@@ -14,7 +14,7 @@ export function Card({ children, className = '', hover = false, glow = false, on
       onClick={onClick}
       className={[
         'bg-[var(--bg-card)] border border-[var(--border-default)]',
-        'shadow-md p-4',
+        'shadow-lg p-4',
         hover ? 'card-lift cursor-pointer' : '',
         glow ? 'border-neon' : '',
         onClick ? 'cursor-pointer' : '',

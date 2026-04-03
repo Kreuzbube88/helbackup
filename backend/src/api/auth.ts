@@ -7,6 +7,11 @@ interface LoginBody {
   password: string
 }
 
+interface ChangePasswordBody {
+  currentPassword: string
+  newPassword: string
+}
+
 interface UserRow {
   id: number
   username: string
@@ -56,6 +61,45 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
   app.post(
     '/api/auth/logout',
     async (_request: FastifyRequest, reply: FastifyReply) => {
+      return reply.send({ ok: true })
+    }
+  )
+
+  app.post<{ Body: ChangePasswordBody }>(
+    '/api/auth/change-password',
+    {
+      preHandler: [app.authenticate],
+      schema: {
+        body: {
+          type: 'object',
+          required: ['currentPassword', 'newPassword'],
+          properties: {
+            currentPassword: { type: 'string', minLength: 1 },
+            newPassword: { type: 'string', minLength: 8 },
+          },
+        },
+      },
+    },
+    async (request: FastifyRequest<{ Body: ChangePasswordBody }>, reply: FastifyReply) => {
+      const { currentPassword, newPassword } = request.body
+      const payload = request.user as { id: number; username: string }
+
+      const user = db
+        .prepare('SELECT * FROM users WHERE id = ?')
+        .get(payload.id) as UserRow | undefined
+
+      if (!user) {
+        return reply.status(404).send({ error: 'User not found' })
+      }
+
+      const valid = await bcrypt.compare(currentPassword, user.password_hash)
+      if (!valid) {
+        return reply.status(401).send({ error: 'Current password incorrect' })
+      }
+
+      const newHash = await bcrypt.hash(newPassword, 12)
+      db.prepare('UPDATE users SET password_hash = ? WHERE id = ?').run(newHash, user.id)
+
       return reply.send({ ok: true })
     }
   )

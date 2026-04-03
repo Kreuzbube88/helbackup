@@ -44,5 +44,7 @@ export const api = {
       request<{ ok: boolean }>('POST', '/auth/logout'),
     me: () =>
       request<MeResponse>('GET', '/auth/me'),
+    changePassword: (currentPassword: string, newPassword: string) =>
+      request<{ ok: boolean }>('POST', '/auth/change-password', { currentPassword, newPassword }),
   },
 }

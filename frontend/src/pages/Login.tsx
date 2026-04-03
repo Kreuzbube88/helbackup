@@ -55,7 +55,7 @@ export function Login() {
           <img
             src="/logo.png"
             alt="HELBACKUP"
-            className="h-20 w-auto"
+            className="h-32 w-auto"
             style={{ filter: 'drop-shadow(0 0 16px var(--theme-glow))' }}
           />
           <p className="text-xs font-mono text-[var(--text-muted)] tracking-widest uppercase">
@@ -64,7 +64,7 @@ export function Login() {
         </div>
 
         {/* Login Card */}
-        <div className="bg-[var(--bg-card)] border border-[var(--border-default)] shadow-xl relative">
+        <div className="bg-[var(--bg-card)] border-2 border-[var(--border-glow)] shadow-xl border-neon relative">
           {/* Neon top line */}
           <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[var(--theme-glow)] to-transparent" />
 

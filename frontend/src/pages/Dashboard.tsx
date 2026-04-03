@@ -13,14 +13,19 @@ export function Dashboard() {
   ]
 
   return (
-    <div className="flex-1 p-6 overflow-auto">
-      <h1 className="text-xl font-semibold text-[var(--text-primary)] mb-6">
+    <div className="flex-1 p-6 overflow-auto bg-grid relative">
+      {/* Background watermark */}
+      <div className="fixed inset-0 pointer-events-none opacity-5 flex items-center justify-center">
+        <img src="/logo.png" alt="" className="w-1/2 max-w-2xl" />
+      </div>
+
+      <h1 className="text-xl font-semibold text-[var(--text-primary)] mb-6 relative">
         {t('nav.dashboard')}
       </h1>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8 relative">
         {stats.map(stat => (
-          <Card key={stat.label} hover className="flex items-center gap-4">
+          <Card key={stat.label} hover glow className="flex items-center gap-4">
             <div
               className="p-2 shrink-0"
               style={{ color: stat.color, backgroundColor: `${stat.color}18` }}
