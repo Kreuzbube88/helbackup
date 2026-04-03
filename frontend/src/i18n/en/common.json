@@ -159,7 +159,8 @@
     "confirm_downloaded": "I have downloaded the recovery key",
     "confirm_understood": "I understand that without this key, recovery is impossible",
     "complete_setup": "Complete Setup",
-    "error_generic": "Setup failed. Please try again."
+    "error_generic": "Setup failed. Please try again.",
+    "select_language": "Select Language"
   },
   "status": {
     "running": "Running",

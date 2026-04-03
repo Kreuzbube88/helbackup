@@ -23,6 +23,7 @@ interface AdminRow {
   username: string
   password_hash: string
   recovery_key_hash: string
+  language: string
 }
 
 function sanitizeAdmin(admin: AdminRow): { id: number; username: string } {
@@ -125,6 +126,14 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
       }
 
       return reply.send({ user: sanitizeAdmin(admin) })
+    }
+  )
+
+  app.get(
+    '/api/auth/language',
+    async (_request: FastifyRequest, reply: FastifyReply) => {
+      const admin = db.prepare('SELECT language FROM admin WHERE id = 1').get() as Pick<AdminRow, 'language'> | undefined
+      return reply.send({ language: admin?.language ?? 'de' })
     }
   )
 

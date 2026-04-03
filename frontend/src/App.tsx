@@ -6,6 +6,7 @@
 // 5. NO hardcoded UI strings - use t()
 import { useEffect, useState } from 'react'
 import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { useStore } from './store/useStore'
 import { api } from './api'
 import { Header } from './components/layout/Header'
@@ -48,14 +49,24 @@ function ProtectedLayout() {
 }
 
 export function App() {
+  const { i18n } = useTranslation()
   const [setupChecking, setSetupChecking] = useState(true)
   const [firstRun, setFirstRun] = useState(false)
 
   useEffect(() => {
     api.setup.checkStatus()
-      .then(s => setFirstRun(s.firstRun))
+      .then(async s => {
+        setFirstRun(s.firstRun)
+        if (!s.firstRun) {
+          try {
+            const { language } = await api.auth.getLanguage()
+            await i18n.changeLanguage(language)
+          } catch { /* use default */ }
+        }
+      })
       .catch(() => { /* assume not first run on error */ })
       .finally(() => setSetupChecking(false))
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   if (setupChecking) {

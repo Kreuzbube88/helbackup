@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { Button } from '../components/common/Button'
 import { Input } from '../components/common/Input'
 import { api } from '../api'
+import { Globe } from 'lucide-react'
 
 type Step = 'intro' | 'credentials' | 'recovery'
 
@@ -11,12 +12,13 @@ interface Props {
 }
 
 export function SetupPage({ onComplete }: Props) {
-  const { t } = useTranslation('common')
+  const { t, i18n } = useTranslation('common')
 
   const [step, setStep] = useState<Step>('intro')
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [passwordConfirm, setPasswordConfirm] = useState('')
+  const [language, setLanguage] = useState('de')
   const [recoveryKey, setRecoveryKey] = useState('')
   const [downloaded, setDownloaded] = useState(false)
   const [understood, setUnderstood] = useState(false)
@@ -25,11 +27,16 @@ export function SetupPage({ onComplete }: Props) {
 
   const passwordsMatch = password.length >= 8 && password === passwordConfirm
 
+  function handleLanguageChange(lang: string) {
+    setLanguage(lang)
+    void i18n.changeLanguage(lang)
+  }
+
   async function handleCreateAdmin() {
     setError('')
     setLoading(true)
     try {
-      const result = await api.setup.completeSetup(username, password)
+      const result = await api.setup.completeSetup(username, password, language)
       setRecoveryKey(result.recoveryKey)
       setStep('recovery')
     } catch (err) {
@@ -75,6 +82,34 @@ export function SetupPage({ onComplete }: Props) {
               <h1 className="text-xl font-semibold text-[var(--text-primary)]">
                 {t('setup.welcome')}
               </h1>
+            </div>
+
+            <div className="mb-4">
+              <p className="text-xs font-medium text-[var(--text-secondary)] mb-2 flex items-center gap-1">
+                <Globe size={12} />{t('setup.select_language')}
+              </p>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => handleLanguageChange('de')}
+                  className={`flex-1 py-2 px-3 text-sm font-medium border transition-colors ${
+                    language === 'de'
+                      ? 'border-[var(--theme-accent)] bg-[var(--theme-accent)]/10 text-[var(--theme-accent)]'
+                      : 'border-[var(--border-default)] text-[var(--text-secondary)] hover:border-[var(--theme-accent)]/50'
+                  }`}
+                >
+                  DE — Deutsch
+                </button>
+                <button
+                  onClick={() => handleLanguageChange('en')}
+                  className={`flex-1 py-2 px-3 text-sm font-medium border transition-colors ${
+                    language === 'en'
+                      ? 'border-[var(--theme-accent)] bg-[var(--theme-accent)]/10 text-[var(--theme-accent)]'
+                      : 'border-[var(--border-default)] text-[var(--text-secondary)] hover:border-[var(--theme-accent)]/50'
+                  }`}
+                >
+                  EN — English
+                </button>
+              </div>
             </div>
 
             <div className="bg-[var(--bg-secondary)] border border-[var(--border-default)] p-4 mb-6 space-y-2">

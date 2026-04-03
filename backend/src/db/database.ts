@@ -36,6 +36,8 @@ async function initDb(): Promise<Database.Database> {
     "ALTER TABLE manifest ADD COLUMN verification_passed INTEGER",
     "ALTER TABLE manifest ADD COLUMN verification_failed INTEGER",
     "ALTER TABLE manifest ADD COLUMN verification_missing INTEGER",
+    // Language preference
+    "ALTER TABLE admin ADD COLUMN language TEXT NOT NULL DEFAULT 'de'",
   ]) {
     try { db.exec(sql) } catch { /* column already exists */ }
   }

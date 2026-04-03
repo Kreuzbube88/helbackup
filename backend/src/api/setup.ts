@@ -7,6 +7,7 @@ import { generateRecoveryKey, hashRecoveryKey } from '../utils/recoveryKey.js'
 interface CompleteSetupBody {
   username: string
   password: string
+  language: string
 }
 
 export async function setupRoutes(app: FastifyInstance): Promise<void> {
@@ -20,10 +21,11 @@ export async function setupRoutes(app: FastifyInstance): Promise<void> {
       schema: {
         body: {
           type: 'object',
-          required: ['username', 'password'],
+          required: ['username', 'password', 'language'],
           properties: {
             username: { type: 'string', minLength: 3 },
             password: { type: 'string', minLength: 8 },
+            language: { type: 'string', enum: ['de', 'en'] },
           },
         },
       },
@@ -33,7 +35,7 @@ export async function setupRoutes(app: FastifyInstance): Promise<void> {
         return reply.status(400).send({ error: 'Setup already completed' })
       }
 
-      const { username, password } = request.body
+      const { username, password, language } = request.body
 
       const recoveryKey = generateRecoveryKey()
       const [passwordHash, recoveryKeyHash] = await Promise.all([
@@ -42,8 +44,8 @@ export async function setupRoutes(app: FastifyInstance): Promise<void> {
       ])
 
       db.prepare(
-        'INSERT INTO admin (id, username, password_hash, recovery_key_hash, created_at) VALUES (1, ?, ?, ?, ?)'
-      ).run(username, passwordHash, recoveryKeyHash, new Date().toISOString())
+        'INSERT INTO admin (id, username, password_hash, recovery_key_hash, language, created_at) VALUES (1, ?, ?, ?, ?, ?)'
+      ).run(username, passwordHash, recoveryKeyHash, language, new Date().toISOString())
 
       return reply.send({ success: true, recoveryKey })
     }

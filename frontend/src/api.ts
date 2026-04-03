@@ -77,8 +77,8 @@ export const api = {
   setup: {
     checkStatus: () =>
       request<{ firstRun: boolean }>('GET', '/setup/status'),
-    completeSetup: (username: string, password: string) =>
-      request<{ success: boolean; recoveryKey: string }>('POST', '/setup/complete', { username, password }),
+    completeSetup: (username: string, password: string, language: string) =>
+      request<{ success: boolean; recoveryKey: string }>('POST', '/setup/complete', { username, password, language }),
   },
 
   auth: {
@@ -92,6 +92,8 @@ export const api = {
       request<{ ok: boolean }>('POST', '/auth/change-password', { currentPassword, newPassword }),
     recover: (recoveryKey: string, newPassword: string) =>
       request<{ success: boolean }>('POST', '/auth/recover', { recoveryKey, newPassword }),
+    getLanguage: () =>
+      request<{ language: string }>('GET', '/auth/language'),
   },
 
   jobs: {

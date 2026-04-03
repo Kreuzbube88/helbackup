@@ -159,7 +159,8 @@
     "confirm_downloaded": "Ich habe den Recovery-Key heruntergeladen",
     "confirm_understood": "Ich verstehe, dass ohne diesen Key keine Wiederherstellung möglich ist",
     "complete_setup": "Setup abschließen",
-    "error_generic": "Setup fehlgeschlagen. Bitte erneut versuchen."
+    "error_generic": "Setup fehlgeschlagen. Bitte erneut versuchen.",
+    "select_language": "Sprache wählen"
   },
   "status": {
     "running": "Läuft",
