@@ -1,0 +1,35 @@
+{
+  "buttons": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "confirm": "Confirm",
+    "close": "Close",
+    "edit": "Edit",
+    "add": "Add",
+    "run": "Run",
+    "enable": "Enable",
+    "disable": "Disable"
+  },
+  "confirm_delete": "Really delete? This action cannot be undone.",
+  "unsaved_changes": "Unsaved changes. Really close?",
+  "loading": "Loading...",
+  "error": "Error",
+  "success": "Success",
+  "nav": {
+    "dashboard": "Dashboard",
+    "jobs": "Jobs",
+    "targets": "Targets",
+    "history": "History",
+    "recovery": "Recovery",
+    "settings": "Settings"
+  },
+  "status": {
+    "running": "Running",
+    "success": "Success",
+    "failed": "Failed",
+    "cancelled": "Cancelled",
+    "enabled": "Enabled",
+    "disabled": "Disabled"
+  }
+}

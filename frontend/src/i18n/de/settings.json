@@ -1,0 +1,24 @@
+{
+  "title": "Einstellungen",
+  "theme": {
+    "label": "Farbschema",
+    "description": "Wähle ein Farbschema für die Benutzeroberfläche"
+  },
+  "language": {
+    "label": "Sprache",
+    "de": "Deutsch",
+    "en": "English"
+  },
+  "account": {
+    "title": "Konto",
+    "change_password": "Passwort ändern",
+    "current_password": "Aktuelles Passwort",
+    "new_password": "Neues Passwort",
+    "confirm_password": "Passwort bestätigen"
+  },
+  "general": {
+    "title": "Allgemein",
+    "timezone": "Zeitzone",
+    "log_level": "Log-Level"
+  }
+}

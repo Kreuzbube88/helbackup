@@ -1,0 +1,93 @@
+name: Release Latest
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version (e.g. 1.0.0)'
+        required: true
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository_owner }}/helbackup
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+    permissions:
+      contents: write
+      packages: write
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Bump backend package.json version
+        env:
+          INPUT_VERSION: ${{ github.event.inputs.version }}
+        run: |
+          cd backend
+          node -e "
+            const fs=require('fs');
+            const p=JSON.parse(fs.readFileSync('package.json','utf8'));
+            p.version=process.env.INPUT_VERSION;
+            fs.writeFileSync('package.json',JSON.stringify(p,null,2)+'\n');
+          "
+
+      - name: Commit and tag
+        env:
+          INPUT_VERSION: ${{ github.event.inputs.version }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add backend/package.json
+          if ! git diff --staged --quiet; then
+            git commit -m "chore: bump version to $INPUT_VERSION"
+            git push
+          fi
+          git tag -f "v$INPUT_VERSION"
+          git push origin "v$INPUT_VERSION" --force
+
+      - uses: docker/login-action@v4
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: docker/setup-buildx-action@v4
+
+      - id: meta
+        uses: docker/metadata-action@v6
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=raw,value=${{ github.event.inputs.version }}
+            type=raw,value=latest
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          platforms: linux/amd64
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - uses: actions/github-script@v7
+        env:
+          INPUT_VERSION: ${{ github.event.inputs.version }}
+          IMAGE_NAME: ${{ env.IMAGE_NAME }}
+        with:
+          script: |
+            const version = process.env.INPUT_VERSION
+            const image = process.env.IMAGE_NAME
+            await github.rest.repos.createRelease({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              tag_name: `v${version}`,
+              name: `v${version}`,
+              body: `Docker: \`ghcr.io/${image}:${version}\` (also tagged \`latest\`)`,
+              draft: false,
+              prerelease: false,
+              make_latest: 'true'
+            })

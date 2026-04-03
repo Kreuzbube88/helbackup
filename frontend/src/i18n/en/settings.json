@@ -1,0 +1,24 @@
+{
+  "title": "Settings",
+  "theme": {
+    "label": "Color Theme",
+    "description": "Choose a color theme for the interface"
+  },
+  "language": {
+    "label": "Language",
+    "de": "Deutsch",
+    "en": "English"
+  },
+  "account": {
+    "title": "Account",
+    "change_password": "Change Password",
+    "current_password": "Current Password",
+    "new_password": "New Password",
+    "confirm_password": "Confirm Password"
+  },
+  "general": {
+    "title": "General",
+    "timezone": "Timezone",
+    "log_level": "Log Level"
+  }
+}

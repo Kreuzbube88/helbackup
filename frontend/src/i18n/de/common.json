@@ -1,0 +1,35 @@
+{
+  "buttons": {
+    "save": "Speichern",
+    "cancel": "Abbrechen",
+    "delete": "Löschen",
+    "confirm": "Bestätigen",
+    "close": "Schließen",
+    "edit": "Bearbeiten",
+    "add": "Hinzufügen",
+    "run": "Ausführen",
+    "enable": "Aktivieren",
+    "disable": "Deaktivieren"
+  },
+  "confirm_delete": "Wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.",
+  "unsaved_changes": "Ungespeicherte Änderungen vorhanden. Wirklich schließen?",
+  "loading": "Lädt...",
+  "error": "Fehler",
+  "success": "Erfolgreich",
+  "nav": {
+    "dashboard": "Dashboard",
+    "jobs": "Jobs",
+    "targets": "Ziele",
+    "history": "Verlauf",
+    "recovery": "Wiederherstellung",
+    "settings": "Einstellungen"
+  },
+  "status": {
+    "running": "Läuft",
+    "success": "Erfolgreich",
+    "failed": "Fehlgeschlagen",
+    "cancelled": "Abgebrochen",
+    "enabled": "Aktiv",
+    "disabled": "Inaktiv"
+  }
+}
