@@ -3,6 +3,7 @@ import fastifyJwt from '@fastify/jwt'
 import fastifyCookie from '@fastify/cookie'
 import fastifyCors from '@fastify/cors'
 import fastifyStatic from '@fastify/static'
+import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { logger } from './utils/logger.js'
@@ -46,8 +47,15 @@ await app.register(fastifyStatic, {
   decorateReply: false,
 })
 
-app.setNotFoundHandler(async (_request, reply) => {
-  return reply.sendFile('index.html', distPath)
+app.setNotFoundHandler(async (request, reply) => {
+  if (!request.url.startsWith('/api')) {
+    const html = fs.readFileSync(
+      path.join(__dirname, '../../frontend/dist/index.html'),
+      'utf-8'
+    )
+    return reply.type('text/html').send(html)
+  }
+  reply.status(404).send({ error: 'Not Found' })
 })
 
 app.addHook('onError', async (_request, _reply, error) => {
