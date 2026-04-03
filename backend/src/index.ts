@@ -50,7 +50,7 @@ await app.register(fastifyStatic, {
 app.setNotFoundHandler(async (request, reply) => {
   if (!request.url.startsWith('/api')) {
     const html = fs.readFileSync(
-      path.join(__dirname, '../../frontend/dist/index.html'),
+      '/app/frontend/dist/index.html',
       'utf-8'
     )
     return reply.type('text/html').send(html)
