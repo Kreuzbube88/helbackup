@@ -17,6 +17,14 @@ export function Login() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
+  const [showRecovery, setShowRecovery] = useState(false)
+  const [recoveryKey, setRecoveryKey] = useState('')
+  const [newPassword, setNewPassword] = useState('')
+  const [newPasswordConfirm, setNewPasswordConfirm] = useState('')
+  const [recoveryLoading, setRecoveryLoading] = useState(false)
+  const [recoveryError, setRecoveryError] = useState('')
+  const [recoverySuccess, setRecoverySuccess] = useState(false)
+
   if (isAuthenticated) return <Navigate to="/" replace />
 
   async function handleSubmit(e: FormEvent) {
@@ -37,6 +45,32 @@ export function Login() {
     } finally {
       setLoading(false)
     }
+  }
+
+  async function handleRecovery() {
+    if (newPassword !== newPasswordConfirm) {
+      setRecoveryError(t('recovery.passwords_dont_match'))
+      return
+    }
+    setRecoveryError('')
+    setRecoveryLoading(true)
+    try {
+      await api.auth.recover(recoveryKey, newPassword)
+      setRecoverySuccess(true)
+    } catch (err) {
+      setRecoveryError(err instanceof Error ? err.message : t('login.error_generic'))
+    } finally {
+      setRecoveryLoading(false)
+    }
+  }
+
+  function resetRecovery() {
+    setShowRecovery(false)
+    setRecoveryKey('')
+    setNewPassword('')
+    setNewPasswordConfirm('')
+    setRecoveryError('')
+    setRecoverySuccess(false)
   }
 
   return (
@@ -63,44 +97,116 @@ export function Login() {
           </p>
         </div>
 
-        {/* Login Card */}
+        {/* Card */}
         <div className="bg-[var(--bg-card)] border-neon relative glow-intense border-holographic corner-cuts" style={{ animation: 'card-entrance 0.6s ease-out' }}>
-          {/* Neon top line */}
           <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[var(--theme-glow)] to-transparent" />
 
           <div className="px-8 py-8">
-            <h1 className="text-lg font-semibold text-[var(--text-primary)] mb-6">
-              {t('login.title')}
-            </h1>
+            {!showRecovery ? (
+              <>
+                <h1 className="text-lg font-semibold text-[var(--text-primary)] mb-6">
+                  {t('login.title')}
+                </h1>
 
-            <form onSubmit={(e) => { void handleSubmit(e) }} className="flex flex-col gap-4">
-              <Input
-                label={t('login.username')}
-                value={username}
-                onChange={e => setUsername(e.target.value)}
-                autoComplete="username"
-                autoFocus
-                required
-              />
-              <Input
-                type="password"
-                label={t('login.password')}
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                autoComplete="current-password"
-                required
-                error={error}
-              />
+                <form onSubmit={(e) => { void handleSubmit(e) }} className="flex flex-col gap-4">
+                  <Input
+                    label={t('login.username')}
+                    value={username}
+                    onChange={e => setUsername(e.target.value)}
+                    autoComplete="username"
+                    autoFocus
+                    required
+                  />
+                  <Input
+                    type="password"
+                    label={t('login.password')}
+                    value={password}
+                    onChange={e => setPassword(e.target.value)}
+                    autoComplete="current-password"
+                    required
+                    error={error}
+                  />
 
-              <Button
-                type="submit"
-                variant="primary"
-                loading={loading}
-                className="mt-2 w-full justify-center"
-              >
-                {t('login.submit')}
-              </Button>
-            </form>
+                  <Button
+                    type="submit"
+                    variant="primary"
+                    loading={loading}
+                    className="mt-2 w-full justify-center"
+                  >
+                    {t('login.submit')}
+                  </Button>
+                </form>
+
+                <div className="mt-4 text-center">
+                  <button
+                    type="button"
+                    onClick={() => setShowRecovery(true)}
+                    className="text-xs text-[var(--text-muted)] hover:text-[var(--theme-primary)] transition-colors font-mono"
+                  >
+                    {t('recovery.forgot_password')}
+                  </button>
+                </div>
+              </>
+            ) : recoverySuccess ? (
+              <>
+                <h1 className="text-lg font-semibold text-[var(--text-primary)] mb-4">
+                  {t('recovery.success_title')}
+                </h1>
+                <p className="text-sm text-[var(--text-secondary)] mb-6">
+                  {t('recovery.success_message')}
+                </p>
+                <Button variant="primary" onClick={resetRecovery} className="w-full justify-center">
+                  {t('recovery.back_to_login')}
+                </Button>
+              </>
+            ) : (
+              <>
+                <h1 className="text-lg font-semibold text-[var(--text-primary)] mb-6">
+                  {t('recovery.title')}
+                </h1>
+
+                <div className="flex flex-col gap-4">
+                  <Input
+                    label={t('recovery.key_label')}
+                    value={recoveryKey}
+                    onChange={e => setRecoveryKey(e.target.value)}
+                    placeholder="HLBK-XXXX-XXXX-XXXX-XXXX"
+                    autoFocus
+                  />
+                  <Input
+                    type="password"
+                    label={t('recovery.new_password')}
+                    value={newPassword}
+                    onChange={e => setNewPassword(e.target.value)}
+                  />
+                  <Input
+                    type="password"
+                    label={t('recovery.confirm_password')}
+                    value={newPasswordConfirm}
+                    onChange={e => setNewPasswordConfirm(e.target.value)}
+                    error={recoveryError}
+                  />
+
+                  <Button
+                    variant="primary"
+                    onClick={() => { void handleRecovery() }}
+                    loading={recoveryLoading}
+                    disabled={!recoveryKey || newPassword.length < 8}
+                    className="w-full justify-center"
+                  >
+                    {t('recovery.submit')}
+                  </Button>
+
+                  <button
+                    type="button"
+                    onClick={resetRecovery}
+                    className="text-xs text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors font-mono text-center"
+                  >
+                    ← {t('recovery.back_to_login')}
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
 

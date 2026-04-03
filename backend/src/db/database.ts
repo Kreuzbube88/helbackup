@@ -1,4 +1,3 @@
-import bcrypt from 'bcryptjs'
 import Database from 'better-sqlite3'
 import fs from 'node:fs'
 import path from 'node:path'
@@ -43,14 +42,25 @@ async function initDb(): Promise<Database.Database> {
 
   logger.info({ path: DB_PATH }, 'Database initialized')
 
-  // Create admin user if ADMIN_PASSWORD is set and no users exist
-  const adminPassword = process.env.ADMIN_PASSWORD
-  if (adminPassword) {
-    const existingUsers = db.prepare('SELECT COUNT(*) as count FROM users').get() as { count: number }
-    if (existingUsers.count === 0) {
-      const passwordHash = await bcrypt.hash(adminPassword, 12)
-      db.prepare('INSERT INTO users (username, password_hash) VALUES (?, ?)').run('admin', passwordHash)
-      logger.info('Admin user created')
+  // Migrate from legacy users table to admin table if needed
+  const adminCount = db.prepare('SELECT COUNT(*) as count FROM admin').get() as { count: number }
+  if (adminCount.count === 0) {
+    try {
+      const firstUser = db.prepare('SELECT * FROM users LIMIT 1').get() as
+        | { username: string; password_hash: string }
+        | undefined
+      if (firstUser) {
+        const { generateRecoveryKey, hashRecoveryKey } = await import('../utils/recoveryKey.js')
+        const recoveryKey = generateRecoveryKey()
+        const recoveryKeyHash = await hashRecoveryKey(recoveryKey)
+        db.prepare(
+          'INSERT INTO admin (id, username, password_hash, recovery_key_hash, created_at) VALUES (1, ?, ?, ?, ?)'
+        ).run(firstUser.username, firstUser.password_hash, recoveryKeyHash, new Date().toISOString())
+        logger.warn('⚠️  MIGRATED existing user to admin table')
+        logger.warn(`⚠️  RECOVERY KEY (save this!): ${recoveryKey}`)
+      }
+    } catch {
+      // users table might not have data — first-run setup handles this
     }
   }
 

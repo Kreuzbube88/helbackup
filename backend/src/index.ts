@@ -8,6 +8,7 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { logger } from './utils/logger.js'
 import { authRoutes } from './api/auth.js'
+import { setupRoutes } from './api/setup.js'
 import { jobsRoutes } from './api/jobs.js'
 import { targetsRoutes } from './api/targets.js'
 import { dockerRoutes } from './api/docker.js'
@@ -52,6 +53,7 @@ let recoveryMode = false
 initScheduler()
 
 // Register routes
+await app.register(setupRoutes)
 await app.register(authRoutes)
 await app.register(jobsRoutes)
 await app.register(targetsRoutes)

@@ -1,6 +1,7 @@
 import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify'
 import bcrypt from 'bcryptjs'
 import { db } from '../db/database.js'
+import { verifyRecoveryKey } from '../utils/recoveryKey.js'
 
 interface LoginBody {
   username: string
@@ -12,14 +13,20 @@ interface ChangePasswordBody {
   newPassword: string
 }
 
-interface UserRow {
+interface RecoverBody {
+  recoveryKey: string
+  newPassword: string
+}
+
+interface AdminRow {
   id: number
   username: string
   password_hash: string
+  recovery_key_hash: string
 }
 
-function sanitizeUser(user: UserRow): { id: number; username: string } {
-  return { id: user.id, username: user.username }
+function sanitizeAdmin(admin: AdminRow): { id: number; username: string } {
+  return { id: admin.id, username: admin.username }
 }
 
 export async function authRoutes(app: FastifyInstance): Promise<void> {
@@ -40,21 +47,23 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
     async (request: FastifyRequest<{ Body: LoginBody }>, reply: FastifyReply) => {
       const { username, password } = request.body
 
-      const user = db
-        .prepare('SELECT * FROM users WHERE username = ?')
-        .get(username) as UserRow | undefined
+      const admin = db
+        .prepare('SELECT * FROM admin WHERE id = 1 AND username = ?')
+        .get(username) as AdminRow | undefined
 
-      if (!user) {
+      if (!admin) {
         return reply.status(401).send({ error: 'Invalid credentials' })
       }
 
-      const valid = await bcrypt.compare(password, user.password_hash)
+      const valid = await bcrypt.compare(password, admin.password_hash)
       if (!valid) {
         return reply.status(401).send({ error: 'Invalid credentials' })
       }
 
-      const token = app.jwt.sign({ id: user.id, username: user.username })
-      return reply.send({ token, user: sanitizeUser(user) })
+      db.prepare('UPDATE admin SET last_login = ? WHERE id = 1').run(new Date().toISOString())
+
+      const token = app.jwt.sign({ id: admin.id, username: admin.username })
+      return reply.send({ token, user: sanitizeAdmin(admin) })
     }
   )
 
@@ -82,23 +91,20 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
     },
     async (request: FastifyRequest<{ Body: ChangePasswordBody }>, reply: FastifyReply) => {
       const { currentPassword, newPassword } = request.body
-      const payload = request.user as { id: number; username: string }
 
-      const user = db
-        .prepare('SELECT * FROM users WHERE id = ?')
-        .get(payload.id) as UserRow | undefined
+      const admin = db.prepare('SELECT * FROM admin WHERE id = 1').get() as AdminRow | undefined
 
-      if (!user) {
-        return reply.status(404).send({ error: 'User not found' })
+      if (!admin) {
+        return reply.status(404).send({ error: 'Admin account not found' })
       }
 
-      const valid = await bcrypt.compare(currentPassword, user.password_hash)
+      const valid = await bcrypt.compare(currentPassword, admin.password_hash)
       if (!valid) {
         return reply.status(401).send({ error: 'Current password incorrect' })
       }
 
       const newHash = await bcrypt.hash(newPassword, 12)
-      db.prepare('UPDATE users SET password_hash = ? WHERE id = ?').run(newHash, user.id)
+      db.prepare('UPDATE admin SET password_hash = ? WHERE id = 1').run(newHash)
 
       return reply.send({ ok: true })
     }
@@ -109,15 +115,51 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
     { preHandler: [app.authenticate] },
     async (request: FastifyRequest, reply: FastifyReply) => {
       const payload = request.user as { id: number; username: string }
-      const user = db
-        .prepare('SELECT * FROM users WHERE id = ?')
-        .get(payload.id) as UserRow | undefined
 
-      if (!user) {
-        return reply.status(404).send({ error: 'User not found' })
+      const admin = db
+        .prepare('SELECT * FROM admin WHERE id = ?')
+        .get(payload.id) as AdminRow | undefined
+
+      if (!admin) {
+        return reply.status(404).send({ error: 'Admin account not found' })
       }
 
-      return reply.send({ user: sanitizeUser(user) })
+      return reply.send({ user: sanitizeAdmin(admin) })
+    }
+  )
+
+  app.post<{ Body: RecoverBody }>(
+    '/api/auth/recover',
+    {
+      schema: {
+        body: {
+          type: 'object',
+          required: ['recoveryKey', 'newPassword'],
+          properties: {
+            recoveryKey: { type: 'string', minLength: 1 },
+            newPassword: { type: 'string', minLength: 8 },
+          },
+        },
+      },
+    },
+    async (request: FastifyRequest<{ Body: RecoverBody }>, reply: FastifyReply) => {
+      const { recoveryKey, newPassword } = request.body
+
+      const admin = db.prepare('SELECT * FROM admin WHERE id = 1').get() as AdminRow | undefined
+
+      if (!admin) {
+        return reply.status(404).send({ error: 'Admin account not found' })
+      }
+
+      const valid = await verifyRecoveryKey(recoveryKey, admin.recovery_key_hash)
+      if (!valid) {
+        return reply.status(401).send({ error: 'Invalid recovery key' })
+      }
+
+      const newHash = await bcrypt.hash(newPassword, 12)
+      db.prepare('UPDATE admin SET password_hash = ? WHERE id = 1').run(newHash)
+
+      return reply.send({ success: true })
     }
   )
 }

@@ -74,6 +74,13 @@ export interface Container {
 }
 
 export const api = {
+  setup: {
+    checkStatus: () =>
+      request<{ firstRun: boolean }>('GET', '/setup/status'),
+    completeSetup: (username: string, password: string) =>
+      request<{ success: boolean; recoveryKey: string }>('POST', '/setup/complete', { username, password }),
+  },
+
   auth: {
     login: (username: string, password: string) =>
       request<LoginResponse>('POST', '/auth/login', { username, password }),
@@ -83,6 +90,8 @@ export const api = {
       request<MeResponse>('GET', '/auth/me'),
     changePassword: (currentPassword: string, newPassword: string) =>
       request<{ ok: boolean }>('POST', '/auth/change-password', { currentPassword, newPassword }),
+    recover: (recoveryKey: string, newPassword: string) =>
+      request<{ success: boolean }>('POST', '/auth/recover', { recoveryKey, newPassword }),
   },
 
   jobs: {

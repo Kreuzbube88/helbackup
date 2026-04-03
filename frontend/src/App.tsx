@@ -4,13 +4,14 @@
 // 3. ALL forms with user input use useUnsavedChanges
 // 4. ALL styling via globals.css variables
 // 5. NO hardcoded UI strings - use t()
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom'
 import { useStore } from './store/useStore'
 import { api } from './api'
 import { Header } from './components/layout/Header'
 import { Sidebar } from './components/layout/Sidebar'
 import { Login } from './pages/Login'
+import { SetupPage } from './pages/SetupPage'
 import { Dashboard } from './pages/Dashboard'
 import { Jobs } from './pages/Jobs'
 import { Targets } from './pages/Targets'
@@ -47,20 +48,49 @@ function ProtectedLayout() {
 }
 
 export function App() {
+  const [setupChecking, setSetupChecking] = useState(true)
+  const [firstRun, setFirstRun] = useState(false)
+
+  useEffect(() => {
+    api.setup.checkStatus()
+      .then(s => setFirstRun(s.firstRun))
+      .catch(() => { /* assume not first run on error */ })
+      .finally(() => setSetupChecking(false))
+  }, [])
+
+  if (setupChecking) {
+    return (
+      <div className="h-full flex items-center justify-center bg-[var(--bg-primary)]">
+        <div className="font-mono text-xs text-[var(--text-muted)] tracking-widest animate-pulse">
+          INITIALIZING...
+        </div>
+      </div>
+    )
+  }
+
   return (
     <BrowserRouter>
       <div className="scanline-overlay" />
       <Routes>
-        <Route path="/login" element={<Login />} />
-        <Route element={<ProtectedLayout />}>
-          <Route path="/" element={<Dashboard />} />
-          <Route path="/jobs" element={<Jobs />} />
-          <Route path="/targets" element={<Targets />} />
-          <Route path="/settings" element={<Settings />} />
-          <Route path="/logs/:runId" element={<LogsPage />} />
-          <Route path="/recovery" element={<RecoveryPage />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Route>
+        {firstRun ? (
+          <>
+            <Route path="/setup" element={<SetupPage onComplete={() => setFirstRun(false)} />} />
+            <Route path="*" element={<Navigate to="/setup" replace />} />
+          </>
+        ) : (
+          <>
+            <Route path="/login" element={<Login />} />
+            <Route element={<ProtectedLayout />}>
+              <Route path="/" element={<Dashboard />} />
+              <Route path="/jobs" element={<Jobs />} />
+              <Route path="/targets" element={<Targets />} />
+              <Route path="/settings" element={<Settings />} />
+              <Route path="/logs/:runId" element={<LogsPage />} />
+              <Route path="/recovery" element={<RecoveryPage />} />
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Route>
+          </>
+        )}
       </Routes>
     </BrowserRouter>
   )

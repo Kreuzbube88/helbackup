@@ -67,6 +67,40 @@ CREATE TABLE IF NOT EXISTS users (
   created_at   TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
+-- Single admin (only 1 row, enforced by CHECK constraint)
+CREATE TABLE IF NOT EXISTS admin (
+  id                 INTEGER PRIMARY KEY CHECK (id = 1),
+  username           TEXT NOT NULL,
+  password_hash      TEXT NOT NULL,
+  recovery_key_hash  TEXT NOT NULL,
+  created_at         TEXT NOT NULL,
+  last_login         TEXT
+);
+
+CREATE TABLE IF NOT EXISTS restore_sessions (
+  session_id    TEXT PRIMARY KEY,
+  backup_id     TEXT NOT NULL,
+  allowed_paths TEXT NOT NULL,
+  created_at    TEXT NOT NULL,
+  expires_at    TEXT NOT NULL,
+  active        INTEGER DEFAULT 1
+);
+
+CREATE TABLE IF NOT EXISTS audit_log (
+  id            INTEGER PRIMARY KEY AUTOINCREMENT,
+  timestamp     TEXT NOT NULL,
+  session_id    TEXT,
+  operation     TEXT NOT NULL,
+  source_path   TEXT,
+  target_path   TEXT NOT NULL,
+  success       INTEGER DEFAULT 1,
+  error_message TEXT,
+  bytes_written INTEGER
+);
+
+CREATE INDEX IF NOT EXISTS idx_sessions_expires ON restore_sessions(expires_at);
+CREATE INDEX IF NOT EXISTS idx_audit_timestamp ON audit_log(timestamp);
+
 CREATE TABLE IF NOT EXISTS manifest (
   id         INTEGER PRIMARY KEY AUTOINCREMENT,
   backup_id  TEXT NOT NULL UNIQUE,
