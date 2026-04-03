@@ -14,6 +14,7 @@ COPY backend/package.json backend/tsconfig.json ./
 RUN npm install
 COPY backend/src ./src
 RUN npm run build
+RUN cp src/db/schema.sql dist/db/schema.sql
 
 # ── Frontend build ─────────────────────────────────────────────────────────────
 FROM base AS frontend-build
