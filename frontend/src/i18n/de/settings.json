@@ -7,14 +7,21 @@
   "language": {
     "label": "Sprache",
     "de": "Deutsch",
-    "en": "English"
+    "en": "English",
+    "changed": "Sprache geändert"
   },
   "account": {
     "title": "Konto",
     "change_password": "Passwort ändern",
     "current_password": "Aktuelles Passwort",
     "new_password": "Neues Passwort",
-    "confirm_password": "Passwort bestätigen"
+    "confirm_password": "Passwort bestätigen",
+    "password_changed": "Passwort erfolgreich geändert",
+    "password_change_confirm": "Passwort wirklich ändern?",
+    "password_change_confirm_message": "Das aktuelle Passwort wird ungültig.",
+    "error_mismatch": "Passwörter stimmen nicht überein",
+    "error_too_short": "Mindestens 8 Zeichen erforderlich",
+    "error_wrong_current": "Aktuelles Passwort falsch"
   },
   "general": {
     "title": "Allgemein",

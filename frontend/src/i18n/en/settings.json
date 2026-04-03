@@ -7,14 +7,21 @@
   "language": {
     "label": "Language",
     "de": "Deutsch",
-    "en": "English"
+    "en": "English",
+    "changed": "Language changed"
   },
   "account": {
     "title": "Account",
     "change_password": "Change Password",
     "current_password": "Current Password",
     "new_password": "New Password",
-    "confirm_password": "Confirm Password"
+    "confirm_password": "Confirm Password",
+    "password_changed": "Password changed successfully",
+    "password_change_confirm": "Really change password?",
+    "password_change_confirm_message": "The current password will become invalid.",
+    "error_mismatch": "Passwords do not match",
+    "error_too_short": "At least 8 characters required",
+    "error_wrong_current": "Current password incorrect"
   },
   "general": {
     "title": "General",

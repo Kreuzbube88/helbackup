@@ -1,3 +1,21 @@
+/**
+ * HELBACKUP DESIGN SYSTEM - CENTRAL CONTROL
+ *
+ * ALL component styling MUST use these CSS variables and utility classes.
+ *
+ * FORBIDDEN:
+ * - Hardcoded colors in components (except dynamic theme values)
+ * - Inline styles (except calculated positions/sizes)
+ * - New shadow/glow definitions outside this file
+ *
+ * REQUIRED:
+ * - Use var(--theme-primary), var(--shadow-glow), etc.
+ * - Use utility classes: .glow-intense, .border-holographic, .pulse-glow
+ * - All new visual effects added HERE first, then referenced
+ *
+ * THEMES: 4 switchable via data-theme attribute (blue/purple/green/orange)
+ */
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;

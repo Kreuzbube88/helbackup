@@ -1,11 +1,14 @@
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { LogOut, User } from 'lucide-react'
 import { useStore } from '../../store/useStore'
 import { ThemeSelector } from '../common/ThemeSelector'
+import { ConfirmModal } from '../common/ConfirmModal'
 
 export function Header() {
-  const { t } = useTranslation()
+  const { t } = useTranslation('auth')
   const { user, logout } = useStore()
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
 
   return (
     <header className="h-14 bg-[var(--bg-secondary)] border-b border-[var(--border-default)] flex items-center justify-end px-6 shrink-0">
@@ -19,14 +22,23 @@ export function Header() {
         </div>
 
         <button
-          onClick={logout}
-          title={t('auth.logout', { defaultValue: 'Logout' })}
+          onClick={() => setShowLogoutConfirm(true)}
+          title={t('logout')}
           className="flex items-center gap-1.5 text-xs text-[var(--text-muted)] hover:text-red-400 transition-colors"
         >
           <LogOut size={14} />
-          {t('auth.logout', { defaultValue: 'Logout' })}
+          {t('logout')}
         </button>
       </div>
+
+      <ConfirmModal
+        open={showLogoutConfirm}
+        onConfirm={logout}
+        onCancel={() => setShowLogoutConfirm(false)}
+        title={t('confirm_logout')}
+        message={t('confirm_logout_message')}
+        variant="warning"
+      />
     </header>
   )
 }

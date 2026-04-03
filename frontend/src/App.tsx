@@ -1,3 +1,9 @@
+// DESIGN RULE ENFORCEMENT:
+// 1. NO browser alerts - use Toast/ConfirmModal
+// 2. ALL destructive actions require ConfirmModal
+// 3. ALL forms with user input use useUnsavedChanges
+// 4. ALL styling via globals.css variables
+// 5. NO hardcoded UI strings - use t()
 import { useEffect } from 'react'
 import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom'
 import { useStore } from './store/useStore'
