@@ -5,7 +5,7 @@ import { logger } from '../utils/logger.js'
 
 export interface JobStep {
   id: string
-  type: 'flash' | 'appdata' | 'vms' | 'docker_images' | 'system_config'
+  type: 'flash' | 'appdata' | 'vms' | 'docker_images' | 'system_config' | 'cloud'
   config: Record<string, unknown>
 }
 
@@ -145,6 +145,26 @@ export class JobExecutionEngine extends EventEmitter {
       case 'appdata': {
         const { executeAppdataBackup } = await import('./steps/appdata.js')
         await executeAppdataBackup(step.config as unknown as Parameters<typeof executeAppdataBackup>[0], this)
+        break
+      }
+      case 'vms': {
+        const { executeVMBackup } = await import('./steps/vms.js')
+        await executeVMBackup(step.config as unknown as Parameters<typeof executeVMBackup>[0], this)
+        break
+      }
+      case 'docker_images': {
+        const { executeDockerImageExport } = await import('./steps/docker-images.js')
+        await executeDockerImageExport(step.config as unknown as Parameters<typeof executeDockerImageExport>[0], this)
+        break
+      }
+      case 'system_config': {
+        const { executeSystemConfigBackup } = await import('./steps/system-config.js')
+        await executeSystemConfigBackup(step.config as unknown as Parameters<typeof executeSystemConfigBackup>[0], this)
+        break
+      }
+      case 'cloud': {
+        const { executeCloudBackup } = await import('./steps/cloud.js')
+        await executeCloudBackup(step.config as unknown as Parameters<typeof executeCloudBackup>[0], this)
         break
       }
       default:

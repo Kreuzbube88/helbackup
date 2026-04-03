@@ -9,5 +9,17 @@
   "steps": "Steps",
   "execute": "Run now",
   "executing": "Running...",
-  "execution_started": "Job started"
+  "execution_started": "Job started",
+  "select_vms": "Select VMs",
+  "vm_backup_note": "Enter VM names separated by commas",
+  "vm_names_placeholder": "e.g. Windows10,Ubuntu-Server",
+  "include_vm_disks": "Include disk images (large!)",
+  "select_docker_images": "Select Docker Images",
+  "docker_image_note": "Only export critical images",
+  "image_names_placeholder": "e.g. postgres:latest,redis:alpine",
+  "select_system_config": "Select System Config",
+  "boot_config": "Boot Config (/boot/config)",
+  "network": "Network Config",
+  "users": "Users & Groups",
+  "plugins": "Plugin Config"
 }
