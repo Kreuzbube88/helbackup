@@ -64,7 +64,7 @@ export function Login() {
         </div>
 
         {/* Login Card */}
-        <div className="bg-[var(--bg-card)] border-2 border-[var(--border-glow)] shadow-xl border-neon relative">
+        <div className="bg-[var(--bg-card)] border-neon relative glow-intense border-holographic corner-cuts" style={{ animation: 'card-entrance 0.6s ease-out' }}>
           {/* Neon top line */}
           <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[var(--theme-glow)] to-transparent" />
 

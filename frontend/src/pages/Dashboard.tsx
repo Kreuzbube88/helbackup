@@ -25,7 +25,7 @@ export function Dashboard() {
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8 relative">
         {stats.map(stat => (
-          <Card key={stat.label} hover glow className="flex items-center gap-4">
+          <Card key={stat.label} hover glow className="flex items-center gap-4 border-holographic glow-intense card-lift relative overflow-hidden group corner-cuts">
             <div
               className="p-2 shrink-0"
               style={{ color: stat.color, backgroundColor: `${stat.color}18` }}
@@ -42,9 +42,11 @@ export function Dashboard() {
         ))}
       </div>
 
-      <Card className="flex items-center justify-center py-16">
+      <Card className="flex items-center justify-center py-16 border-holographic corner-cuts">
         <div className="text-center">
-          <Activity size={40} className="mx-auto mb-3 text-[var(--text-muted)]" />
+          <div className="pulse-glow inline-block mb-3">
+            <Activity size={40} className="text-[var(--text-muted)]" />
+          </div>
           <p className="text-sm text-[var(--text-muted)]">Keine laufenden Jobs</p>
         </div>
       </Card>

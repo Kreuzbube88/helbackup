@@ -28,7 +28,7 @@ export function Input({ label, error, className = '', type, ...props }: InputPro
             'transition-all duration-150',
             error
               ? 'border-red-500 focus:shadow-[0_0_8px_rgba(239,68,68,0.4)]'
-              : 'border-[var(--border-default)] focus:border-[var(--border-glow)] focus:shadow-[0_0_8px_var(--theme-glow)]',
+              : 'border-[var(--border-default)] focus:border-[var(--theme-glow)] focus:shadow-[0_0_20px_var(--theme-glow),inset_0_0_20px_rgba(6,182,212,0.1)] focus:scale-[1.02]',
             isPassword ? 'pr-10' : '',
             className,
           ].join(' ')}

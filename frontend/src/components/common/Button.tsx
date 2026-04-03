@@ -13,9 +13,10 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 
 const variantStyles: Record<Variant, string> = {
   primary: [
-    'bg-primary text-white border border-primary',
-    'shadow-md hover:shadow-glow hover:-translate-y-0.5',
-    'active:translate-y-0 active:shadow-sm',
+    'bg-primary text-white border-2 border-[var(--theme-glow)]',
+    'shadow-[0_0_30px_var(--theme-glow)] hover:shadow-[0_0_50px_var(--theme-glow)] hover:-translate-y-0.5',
+    'active:shadow-[0_0_10px_var(--theme-glow)] active:translate-y-0.5',
+    'relative overflow-hidden',
   ].join(' '),
   secondary: [
     'bg-transparent text-[var(--text-primary)] border border-[var(--border-default)]',
@@ -61,6 +62,9 @@ export function Button({
         className,
       ].join(' ')}
     >
+      {variant === 'primary' && (
+        <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent opacity-0 hover:opacity-20 translate-x-[-200%] hover:translate-x-[200%] transition-all duration-700 pointer-events-none" />
+      )}
       {loading && <Loader2 size={14} className="animate-spin shrink-0" />}
       {children}
     </button>

@@ -39,6 +39,7 @@ function ProtectedLayout() {
 export function App() {
   return (
     <BrowserRouter>
+      <div className="scanline-overlay" />
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route element={<ProtectedLayout />}>
