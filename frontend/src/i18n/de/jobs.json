@@ -3,7 +3,11 @@
   "create": "Job erstellen",
   "empty": "Keine Jobs vorhanden. Erstelle deinen ersten Backup-Job.",
   "load_error": "Fehler beim Laden der Jobs",
+  "execute_error": "Fehler beim Starten des Jobs",
   "manual": "Manuell",
   "cron": "Cron",
-  "steps": "Schritte"
+  "steps": "Schritte",
+  "execute": "Jetzt ausführen",
+  "executing": "Läuft...",
+  "execution_started": "Job gestartet"
 }

@@ -1,5 +1,6 @@
 import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify'
 import { db } from '../db/database.js'
+import { activeExecutions } from '../execution/active.js'
 
 interface LogRow {
   id: number
@@ -11,7 +12,7 @@ interface LogRow {
 }
 
 export async function logsRoutes(app: FastifyInstance): Promise<void> {
-  // GET /api/logs/:runId/stream — SSE endpoint
+  // GET /api/logs/:runId/stream — SSE live stream
   app.get<{ Params: { runId: string } }>(
     '/api/logs/:runId/stream',
     { preHandler: [app.authenticate] },
@@ -21,25 +22,44 @@ export async function logsRoutes(app: FastifyInstance): Promise<void> {
       reply.raw.setHeader('Connection', 'keep-alive')
       reply.hijack()
 
+      const { runId } = request.params
+
       const send = (event: string, data: unknown): void => {
         reply.raw.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`)
       }
 
-      const existingLogs = db
+      // Replay backlog from DB
+      const backlog = db
         .prepare('SELECT * FROM logs WHERE run_id = ? ORDER BY id ASC')
-        .all(request.params.runId) as LogRow[]
+        .all(runId) as LogRow[]
+      for (const log of backlog) send('log', log)
 
-      for (const log of existingLogs) {
-        send('log', log)
+      const engine = activeExecutions.get(runId)
+      if (!engine) {
+        // Job already finished — send complete and close
+        send('complete', { runId })
+        reply.raw.end()
+        return
       }
 
-      // Phase 5 will implement real-time streaming; for now close after backlog
-      send('complete', { runId: request.params.runId })
-      reply.raw.end()
+      // Subscribe to live events
+      const onLog = (data: unknown) => send('log', data)
+      const onComplete = () => { send('complete', { runId }); reply.raw.end() }
+      const onError = (data: unknown) => { send('error', data); reply.raw.end() }
+
+      engine.on('log', onLog)
+      engine.once('job:complete', onComplete)
+      engine.once('job:error', onError)
+
+      request.raw.on('close', () => {
+        engine.off('log', onLog)
+        engine.off('job:complete', onComplete)
+        engine.off('job:error', onError)
+      })
     }
   )
 
-  // GET /api/logs/:runId — JSON endpoint for full log retrieval
+  // GET /api/logs/:runId — full log retrieval (JSON)
   app.get<{ Params: { runId: string } }>(
     '/api/logs/:runId',
     { preHandler: [app.authenticate] },

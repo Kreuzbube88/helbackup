@@ -1,0 +1,66 @@
+import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify'
+import { db } from '../db/database.js'
+import { JobExecutionEngine, type JobStep } from '../execution/engine.js'
+import { activeExecutions } from '../execution/active.js'
+import { logger } from '../utils/logger.js'
+
+interface JobRow {
+  id: string
+  name: string
+  steps: string
+}
+
+interface JobHistoryRow {
+  id: string
+  job_id: string
+  status: string
+  started_at: string
+  ended_at: string | null
+  duration_s: number | null
+}
+
+export async function executionRoutes(app: FastifyInstance): Promise<void> {
+  // POST /api/jobs/:id/execute — trigger manual execution
+  app.post<{ Params: { id: string } }>(
+    '/api/jobs/:id/execute',
+    { preHandler: [app.authenticate] },
+    async (request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) => {
+      const job = db.prepare('SELECT * FROM jobs WHERE id = ?').get(request.params.id) as JobRow | undefined
+      if (!job) return reply.status(404).send({ error: 'Job not found' })
+
+      let steps: JobStep[]
+      try {
+        steps = JSON.parse(job.steps) as JobStep[]
+      } catch {
+        return reply.status(500).send({ error: 'Invalid job steps' })
+      }
+
+      const engine = new JobExecutionEngine(job.id)
+      const runId = engine.getRunId()
+      activeExecutions.set(runId, engine)
+
+      void (async () => {
+        try {
+          await engine.execute(steps)
+        } catch (err: unknown) {
+          logger.error({ runId, err }, 'Job execution failed')
+        } finally {
+          activeExecutions.delete(runId)
+        }
+      })()
+
+      return reply.status(202).send({ runId })
+    }
+  )
+
+  // GET /api/executions/:runId — execution status
+  app.get<{ Params: { runId: string } }>(
+    '/api/executions/:runId',
+    { preHandler: [app.authenticate] },
+    async (request: FastifyRequest<{ Params: { runId: string } }>, reply: FastifyReply) => {
+      const run = db.prepare('SELECT * FROM job_history WHERE id = ?').get(request.params.runId) as JobHistoryRow | undefined
+      if (!run) return reply.status(404).send({ error: 'Execution not found' })
+      return reply.send(run)
+    }
+  )
+}

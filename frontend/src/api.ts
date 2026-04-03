@@ -85,6 +85,7 @@ export const api = {
       request<Job>('PUT', `/jobs/${id}`, data),
     delete: (id: string) => request<{ ok: boolean }>('DELETE', `/jobs/${id}`),
     getHistory: (id: string) => request<unknown[]>('GET', `/jobs/${id}/history`),
+    execute: (id: string) => request<{ runId: string }>('POST', `/jobs/${id}/execute`),
   },
 
   targets: {

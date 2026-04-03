@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Briefcase, Calendar, Zap } from 'lucide-react'
+import { Briefcase, Calendar, Zap, Play } from 'lucide-react'
 import { api, type Job } from '../api'
 import { Card } from '../components/common/Card'
 import { Button } from '../components/common/Button'
@@ -11,6 +11,7 @@ export function Jobs() {
   const { toast } = useToast()
   const [jobs, setJobs] = useState<Job[]>([])
   const [loading, setLoading] = useState(true)
+  const [executing, setExecuting] = useState<Set<string>>(new Set())
 
   useEffect(() => {
     api.jobs.getAll()
@@ -19,6 +20,18 @@ export function Jobs() {
       .finally(() => setLoading(false))
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  const handleExecute = async (jobId: string): Promise<void> => {
+    setExecuting(prev => new Set(prev).add(jobId))
+    try {
+      const { runId } = await api.jobs.execute(jobId)
+      toast(`${t('execution_started')} — Run: ${runId}`, 'success')
+    } catch (err: unknown) {
+      toast(err instanceof Error ? err.message : t('execute_error'), 'error')
+    } finally {
+      setExecuting(prev => { const s = new Set(prev); s.delete(jobId); return s })
+    }
+  }
 
   if (loading) {
     return (
@@ -85,6 +98,15 @@ export function Jobs() {
                     >
                       {job.enabled ? t('common:status.enabled') : t('common:status.disabled')}
                     </span>
+                    <Button
+                      variant="primary"
+                      size="sm"
+                      disabled={executing.has(job.id)}
+                      onClick={() => { void handleExecute(job.id) }}
+                    >
+                      <Play size={12} />
+                      {executing.has(job.id) ? t('executing') : t('execute')}
+                    </Button>
                   </div>
                 </div>
               </Card>

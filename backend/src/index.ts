@@ -15,6 +15,7 @@ import { logsRoutes } from './api/logs.js'
 import { toolsRoutes } from './api/tools.js'
 import { nasRoutes } from './api/nas.js'
 import { initScheduler, stopScheduler } from './scheduler/index.js'
+import { executionRoutes } from './api/execution.js'
 
 declare module 'fastify' {
   interface FastifyInstance {
@@ -55,6 +56,7 @@ await app.register(dockerRoutes)
 await app.register(logsRoutes)
 await app.register(toolsRoutes)
 await app.register(nasRoutes)
+await app.register(executionRoutes)
 
 // Serve React SPA in production
 const distPath = path.join(__dirname, '../frontend/dist')
