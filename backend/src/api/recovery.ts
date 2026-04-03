@@ -138,6 +138,67 @@ export default async function recoveryRoutes(app: FastifyInstance) {
     }
   );
 
+  // Restore database from dump
+  app.post<{ Body: { backupId: string; containerId: string; databaseType: string } }>(
+    '/api/recovery/restore/database',
+    async (request, reply) => {
+      try {
+        const { backupId, containerId, databaseType } = request.body;
+
+        const manifestRecord = db.prepare(
+          'SELECT * FROM manifest WHERE backup_id = ?'
+        ).get(backupId) as Record<string, unknown> | undefined;
+
+        if (!manifestRecord) {
+          return reply.status(404).send({ error: 'Manifest not found' });
+        }
+
+        const manifest = JSON.parse(manifestRecord.manifest as string) as {
+          entries?: Array<{ path: string }>;
+        };
+
+        const dumpEntry = manifest.entries?.find((e) =>
+          e.path.includes('database-dumps') && e.path.includes(containerId)
+        );
+
+        if (!dumpEntry) {
+          return reply.status(404).send({ error: 'No database dump found for this container' });
+        }
+
+        let restoreCommand = '';
+
+        switch (databaseType) {
+          case 'postgres':
+            restoreCommand = `docker exec -i ${containerId} psql -U postgres < ${dumpEntry.path}`;
+            break;
+          case 'mysql':
+          case 'mariadb':
+            restoreCommand = `docker exec -i ${containerId} sh -c 'mysql -u root -p"$MYSQL_ROOT_PASSWORD"' < ${dumpEntry.path}`;
+            break;
+          case 'mongodb':
+            restoreCommand = `docker exec ${containerId} mongorestore --dir ${dumpEntry.path}`;
+            break;
+          default:
+            return reply.status(400).send({ error: 'Unsupported database type' });
+        }
+
+        return reply.send({
+          dumpPath: dumpEntry.path,
+          restoreCommand,
+          instructions: [
+            '1. Ensure the container is running',
+            '2. Run the restore command below',
+            '3. Verify database integrity',
+            '4. Restart dependent containers if needed'
+          ]
+        });
+      } catch (error: unknown) {
+        const err = error as Error;
+        return reply.status(500).send({ error: err.message });
+      }
+    }
+  );
+
   // Restore files from backup
   app.post<{ Body: { backupId: string; files: string[]; destination: string } }>(
     '/api/recovery/restore/files',

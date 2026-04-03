@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { Button } from '../common/Button';
 
 interface ManifestEntry {
+  path?: string;
   size?: number;
 }
 
@@ -15,6 +16,8 @@ interface ParsedManifest {
   entries?: ManifestEntry[];
   containerConfigs?: ContainerConfig[];
   helbackupExport?: boolean;
+  verified?: boolean;
+  lastVerified?: string;
 }
 
 interface Manifest {
@@ -68,6 +71,9 @@ export default function ManifestBrowser({ manifests, onSelect, onRefresh }: Prop
             const totalSize = parsed.entries?.reduce((sum, e) => sum + (e.size ?? 0), 0) ?? 0;
             const fileCount = parsed.entries?.length ?? 0;
             const containerCount = parsed.containerConfigs?.length ?? 0;
+            const externalVolumes = parsed.entries?.filter((e) => e.path?.includes('external-volumes')) ?? [];
+            const verified = parsed.verified ?? false;
+            const lastVerified = parsed.lastVerified;
 
             return (
               <div
@@ -101,6 +107,30 @@ export default function ManifestBrowser({ manifests, onSelect, onRefresh }: Prop
                         {t('recovery.includes_helbackup_config')}
                       </div>
                     )}
+
+                    {externalVolumes.length > 0 && (
+                      <div className="mt-2 text-sm">
+                        <span className="opacity-70">{t('recovery.external_volumes')}:</span>
+                        <span className="ml-2 font-bold">{externalVolumes.length} {t('recovery.volumes')}</span>
+                      </div>
+                    )}
+
+                    <div className="flex items-center gap-2 mt-2">
+                      {verified ? (
+                        <span className="px-3 py-1 bg-green-500 text-white text-sm font-bold">
+                          ✓ {t('recovery.verified')}
+                        </span>
+                      ) : (
+                        <span className="px-3 py-1 bg-yellow-500 text-white text-sm font-bold">
+                          ⚠ {t('recovery.not_verified')}
+                        </span>
+                      )}
+                      {lastVerified && (
+                        <span className="text-sm opacity-70">
+                          {t('recovery.last_verified')}: {new Date(lastVerified).toLocaleString()}
+                        </span>
+                      )}
+                    </div>
                   </div>
 
                   <Button variant="primary">

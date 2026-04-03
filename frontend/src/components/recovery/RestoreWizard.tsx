@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '../common/Button';
 import { recovery as recoveryApi } from '../../api';
+import VerifyBackup from './VerifyBackup';
 
 interface ContainerConfig {
   id: string;
@@ -9,9 +10,15 @@ interface ContainerConfig {
   image: string;
 }
 
+interface ChecksumEntry {
+  path: string;
+  hash: string;
+}
+
 interface ParsedManifest {
   containerConfigs?: ContainerConfig[];
   entries?: unknown[];
+  checksums?: ChecksumEntry[];
 }
 
 interface Manifest {
@@ -28,7 +35,7 @@ interface Props {
 
 export default function RestoreWizard({ manifest, onClose, onComplete }: Props) {
   const { t } = useTranslation();
-  const [step, setStep] = useState(1);
+  const [step, setStep] = useState(0);
   const [selectedContainers, setSelectedContainers] = useState<string[]>([]);
   const [restoreDestination, setRestoreDestination] = useState('/mnt/user');
 
@@ -77,10 +84,19 @@ export default function RestoreWizard({ manifest, onClose, onComplete }: Props) 
       </div>
 
       <div className="mb-8 flex items-center gap-4">
+        <div className={`flex-1 h-2 ${step >= 0 ? 'bg-blue-500' : 'bg-gray-300'}`} />
         <div className={`flex-1 h-2 ${step >= 1 ? 'bg-blue-500' : 'bg-gray-300'}`} />
         <div className={`flex-1 h-2 ${step >= 2 ? 'bg-blue-500' : 'bg-gray-300'}`} />
         <div className={`flex-1 h-2 ${step >= 3 ? 'bg-blue-500' : 'bg-gray-300'}`} />
       </div>
+
+      {step === 0 && (
+        <VerifyBackup
+          backupId={manifest.backup_id ?? ''}
+          checksums={parsed.checksums ?? []}
+          onComplete={() => setStep(1)}
+        />
+      )}
 
       {step === 1 && (
         <div>

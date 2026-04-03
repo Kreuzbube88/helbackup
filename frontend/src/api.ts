@@ -137,4 +137,6 @@ export const recovery = {
     request<{ restored: unknown[]; failed: unknown[] }>('POST', '/recovery/restore/containers', { backupId, containers }),
   restoreFiles: (backupId: string, files: string[], destination: string) =>
     request<{ message: string; files: number; destination: string }>('POST', '/recovery/restore/files', { backupId, files, destination }),
+  getDatabaseRestore: (backupId: string, containerId: string, databaseType: string) =>
+    request<{ dumpPath: string; restoreCommand: string; instructions: string[] }>('POST', '/recovery/restore/database', { backupId, containerId, databaseType }),
 }
