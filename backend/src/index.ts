@@ -41,6 +41,10 @@ await app.register(authRoutes)
 
 // Serve React SPA in production
 const distPath = path.join(__dirname, '../../frontend/dist')
+console.log('DEBUG - __filename:', import.meta.url)
+console.log('DEBUG - __dirname:', __dirname)
+console.log('DEBUG - distPath:', distPath)
+console.log('DEBUG - Files exist?', fs.existsSync(distPath))
 await app.register(fastifyStatic, {
   root: distPath,
   prefix: '/',
