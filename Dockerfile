@@ -1,14 +1,15 @@
 FROM node:24-alpine AS base
 WORKDIR /app
-RUN apk add --no-cache python3 make g++
 
 # ── Backend deps ───────────────────────────────────────────────────────────────
 FROM base AS backend-deps
+RUN apk add --no-cache python3 make g++
 COPY backend/package.json ./
 RUN npm install --omit=dev
 
 # ── Backend build ──────────────────────────────────────────────────────────────
 FROM base AS backend-build
+RUN apk add --no-cache python3 make g++
 COPY backend/package.json backend/tsconfig.json ./
 RUN npm install
 COPY backend/src ./src
