@@ -21,7 +21,7 @@ export async function executeFlashBackup(
   config: FlashBackupConfig,
   engine: JobExecutionEngine
 ): Promise<void> {
-  engine.log('info', 'Starting Flash Drive backup')
+  engine.log('info', 'system', 'Starting Flash Drive backup')
 
   const target = db.prepare('SELECT * FROM targets WHERE id = ?').get(config.targetId) as TargetRow | undefined
   if (!target) throw new Error(`Target not found: ${config.targetId}`)
@@ -29,7 +29,7 @@ export async function executeFlashBackup(
   const targetConfig = JSON.parse(target.config) as TargetConfig
   const destPath = path.join(targetConfig.path, 'flash', new Date().toISOString().split('T')[0])
 
-  engine.log('info', `Destination: ${destPath}`)
+  engine.log('info', 'system', `Destination: ${destPath}`)
 
   const result = await executeRsync({
     source: config.source,
@@ -37,10 +37,13 @@ export async function executeFlashBackup(
     bwLimit: 51200, // 50 MB/s
     excludePatterns: ['previous/', 'System Volume Information/', '*.tmp'],
     onProgress: ({ percent, speed }) => {
-      engine.log('info', `Progress: ${percent}% — ${speed}`)
+      engine.log('info', 'system', `Progress: ${percent}% — ${speed}`)
     },
-    onLog: msg => engine.log('debug', msg.trim()),
+    onLog: msg => {
+      const line = msg.trim()
+      if (line) engine.log('debug', 'file', line)
+    },
   })
 
-  engine.log('info', `Flash backup done: ${result.bytesTransferred} bytes transferred`)
+  engine.log('info', 'system', `Flash backup done: ${result.bytesTransferred} bytes transferred`)
 }

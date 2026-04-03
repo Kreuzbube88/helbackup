@@ -9,16 +9,74 @@ export interface JobStep {
   config: Record<string, unknown>
 }
 
+export type LogLevel = 'debug' | 'info' | 'warn' | 'error'
+export type LogCategory = 'system' | 'file' | 'container' | 'network' | 'verification'
+
+export interface LogMetadata {
+  file?: {
+    path: string
+    size: number
+    result: 'copied' | 'skipped' | 'failed'
+    reason?: string
+  }
+  container?: {
+    id: string
+    name: string
+    action: 'stop' | 'start' | 'export' | 'verify'
+    result: 'success' | 'failed' | 'pending'
+    error?: string
+  }
+  progress?: {
+    current: number
+    total: number
+    unit: 'bytes' | 'files'
+    speed?: number    // bytes/sec
+    eta_seconds?: number
+  }
+  error?: {
+    code: string
+    stack?: string
+    suggestion: string
+  }
+  performance?: {
+    duration_ms: number
+    speed_mbps?: number
+  }
+}
+
 interface LogEvent {
-  level: string
+  id: string
+  run_id: string
+  step_id: string | null
+  sequence: number
+  level: LogLevel
+  category: LogCategory
   message: string
-  stepId?: string
-  timestamp: string
+  metadata: LogMetadata | null
+  ts: string
+}
+
+interface Summary {
+  filesCopied: number
+  filesSkipped: number
+  filesFailed: number
+  bytesTransferred: number
+  errors: number
+  warnings: number
 }
 
 export class JobExecutionEngine extends EventEmitter {
   private readonly runId: string
   private readonly startedAt: string
+  private sequence = 0
+  private summary: Summary = {
+    filesCopied: 0,
+    filesSkipped: 0,
+    filesFailed: 0,
+    bytesTransferred: 0,
+    errors: 0,
+    warnings: 0,
+  }
 
   constructor(jobId: string) {
     super()
@@ -36,31 +94,40 @@ export class JobExecutionEngine extends EventEmitter {
     try {
       for (const step of steps) {
         this.emit('step:start', { stepId: step.id, type: step.type })
-        this.log('info', `Starting step: ${step.type}`, step.id)
+        this.log('info', 'system', `Starting step: ${step.type}`, step.id)
 
         try {
           await this.executeStep(step)
           this.emit('step:complete', { stepId: step.id })
-          this.log('info', `Step completed: ${step.type}`, step.id)
+          this.log('info', 'system', `Step completed: ${step.type}`, step.id)
         } catch (err: unknown) {
           const message = err instanceof Error ? err.message : String(err)
           this.emit('step:error', { stepId: step.id, error: message })
-          this.log('error', `Step failed: ${message}`, step.id)
+          this.log('error', 'system', `Step failed: ${message}`, step.id)
           throw err
         }
       }
 
+      const duration = this.elapsedSeconds()
       db.prepare(
         'UPDATE job_history SET status = ?, ended_at = ?, duration_s = ? WHERE id = ?'
-      ).run('success', new Date().toISOString(), this.elapsedSeconds(), this.runId)
+      ).run('success', new Date().toISOString(), duration, this.runId)
+
+      this.saveSummary(duration * 1000)
+      this.log('info', 'system',
+        `Backup completed: ${this.summary.filesCopied} files copied, ${this.summary.errors} errors`
+      )
 
       this.emit('job:complete')
       logger.info({ runId: this.runId }, 'Job execution completed')
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err)
+      const duration = this.elapsedSeconds()
       db.prepare(
         'UPDATE job_history SET status = ?, ended_at = ?, duration_s = ? WHERE id = ?'
-      ).run('failed', new Date().toISOString(), this.elapsedSeconds(), this.runId)
+      ).run('failed', new Date().toISOString(), duration, this.runId)
+
+      this.saveSummary(duration * 1000)
 
       this.emit('job:error', { error: message })
       logger.error({ runId: this.runId, error: message }, 'Job execution failed')
@@ -85,12 +152,53 @@ export class JobExecutionEngine extends EventEmitter {
     }
   }
 
-  log(level: string, message: string, stepId?: string): void {
-    db.prepare(
-      'INSERT INTO logs (run_id, step_id, level, message, ts) VALUES (?, ?, ?, ?, ?)'
-    ).run(this.runId, stepId ?? null, level, message, new Date().toISOString())
+  log(
+    level: LogLevel,
+    category: LogCategory,
+    message: string,
+    stepId?: string,
+    metadata?: LogMetadata
+  ): void {
+    this.sequence++
 
-    const event: LogEvent = { level, message, stepId, timestamp: new Date().toISOString() }
+    if (level === 'error') this.summary.errors++
+    if (level === 'warn') this.summary.warnings++
+
+    if (metadata?.file) {
+      const { result, size } = metadata.file
+      if (result === 'copied') { this.summary.filesCopied++; this.summary.bytesTransferred += size }
+      else if (result === 'skipped') this.summary.filesSkipped++
+      else if (result === 'failed') this.summary.filesFailed++
+    }
+
+    const ts = new Date().toISOString()
+    const id = randomUUID()
+
+    db.prepare(
+      'INSERT INTO logs (id, run_id, step_id, sequence, level, category, message, metadata, ts) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
+    ).run(
+      id,
+      this.runId,
+      stepId ?? null,
+      this.sequence,
+      level,
+      category,
+      message,
+      metadata ? JSON.stringify(metadata) : null,
+      ts
+    )
+
+    const event: LogEvent = {
+      id,
+      run_id: this.runId,
+      step_id: stepId ?? null,
+      sequence: this.sequence,
+      level,
+      category,
+      message,
+      metadata: metadata ?? null,
+      ts,
+    }
     this.emit('log', event)
   }
 
@@ -100,5 +208,28 @@ export class JobExecutionEngine extends EventEmitter {
 
   private elapsedSeconds(): number {
     return Math.floor((Date.now() - new Date(this.startedAt).getTime()) / 1000)
+  }
+
+  private saveSummary(durationMs: number): void {
+    try {
+      db.prepare(
+        `INSERT INTO log_summary
+         (id, run_id, files_copied, files_skipped, files_failed, bytes_transferred, errors, warnings, duration_ms, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      ).run(
+        randomUUID(),
+        this.runId,
+        this.summary.filesCopied,
+        this.summary.filesSkipped,
+        this.summary.filesFailed,
+        this.summary.bytesTransferred,
+        this.summary.errors,
+        this.summary.warnings,
+        Math.round(durationMs),
+        new Date().toISOString()
+      )
+    } catch (err) {
+      logger.warn({ err }, 'Failed to save log summary')
+    }
   }
 }

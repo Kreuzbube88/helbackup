@@ -28,7 +28,7 @@ export async function executeAppdataBackup(
   config: AppdataBackupConfig,
   engine: JobExecutionEngine
 ): Promise<void> {
-  engine.log('info', 'Starting Appdata backup')
+  engine.log('info', 'system', 'Starting Appdata backup')
 
   // CRITICAL: Never stop/include HELBACKUP itself
   const allContainers = await listContainers()
@@ -39,7 +39,7 @@ export async function executeAppdataBackup(
   if (helbackupId) {
     config.containers = config.containers.filter(id => id !== helbackupId)
     config.stopOrder = config.stopOrder.filter(id => id !== helbackupId)
-    engine.log('warn', 'HELBACKUP container excluded from backup scope')
+    engine.log('warn', 'system', 'HELBACKUP container excluded from backup scope')
   }
 
   const target = db.prepare('SELECT * FROM targets WHERE id = ?').get(config.targetId) as TargetRow | undefined
@@ -50,7 +50,7 @@ export async function executeAppdataBackup(
   await fs.mkdir(destPath, { recursive: true })
 
   // Export container configs BEFORE stopping
-  engine.log('info', 'Exporting container configs...')
+  engine.log('info', 'system', 'Exporting container configs...')
   const containerConfigs: unknown[] = []
   for (const containerId of config.containers) {
     try {
@@ -65,8 +65,14 @@ export async function executeAppdataBackup(
         network: details.HostConfig.NetworkMode,
         labels: details.Config.Labels,
       })
+      engine.log('info', 'container', `Exported config: ${details.Name}`, undefined, {
+        container: { id: containerId, name: details.Name, action: 'export', result: 'success' }
+      })
     } catch (err: unknown) {
-      engine.log('warn', `Could not inspect container ${containerId}: ${err instanceof Error ? err.message : String(err)}`)
+      const msg = err instanceof Error ? err.message : String(err)
+      engine.log('warn', 'container', `Could not inspect container ${containerId}: ${msg}`, undefined, {
+        container: { id: containerId, name: containerId, action: 'export', result: 'failed', error: msg }
+      })
     }
   }
 
@@ -75,55 +81,74 @@ export async function executeAppdataBackup(
   // Stop containers in specified order
   const stopped: string[] = []
   if (config.stopContainers && config.stopOrder.length > 0) {
-    engine.log('info', `Stopping ${config.stopOrder.length} containers...`)
+    engine.log('info', 'system', `Stopping ${config.stopOrder.length} containers...`)
     for (const id of config.stopOrder) {
       try {
-        engine.log('info', `Stopping container: ${id}`)
+        const details = await inspectContainer(id).catch(() => ({ Name: id }))
+        const name = details.Name ?? id
+        engine.log('info', 'container', `Stopping: ${name}`, undefined, {
+          container: { id, name, action: 'stop', result: 'pending' }
+        })
         await stopContainer(id)
         stopped.push(id)
+        engine.log('info', 'container', `Stopped: ${name}`, undefined, {
+          container: { id, name, action: 'stop', result: 'success' }
+        })
         await new Promise(r => setTimeout(r, 10_000))
       } catch (err: unknown) {
-        engine.log('error', `Failed to stop ${id}: ${err instanceof Error ? err.message : String(err)}`)
+        const msg = err instanceof Error ? err.message : String(err)
+        engine.log('error', 'container', `Failed to stop ${id}: ${msg}`, undefined, {
+          container: { id, name: id, action: 'stop', result: 'failed', error: msg },
+          error: { code: 'CONTAINER_STOP_FAILED', suggestion: 'Check if container exists and Docker daemon is running' }
+        })
       }
     }
   }
 
   try {
     if (config.method === 'tar') {
-      engine.log('info', 'Creating tar archive...')
+      engine.log('info', 'system', 'Creating tar archive...')
       await createTarArchive({
         source: config.source,
         destination: path.join(destPath, 'appdata.tar.gz'),
         compress: true,
-        onProgress: ({ currentFile }) => engine.log('info', `Archiving: ${currentFile}`),
+        onProgress: ({ currentFile }) => engine.log('info', 'file', `Archiving: ${currentFile}`),
       })
-      engine.log('info', 'Tar archive created')
+      engine.log('info', 'system', 'Tar archive created')
     } else {
-      engine.log('info', 'Starting rsync...')
+      engine.log('info', 'system', 'Starting rsync...')
       const result = await executeRsync({
         source: config.source,
         destination: destPath,
         bwLimit: 51200,
         excludePatterns: ['*/logs/*', '*/cache/*', '*/*.log'],
-        onProgress: ({ percent, speed }) => engine.log('info', `Progress: ${percent}% — ${speed}`),
+        onProgress: ({ percent, speed }) => engine.log('info', 'system', `Progress: ${percent}% — ${speed}`),
       })
-      engine.log('info', `Rsync done: ${result.bytesTransferred} bytes`)
+      engine.log('info', 'system', `Rsync done: ${result.bytesTransferred} bytes`)
     }
   } finally {
     // ALWAYS restart in reverse order
     if (stopped.length > 0) {
-      engine.log('info', `Restarting ${stopped.length} containers (reverse order)...`)
+      engine.log('info', 'system', `Restarting ${stopped.length} containers (reverse order)...`)
       for (const id of [...stopped].reverse()) {
         try {
-          engine.log('info', `Starting container: ${id}`)
+          engine.log('info', 'container', `Starting: ${id}`, undefined, {
+            container: { id, name: id, action: 'start', result: 'pending' }
+          })
           await startContainer(id)
+          engine.log('info', 'container', `Started: ${id}`, undefined, {
+            container: { id, name: id, action: 'start', result: 'success' }
+          })
           await new Promise(r => setTimeout(r, 5_000))
         } catch (err: unknown) {
-          engine.log('error', `Failed to start ${id}: ${err instanceof Error ? err.message : String(err)}`)
+          const msg = err instanceof Error ? err.message : String(err)
+          engine.log('error', 'container', `Failed to start ${id}: ${msg}`, undefined, {
+            container: { id, name: id, action: 'start', result: 'failed', error: msg }
+          })
         }
       }
     }
   }
 
-  engine.log('info', 'Appdata backup completed')
+  engine.log('info', 'system', 'Appdata backup completed')
 }

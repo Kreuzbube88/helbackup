@@ -19,7 +19,7 @@ docker-compose.override.yml
 
 # Data (runtime)
 data/
-logs/
+/logs/
 config/ssh/
 
 # OS

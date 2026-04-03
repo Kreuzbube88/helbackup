@@ -54,6 +54,26 @@
     "auto_shutdown": "NAS nach Backup automatisch herunterfahren",
     "supported_systems": "Kompatibel: Synology, QNAP, TrueNAS, OpenMediaVault, Unraid und andere Linux-basierte NAS-Systeme"
   },
+  "logs": {
+    "title": "Backup Logs",
+    "export": "Exportieren",
+    "all_levels": "Alle Level",
+    "errors_only": "Nur Fehler",
+    "warnings_only": "Nur Warnungen",
+    "info_only": "Nur Info",
+    "debug_only": "Nur Debug",
+    "all_categories": "Alle Kategorien",
+    "system": "System",
+    "files": "Dateien",
+    "containers": "Container",
+    "network": "Netzwerk",
+    "verification": "Verifikation",
+    "search_placeholder": "Logs durchsuchen...",
+    "duration": "Dauer",
+    "files_copied": "Dateien kopiert",
+    "warnings": "Warnungen",
+    "errors": "Fehler"
+  },
   "status": {
     "running": "Läuft",
     "success": "Erfolgreich",

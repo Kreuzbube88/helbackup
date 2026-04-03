@@ -27,7 +27,7 @@ export async function createManifest(
   backupPath: string,
   engine: JobExecutionEngine
 ): Promise<Manifest> {
-  engine.log('info', 'Creating backup manifest...')
+  engine.log('info', 'system', 'Creating backup manifest...')
 
   const helbackupExportPath = await exportHELBACKUP(backupPath, engine)
 
@@ -59,7 +59,7 @@ export async function createManifest(
     'INSERT INTO manifest (backup_id, job_id, manifest, created_at) VALUES (?, ?, ?, ?)'
   ).run(manifest.backupId, jobId, JSON.stringify(manifest), manifest.timestamp)
 
-  engine.log('info', `Manifest created: ${entries.length} files`)
+  engine.log('info', 'system', `Manifest created: ${entries.length} files`)
   return manifest
 }
 

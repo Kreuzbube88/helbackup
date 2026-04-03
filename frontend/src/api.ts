@@ -56,6 +56,15 @@ export interface Target {
   updated_at: string
 }
 
+export interface JobHistoryRun {
+  id: string
+  job_id: string
+  status: 'running' | 'success' | 'failed' | 'cancelled'
+  started_at: string
+  ended_at: string | null
+  duration_s: number | null
+}
+
 export interface Container {
   Id: string
   Names: string[]
@@ -103,6 +112,10 @@ export const api = {
       request<{ success: boolean }>('POST', '/nas/wake/test', { mac, ip }),
     testSSH: (host: string, port: number | undefined, username: string, password?: string, privateKey?: string) =>
       request<{ success: boolean }>('POST', '/nas/ssh/test', { host, port, username, password, privateKey }),
+  },
+
+  executions: {
+    get: (runId: string) => request<JobHistoryRun>('GET', `/executions/${runId}`),
   },
 
   docker: {

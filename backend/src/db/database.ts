@@ -18,6 +18,16 @@ async function initDb(): Promise<Database.Database> {
   const db = new Database(DB_PATH)
   const schema = fs.readFileSync(path.join(__dirname, 'schema.sql'), 'utf8')
   db.exec(schema)
+
+  // Migrations for columns added after initial release
+  for (const sql of [
+    "ALTER TABLE logs ADD COLUMN sequence INTEGER",
+    "ALTER TABLE logs ADD COLUMN category TEXT NOT NULL DEFAULT 'system'",
+    "ALTER TABLE logs ADD COLUMN metadata TEXT",
+  ]) {
+    try { db.exec(sql) } catch { /* column already exists */ }
+  }
+
   logger.info({ path: DB_PATH }, 'Database initialized')
 
   // Create admin user if ADMIN_PASSWORD is set and no users exist

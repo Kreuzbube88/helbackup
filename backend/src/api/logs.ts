@@ -6,17 +6,30 @@ interface LogRow {
   id: number
   run_id: string
   step_id: string | null
+  sequence: number | null
   level: string
+  category: string
   message: string
+  metadata: string | null
   ts: string
 }
 
 export async function logsRoutes(app: FastifyInstance): Promise<void> {
-  // GET /api/logs/:runId/stream — SSE live stream
-  app.get<{ Params: { runId: string } }>(
+  // GET /api/logs/:runId/stream — SSE live stream (accepts ?token= for EventSource clients)
+  app.get<{ Params: { runId: string }; Querystring: { token?: string } }>(
     '/api/logs/:runId/stream',
-    { preHandler: [app.authenticate] },
-    async (request: FastifyRequest<{ Params: { runId: string } }>, reply: FastifyReply) => {
+    async (request: FastifyRequest<{ Params: { runId: string }; Querystring: { token?: string } }>, reply: FastifyReply) => {
+      // EventSource cannot set headers, so accept JWT via query param as fallback
+      const token = (request.query as { token?: string }).token
+      try {
+        if (token) {
+          app.jwt.verify(token)
+        } else {
+          await request.jwtVerify()
+        }
+      } catch {
+        return reply.status(401).send({ error: 'Unauthorized' })
+      }
       reply.raw.setHeader('Content-Type', 'text/event-stream')
       reply.raw.setHeader('Cache-Control', 'no-cache')
       reply.raw.setHeader('Connection', 'keep-alive')

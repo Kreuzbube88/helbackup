@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useNavigate } from 'react-router-dom'
 import { Briefcase, Calendar, Zap, Play } from 'lucide-react'
 import { api, type Job } from '../api'
 import { Card } from '../components/common/Card'
@@ -9,6 +10,7 @@ import { useToast } from '../components/common/Toast'
 export function Jobs() {
   const { t } = useTranslation('jobs')
   const { toast } = useToast()
+  const navigate = useNavigate()
   const [jobs, setJobs] = useState<Job[]>([])
   const [loading, setLoading] = useState(true)
   const [executing, setExecuting] = useState<Set<string>>(new Set())
@@ -25,7 +27,7 @@ export function Jobs() {
     setExecuting(prev => new Set(prev).add(jobId))
     try {
       const { runId } = await api.jobs.execute(jobId)
-      toast(`${t('execution_started')} — Run: ${runId}`, 'success')
+      navigate(`/logs/${runId}`)
     } catch (err: unknown) {
       toast(err instanceof Error ? err.message : t('execute_error'), 'error')
     } finally {
