@@ -97,6 +97,13 @@ export const api = {
     delete: (id: string) => request<{ ok: boolean }>('DELETE', `/targets/${id}`),
   },
 
+  nas: {
+    testWake: (mac: string, ip?: string) =>
+      request<{ success: boolean }>('POST', '/nas/wake/test', { mac, ip }),
+    testSSH: (host: string, port: number | undefined, username: string, password?: string, privateKey?: string) =>
+      request<{ success: boolean }>('POST', '/nas/ssh/test', { host, port, username, password, privateKey }),
+  },
+
   docker: {
     listContainers: () => request<Container[]>('GET', '/docker/containers'),
     inspectContainer: (id: string) => request<unknown>('GET', `/docker/containers/${id}`),

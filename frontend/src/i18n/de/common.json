@@ -35,6 +35,25 @@
     "cloud_backup": "Cloud Backup",
     "cloud_description": "Multi-Provider Support mit Rclone"
   },
+  "nas": {
+    "enable_power_management": "NAS Power Management aktivieren",
+    "wake_on_lan": "Wake-on-LAN",
+    "mac_address": "MAC-Adresse",
+    "ip_address": "IP-Adresse",
+    "test_wol": "WoL-Paket senden",
+    "wol_sent": "Paket gesendet",
+    "wol_failed": "Fehlgeschlagen",
+    "ssh_config": "SSH-Konfiguration",
+    "username": "Benutzername",
+    "password": "Passwort",
+    "password_placeholder": "Optional (oder SSH-Key verwenden)",
+    "ssh_key_hint": "SSH-Key wird in /app/config/ssh/ gespeichert",
+    "test_ssh": "SSH testen",
+    "ssh_ok": "Verbunden",
+    "ssh_failed": "Fehlgeschlagen",
+    "auto_shutdown": "NAS nach Backup automatisch herunterfahren",
+    "supported_systems": "Kompatibel: Synology, QNAP, TrueNAS, OpenMediaVault, Unraid und andere Linux-basierte NAS-Systeme"
+  },
   "status": {
     "running": "Läuft",
     "success": "Erfolgreich",
