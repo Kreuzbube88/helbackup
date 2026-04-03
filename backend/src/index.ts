@@ -16,6 +16,7 @@ import { toolsRoutes } from './api/tools.js'
 import { nasRoutes } from './api/nas.js'
 import { initScheduler, stopScheduler } from './scheduler/index.js'
 import { executionRoutes } from './api/execution.js'
+import recoveryRoutes from './api/recovery.js'
 
 declare module 'fastify' {
   interface FastifyInstance {
@@ -45,6 +46,8 @@ app.decorate('authenticate', async (request: import('fastify').FastifyRequest, r
   }
 })
 
+let recoveryMode = false
+
 // Initialize scheduler
 initScheduler()
 
@@ -57,6 +60,21 @@ await app.register(logsRoutes)
 await app.register(toolsRoutes)
 await app.register(nasRoutes)
 await app.register(executionRoutes)
+await app.register(recoveryRoutes)
+
+app.get('/api/recovery/status', async (_request, reply) => {
+  return reply.send({ enabled: recoveryMode })
+})
+
+app.post('/api/recovery/enable', async (_request, reply) => {
+  recoveryMode = true
+  return reply.send({ ok: true })
+})
+
+app.post('/api/recovery/disable', async (_request, reply) => {
+  recoveryMode = false
+  return reply.send({ ok: true })
+})
 
 // Serve React SPA in production
 const distPath = path.join(__dirname, '../frontend/dist')

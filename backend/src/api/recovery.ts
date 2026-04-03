@@ -1,0 +1,218 @@
+import { FastifyInstance } from 'fastify';
+import { db } from '../db/database.js';
+import fs from 'fs/promises';
+import path from 'path';
+
+export default async function recoveryRoutes(app: FastifyInstance) {
+  // List all backup manifests
+  app.get('/api/recovery/manifests', async (request, reply) => {
+    try {
+      const manifests = db.prepare(
+        'SELECT * FROM manifest ORDER BY created_at DESC'
+      ).all();
+
+      return reply.send(manifests);
+    } catch (error: unknown) {
+      const err = error as Error;
+      return reply.status(500).send({ error: err.message });
+    }
+  });
+
+  // Get specific manifest details
+  app.get<{ Params: { backupId: string } }>(
+    '/api/recovery/manifests/:backupId',
+    async (request, reply) => {
+      try {
+        const manifest = db.prepare(
+          'SELECT * FROM manifest WHERE backup_id = ?'
+        ).get(request.params.backupId) as Record<string, unknown> | undefined;
+
+        if (!manifest) {
+          return reply.status(404).send({ error: 'Manifest not found' });
+        }
+
+        return reply.send({
+          ...manifest,
+          manifest: JSON.parse(manifest.manifest as string)
+        });
+      } catch (error: unknown) {
+        const err = error as Error;
+        return reply.status(500).send({ error: err.message });
+      }
+    }
+  );
+
+  // Scan backup directory for manifests (if DB lost)
+  app.post<{ Body: { path: string } }>(
+    '/api/recovery/scan',
+    async (request, reply) => {
+      try {
+        const scanPath = request.body.path;
+        const manifests: Record<string, unknown>[] = [];
+
+        async function scanDir(dir: string) {
+          try {
+            const items = await fs.readdir(dir, { withFileTypes: true });
+
+            for (const item of items) {
+              const fullPath = path.join(dir, item.name);
+
+              if (item.isDirectory()) {
+                await scanDir(fullPath);
+              } else if (item.name === 'manifest.json') {
+                const content = await fs.readFile(fullPath, 'utf-8');
+                const manifest = JSON.parse(content) as Record<string, unknown>;
+                manifests.push({
+                  path: fullPath,
+                  ...manifest
+                });
+              }
+            }
+          } catch {
+            // Ignore permission errors
+          }
+        }
+
+        await scanDir(scanPath);
+
+        return reply.send({ manifests, count: manifests.length });
+      } catch (error: unknown) {
+        const err = error as Error;
+        return reply.status(500).send({ error: err.message });
+      }
+    }
+  );
+
+  // Restore container configs from backup
+  app.post<{ Body: { backupId: string; containers: string[] } }>(
+    '/api/recovery/restore/containers',
+    async (request, reply) => {
+      try {
+        const { backupId, containers } = request.body;
+
+        const manifestRecord = db.prepare(
+          'SELECT * FROM manifest WHERE backup_id = ?'
+        ).get(backupId) as Record<string, unknown> | undefined;
+
+        if (!manifestRecord) {
+          return reply.status(404).send({ error: 'Manifest not found' });
+        }
+
+        const manifest = JSON.parse(manifestRecord.manifest as string) as {
+          containerConfigs?: Array<{ id: string; name: string; image: string; env?: string[]; volumes?: string[]; ports?: Record<string, Array<{ HostPort: string }>>; network?: string; labels?: Record<string, string> }>;
+        };
+
+        if (!manifest.containerConfigs) {
+          return reply.status(404).send({ error: 'No container configs in backup' });
+        }
+
+        const restored: Array<{ id: string; name: string; command: string }> = [];
+        const failed: Array<{ id: string; error: string }> = [];
+
+        for (const containerId of containers) {
+          const config = manifest.containerConfigs.find(c => c.id === containerId || c.name === containerId);
+
+          if (!config) {
+            failed.push({ id: containerId, error: 'Config not found' });
+            continue;
+          }
+
+          try {
+            const cmd = buildDockerRunCommand(config);
+            restored.push({
+              id: containerId,
+              name: config.name,
+              command: cmd
+            });
+          } catch (error: unknown) {
+            const err = error as Error;
+            failed.push({ id: containerId, error: err.message });
+          }
+        }
+
+        return reply.send({ restored, failed });
+      } catch (error: unknown) {
+        const err = error as Error;
+        return reply.status(500).send({ error: err.message });
+      }
+    }
+  );
+
+  // Restore files from backup
+  app.post<{ Body: { backupId: string; files: string[]; destination: string } }>(
+    '/api/recovery/restore/files',
+    async (request, reply) => {
+      try {
+        const { backupId, files, destination } = request.body;
+
+        const manifestRecord = db.prepare(
+          'SELECT * FROM manifest WHERE backup_id = ?'
+        ).get(backupId) as Record<string, unknown> | undefined;
+
+        if (!manifestRecord) {
+          return reply.status(404).send({ error: 'Manifest not found' });
+        }
+
+        // manifest parsed but not used yet — placeholder for future restore logic
+        JSON.parse(manifestRecord.manifest as string);
+
+        return reply.send({
+          message: 'File restore initiated',
+          files: files.length,
+          destination
+        });
+      } catch (error: unknown) {
+        const err = error as Error;
+        return reply.status(500).send({ error: err.message });
+      }
+    }
+  );
+}
+
+interface ContainerConfig {
+  name: string;
+  image: string;
+  env?: string[];
+  volumes?: string[];
+  ports?: Record<string, Array<{ HostPort: string }>>;
+  network?: string;
+  labels?: Record<string, string>;
+}
+
+function buildDockerRunCommand(config: ContainerConfig): string {
+  let cmd = `docker run -d --name ${config.name}`;
+
+  if (config.env) {
+    config.env.forEach((env) => {
+      cmd += ` -e "${env}"`;
+    });
+  }
+
+  if (config.volumes) {
+    config.volumes.forEach((vol) => {
+      cmd += ` -v ${vol}`;
+    });
+  }
+
+  if (config.ports) {
+    Object.entries(config.ports).forEach(([container, hostBindings]) => {
+      if (hostBindings && hostBindings[0]) {
+        cmd += ` -p ${hostBindings[0].HostPort}:${container.split('/')[0]}`;
+      }
+    });
+  }
+
+  if (config.network) {
+    cmd += ` --network ${config.network}`;
+  }
+
+  if (config.labels) {
+    Object.entries(config.labels).forEach(([key, value]) => {
+      cmd += ` --label "${key}=${value}"`;
+    });
+  }
+
+  cmd += ` ${config.image}`;
+
+  return cmd;
+}

@@ -125,3 +125,16 @@ export const api = {
     startContainer: (id: string) => request<{ ok: boolean }>('POST', `/docker/containers/${id}/start`),
   },
 }
+
+export const recovery = {
+  getStatus: () => request<{ enabled: boolean }>('GET', '/recovery/status'),
+  enable: () => request<{ ok: boolean }>('POST', '/recovery/enable'),
+  disable: () => request<{ ok: boolean }>('POST', '/recovery/disable'),
+  getManifests: () => request<unknown[]>('GET', '/recovery/manifests'),
+  getManifest: (backupId: string) => request<unknown>('GET', `/recovery/manifests/${backupId}`),
+  scan: (scanPath: string) => request<{ manifests: unknown[]; count: number }>('POST', '/recovery/scan', { path: scanPath }),
+  restoreContainers: (backupId: string, containers: string[]) =>
+    request<{ restored: unknown[]; failed: unknown[] }>('POST', '/recovery/restore/containers', { backupId, containers }),
+  restoreFiles: (backupId: string, files: string[], destination: string) =>
+    request<{ message: string; files: number; destination: string }>('POST', '/recovery/restore/files', { backupId, files, destination }),
+}

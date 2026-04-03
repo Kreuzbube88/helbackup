@@ -16,6 +16,7 @@ import { Jobs } from './pages/Jobs'
 import { Targets } from './pages/Targets'
 import { Settings } from './pages/Settings'
 import { LogsPage } from './pages/LogsPage'
+import RecoveryPage from './pages/RecoveryPage'
 
 function ProtectedLayout() {
   const { isAuthenticated, setAuth, logout } = useStore()
@@ -57,6 +58,7 @@ export function App() {
           <Route path="/targets" element={<Targets />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/logs/:runId" element={<LogsPage />} />
+          <Route path="/recovery" element={<RecoveryPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
       </Routes>

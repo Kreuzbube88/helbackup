@@ -1,0 +1,141 @@
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { recovery as recoveryApi } from '../api';
+import { Button } from '../components/common/Button';
+import ManifestBrowser from '../components/recovery/ManifestBrowser';
+import RestoreWizard from '../components/recovery/RestoreWizard';
+import { useTranslation } from 'react-i18next';
+
+interface Manifest {
+  backup_id?: string;
+  backupId?: string;
+  created_at?: string;
+  manifest?: string;
+  [key: string]: unknown;
+}
+
+export default function RecoveryPage() {
+  const { t } = useTranslation();
+  const navigate = useNavigate();
+  const [isRecoveryMode, setIsRecoveryMode] = useState(false);
+  const [manifests, setManifests] = useState<Manifest[]>([]);
+  const [selectedManifest, setSelectedManifest] = useState<Manifest | null>(null);
+  const [showWizard, setShowWizard] = useState(false);
+
+  useEffect(() => {
+    loadStatus();
+    loadManifests();
+  }, []);
+
+  const loadStatus = async () => {
+    try {
+      const status = await recoveryApi.getStatus();
+      setIsRecoveryMode((status as { enabled: boolean }).enabled);
+    } catch (error) {
+      console.error('Failed to load recovery status:', error);
+    }
+  };
+
+  const loadManifests = async () => {
+    try {
+      const data = await recoveryApi.getManifests();
+      setManifests(data as Manifest[]);
+    } catch (error) {
+      console.error('Failed to load manifests:', error);
+    }
+  };
+
+  const handleEnableRecovery = async () => {
+    try {
+      await recoveryApi.enable();
+      setIsRecoveryMode(true);
+    } catch (error: unknown) {
+      const err = error as Error;
+      alert(`Failed to enable recovery mode: ${err.message}`);
+    }
+  };
+
+  const handleDisableRecovery = async () => {
+    try {
+      await recoveryApi.disable();
+      setIsRecoveryMode(false);
+      navigate('/');
+    } catch (error: unknown) {
+      const err = error as Error;
+      alert(`Failed to disable recovery mode: ${err.message}`);
+    }
+  };
+
+  const handleSelectManifest = (manifest: Manifest) => {
+    setSelectedManifest(manifest);
+    setShowWizard(true);
+  };
+
+  if (!isRecoveryMode) {
+    return (
+      <div className="p-8 max-w-2xl mx-auto">
+        <div className="border-4 border-red-500 bg-red-50 p-8 text-center">
+          <h1 className="text-3xl font-bold mb-4 text-red-600">
+            {t('recovery.disaster_recovery_mode')}
+          </h1>
+
+          <p className="mb-6 text-lg">
+            {t('recovery.warning_message')}
+          </p>
+
+          <div className="bg-white border-2 border-red-500 p-6 mb-6 text-left">
+            <h2 className="font-bold mb-2">{t('recovery.when_to_use')}</h2>
+            <ul className="list-disc list-inside space-y-2">
+              <li>{t('recovery.use_case_1')}</li>
+              <li>{t('recovery.use_case_2')}</li>
+              <li>{t('recovery.use_case_3')}</li>
+            </ul>
+          </div>
+
+          <Button
+            variant="primary"
+            onClick={handleEnableRecovery}
+            className="bg-red-600 hover:bg-red-700"
+          >
+            {t('recovery.enable_recovery_mode')}
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  if (showWizard && selectedManifest) {
+    return (
+      <RestoreWizard
+        manifest={selectedManifest}
+        onClose={() => {
+          setShowWizard(false);
+          setSelectedManifest(null);
+        }}
+        onComplete={handleDisableRecovery}
+      />
+    );
+  }
+
+  return (
+    <div className="p-8">
+      <div className="bg-red-600 text-white p-4 mb-6 flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <div>
+            <h1 className="text-xl font-bold">{t('recovery.recovery_mode_active')}</h1>
+            <p className="text-sm">{t('recovery.normal_operations_suspended')}</p>
+          </div>
+        </div>
+        <Button variant="secondary" onClick={handleDisableRecovery}>
+          {t('recovery.exit_recovery_mode')}
+        </Button>
+      </div>
+
+      <ManifestBrowser
+        manifests={manifests}
+        onSelect={handleSelectManifest}
+        onRefresh={loadManifests}
+      />
+    </div>
+  );
+}
