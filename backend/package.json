@@ -20,7 +20,7 @@
     "cron-parser": "^4.9.0",
     "fastify": "^4.28.1",
     "node-schedule": "^2.1.1",
-    "node-wake-on-lan": "^1.2.3",
+    "wake_on_lan": "^0.0.4",
     "pino": "^9.3.2",
     "pino-pretty": "^11.2.2",
     "ssh2": "^1.15.0",
