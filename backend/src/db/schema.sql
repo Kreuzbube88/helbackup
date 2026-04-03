@@ -20,7 +20,7 @@ CREATE TABLE IF NOT EXISTS jobs (
   id         TEXT PRIMARY KEY,
   name       TEXT NOT NULL,
   enabled    INTEGER NOT NULL DEFAULT 1,
-  schedule   TEXT NOT NULL,
+  schedule   TEXT,
   steps      TEXT NOT NULL DEFAULT '[]',
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
   updated_at TEXT NOT NULL DEFAULT (datetime('now'))
@@ -51,5 +51,14 @@ CREATE TABLE IF NOT EXISTS users (
   created_at   TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
+CREATE TABLE IF NOT EXISTS manifest (
+  id         INTEGER PRIMARY KEY AUTOINCREMENT,
+  backup_id  TEXT NOT NULL UNIQUE,
+  job_id     TEXT NOT NULL REFERENCES jobs(id) ON DELETE CASCADE,
+  manifest   TEXT NOT NULL,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
 CREATE INDEX IF NOT EXISTS idx_logs_run_id ON logs(run_id);
 CREATE INDEX IF NOT EXISTS idx_job_history_job_id ON job_history(job_id);
+CREATE INDEX IF NOT EXISTS idx_manifest_backup_id ON manifest(backup_id);

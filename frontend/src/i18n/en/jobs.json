@@ -1,0 +1,9 @@
+{
+  "title": "Jobs",
+  "create": "Create Job",
+  "empty": "No jobs yet. Create your first backup job.",
+  "load_error": "Failed to load jobs",
+  "manual": "Manual",
+  "cron": "Cron",
+  "steps": "Steps"
+}

@@ -4,9 +4,13 @@ import { initReactI18next } from 'react-i18next'
 import deCommon from './de/common.json'
 import deAuth from './de/auth.json'
 import deSettings from './de/settings.json'
+import deJobs from './de/jobs.json'
+import deTargets from './de/targets.json'
 import enCommon from './en/common.json'
 import enAuth from './en/auth.json'
 import enSettings from './en/settings.json'
+import enJobs from './en/jobs.json'
+import enTargets from './en/targets.json'
 
 i18n.use(initReactI18next).init({
   resources: {
@@ -14,11 +18,15 @@ i18n.use(initReactI18next).init({
       common: deCommon,
       auth: deAuth,
       settings: deSettings,
+      jobs: deJobs,
+      targets: deTargets,
     },
     en: {
       common: enCommon,
       auth: enAuth,
       settings: enSettings,
+      jobs: enJobs,
+      targets: enTargets,
     },
   },
   lng: (localStorage.getItem('helbackup_lang') as string | null) ?? 'de',

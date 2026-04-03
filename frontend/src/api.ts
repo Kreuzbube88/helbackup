@@ -36,6 +36,34 @@ interface MeResponse {
   user: { id: number; username: string }
 }
 
+export interface Job {
+  id: string
+  name: string
+  enabled: boolean
+  schedule: string | null
+  steps: unknown[]
+  created_at: string
+  updated_at: string
+}
+
+export interface Target {
+  id: string
+  name: string
+  type: string
+  config: Record<string, unknown>
+  enabled: boolean
+  created_at: string
+  updated_at: string
+}
+
+export interface Container {
+  Id: string
+  Names: string[]
+  Image: string
+  State: string
+  Status: string
+}
+
 export const api = {
   auth: {
     login: (username: string, password: string) =>
@@ -46,5 +74,33 @@ export const api = {
       request<MeResponse>('GET', '/auth/me'),
     changePassword: (currentPassword: string, newPassword: string) =>
       request<{ ok: boolean }>('POST', '/auth/change-password', { currentPassword, newPassword }),
+  },
+
+  jobs: {
+    getAll: () => request<Job[]>('GET', '/jobs'),
+    getById: (id: string) => request<Job>('GET', `/jobs/${id}`),
+    create: (data: { name: string; schedule?: string; steps: unknown[]; enabled?: boolean }) =>
+      request<Job>('POST', '/jobs', data),
+    update: (id: string, data: Partial<{ name: string; schedule: string | null; steps: unknown[]; enabled: boolean }>) =>
+      request<Job>('PUT', `/jobs/${id}`, data),
+    delete: (id: string) => request<{ ok: boolean }>('DELETE', `/jobs/${id}`),
+    getHistory: (id: string) => request<unknown[]>('GET', `/jobs/${id}/history`),
+  },
+
+  targets: {
+    getAll: () => request<Target[]>('GET', '/targets'),
+    getById: (id: string) => request<Target>('GET', `/targets/${id}`),
+    create: (data: { name: string; type: string; config: Record<string, unknown>; enabled?: boolean }) =>
+      request<Target>('POST', '/targets', data),
+    update: (id: string, data: Partial<{ name: string; type: string; config: Record<string, unknown>; enabled: boolean }>) =>
+      request<Target>('PUT', `/targets/${id}`, data),
+    delete: (id: string) => request<{ ok: boolean }>('DELETE', `/targets/${id}`),
+  },
+
+  docker: {
+    listContainers: () => request<Container[]>('GET', '/docker/containers'),
+    inspectContainer: (id: string) => request<unknown>('GET', `/docker/containers/${id}`),
+    stopContainer: (id: string) => request<{ ok: boolean }>('POST', `/docker/containers/${id}/stop`),
+    startContainer: (id: string) => request<{ ok: boolean }>('POST', `/docker/containers/${id}/start`),
   },
 }

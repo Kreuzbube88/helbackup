@@ -8,6 +8,11 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { logger } from './utils/logger.js'
 import { authRoutes } from './api/auth.js'
+import { jobsRoutes } from './api/jobs.js'
+import { targetsRoutes } from './api/targets.js'
+import { dockerRoutes } from './api/docker.js'
+import { logsRoutes } from './api/logs.js'
+import { initScheduler, stopScheduler } from './scheduler/index.js'
 
 declare module 'fastify' {
   interface FastifyInstance {
@@ -37,7 +42,15 @@ app.decorate('authenticate', async (request: import('fastify').FastifyRequest, r
   }
 })
 
+// Initialize scheduler
+initScheduler()
+
+// Register routes
 await app.register(authRoutes)
+await app.register(jobsRoutes)
+await app.register(targetsRoutes)
+await app.register(dockerRoutes)
+await app.register(logsRoutes)
 
 // Serve React SPA in production
 const distPath = path.join(__dirname, '../frontend/dist')
@@ -49,10 +62,7 @@ await app.register(fastifyStatic, {
 
 app.setNotFoundHandler(async (request, reply) => {
   if (!request.url.startsWith('/api')) {
-    const html = fs.readFileSync(
-      '/app/frontend/dist/index.html',
-      'utf-8'
-    )
+    const html = fs.readFileSync('/app/frontend/dist/index.html', 'utf-8')
     return reply.type('text/html').send(html)
   }
   reply.status(404).send({ error: 'Not Found' })
@@ -61,6 +71,17 @@ app.setNotFoundHandler(async (request, reply) => {
 app.addHook('onError', async (_request, _reply, error) => {
   logger.error(error)
 })
+
+// Graceful shutdown
+const shutdown = async (signal: string): Promise<void> => {
+  logger.info(`${signal} received, shutting down gracefully`)
+  stopScheduler()
+  await app.close()
+  process.exit(0)
+}
+
+process.on('SIGTERM', () => { void shutdown('SIGTERM') })
+process.on('SIGINT', () => { void shutdown('SIGINT') })
 
 try {
   await app.listen({ port: PORT, host: '0.0.0.0' })

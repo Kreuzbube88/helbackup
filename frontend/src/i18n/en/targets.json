@@ -1,0 +1,9 @@
+{
+  "title": "Targets",
+  "create": "Create Target",
+  "empty": "No targets yet. Add your first backup target.",
+  "load_error": "Failed to load targets",
+  "type_synology": "Synology NAS",
+  "type_rclone": "Rclone (Cloud)",
+  "type_local": "Local Filesystem"
+}

@@ -12,6 +12,8 @@ import { Header } from './components/layout/Header'
 import { Sidebar } from './components/layout/Sidebar'
 import { Login } from './pages/Login'
 import { Dashboard } from './pages/Dashboard'
+import { Jobs } from './pages/Jobs'
+import { Targets } from './pages/Targets'
 import { Settings } from './pages/Settings'
 
 function ProtectedLayout() {
@@ -50,6 +52,8 @@ export function App() {
         <Route path="/login" element={<Login />} />
         <Route element={<ProtectedLayout />}>
           <Route path="/" element={<Dashboard />} />
+          <Route path="/jobs" element={<Jobs />} />
+          <Route path="/targets" element={<Targets />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
