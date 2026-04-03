@@ -24,6 +24,17 @@
     "recovery": "Wiederherstellung",
     "settings": "Einstellungen"
   },
+  "tools": {
+    "flash_backup": "Flash Drive Backup",
+    "flash_description": "Inkrementelles Backup mit Rsync",
+    "appdata_backup": "Appdata Backup",
+    "tar_description": "Tar-Archiv (Container gestoppt – konsistent)",
+    "rsync_description": "Rsync Live (Container läuft – Risiko)",
+    "vm_backup": "VM Backup",
+    "vm_description": "Große Dateien effizient mit Rsync",
+    "cloud_backup": "Cloud Backup",
+    "cloud_description": "Multi-Provider Support mit Rclone"
+  },
   "status": {
     "running": "Läuft",
     "success": "Erfolgreich",

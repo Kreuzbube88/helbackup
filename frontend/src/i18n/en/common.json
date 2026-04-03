@@ -24,6 +24,17 @@
     "recovery": "Recovery",
     "settings": "Settings"
   },
+  "tools": {
+    "flash_backup": "Flash Drive Backup",
+    "flash_description": "Incremental backup with Rsync",
+    "appdata_backup": "Appdata Backup",
+    "tar_description": "Tar archive (container stopped – consistent)",
+    "rsync_description": "Rsync live (container running – risk)",
+    "vm_backup": "VM Backup",
+    "vm_description": "Large files efficiently with Rsync",
+    "cloud_backup": "Cloud Backup",
+    "cloud_description": "Multi-provider support with Rclone"
+  },
   "status": {
     "running": "Running",
     "success": "Success",

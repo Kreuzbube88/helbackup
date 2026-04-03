@@ -28,6 +28,9 @@ RUN npm run build
 FROM node:24-alpine AS final
 WORKDIR /app
 
+# Install runtime backup tools
+RUN apk add --no-cache rsync rclone openssh-client
+
 LABEL org.opencontainers.image.title="HELBACKUP"
 LABEL org.opencontainers.image.description="Intelligent backup orchestrator for Unraid"
 LABEL org.opencontainers.image.source="https://github.com/Kreuzbube88/helbackup"
