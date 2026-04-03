@@ -1,5 +1,6 @@
 FROM node:24-alpine AS base
 WORKDIR /app
+RUN apk add --no-cache python3 make g++
 
 # ── Backend deps ───────────────────────────────────────────────────────────────
 FROM base AS backend-deps
