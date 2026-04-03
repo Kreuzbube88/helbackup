@@ -24,6 +24,19 @@ async function initDb(): Promise<Database.Database> {
     "ALTER TABLE logs ADD COLUMN sequence INTEGER",
     "ALTER TABLE logs ADD COLUMN category TEXT NOT NULL DEFAULT 'system'",
     "ALTER TABLE logs ADD COLUMN metadata TEXT",
+    // Phase 6.5: advanced job settings
+    "ALTER TABLE jobs ADD COLUMN use_database_dumps INTEGER NOT NULL DEFAULT 0",
+    "ALTER TABLE jobs ADD COLUMN verify_checksums INTEGER NOT NULL DEFAULT 1",
+    "ALTER TABLE jobs ADD COLUMN retention_days INTEGER",
+    "ALTER TABLE jobs ADD COLUMN retention_minimum INTEGER NOT NULL DEFAULT 3",
+    "ALTER TABLE jobs ADD COLUMN pre_backup_script TEXT",
+    "ALTER TABLE jobs ADD COLUMN post_backup_script TEXT",
+    // Phase 6.5: manifest verification tracking
+    "ALTER TABLE manifest ADD COLUMN verified INTEGER NOT NULL DEFAULT 0",
+    "ALTER TABLE manifest ADD COLUMN last_verified TEXT",
+    "ALTER TABLE manifest ADD COLUMN verification_passed INTEGER",
+    "ALTER TABLE manifest ADD COLUMN verification_failed INTEGER",
+    "ALTER TABLE manifest ADD COLUMN verification_missing INTEGER",
   ]) {
     try { db.exec(sql) } catch { /* column already exists */ }
   }

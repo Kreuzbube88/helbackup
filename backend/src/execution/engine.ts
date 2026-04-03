@@ -2,6 +2,12 @@ import { EventEmitter } from 'events'
 import { randomUUID } from 'crypto'
 import { db } from '../db/database.js'
 import { logger } from '../utils/logger.js'
+import { executeHook } from './hooks.js'
+
+export interface JobHooks {
+  prePath?: string
+  postPath?: string
+}
 
 export interface JobStep {
   id: string
@@ -67,6 +73,7 @@ interface Summary {
 
 export class JobExecutionEngine extends EventEmitter {
   private readonly runId: string
+  private readonly jobId: string
   private readonly startedAt: string
   private sequence = 0
   private summary: Summary = {
@@ -81,6 +88,7 @@ export class JobExecutionEngine extends EventEmitter {
   constructor(jobId: string) {
     super()
     this.runId = randomUUID()
+    this.jobId = jobId
     this.startedAt = new Date().toISOString()
 
     db.prepare(
@@ -90,8 +98,20 @@ export class JobExecutionEngine extends EventEmitter {
     logger.info({ runId: this.runId }, 'Job execution started')
   }
 
-  async execute(steps: JobStep[]): Promise<void> {
+  async execute(steps: JobStep[], hooks?: JobHooks): Promise<void> {
     try {
+      // Execute pre-backup hook
+      if (hooks?.prePath) {
+        this.log('info', 'system', 'Executing pre-backup hook...')
+        const result = await executeHook(hooks.prePath, 'pre', {
+          RUN_ID: this.runId,
+          JOB_ID: this.jobId,
+        })
+        if (!result.success) {
+          throw new Error('Pre-backup hook failed or requested skip')
+        }
+      }
+
       for (const step of steps) {
         this.emit('step:start', { stepId: step.id, type: step.type })
         this.log('info', 'system', `Starting step: ${step.type}`, step.id)
@@ -117,6 +137,15 @@ export class JobExecutionEngine extends EventEmitter {
       this.log('info', 'system',
         `Backup completed: ${this.summary.filesCopied} files copied, ${this.summary.errors} errors`
       )
+
+      // Execute post-backup hook
+      if (hooks?.postPath) {
+        this.log('info', 'system', 'Executing post-backup hook...')
+        await executeHook(hooks.postPath, 'post', {
+          RUN_ID: this.runId,
+          JOB_ID: this.jobId,
+        })
+      }
 
       this.emit('job:complete')
       logger.info({ runId: this.runId }, 'Job execution completed')
@@ -224,6 +253,10 @@ export class JobExecutionEngine extends EventEmitter {
 
   getRunId(): string {
     return this.runId
+  }
+
+  getJobId(): string {
+    return this.jobId
   }
 
   private elapsedSeconds(): number {

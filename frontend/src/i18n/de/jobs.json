@@ -21,5 +21,16 @@
   "boot_config": "Boot-Konfiguration (/boot/config)",
   "network": "Netzwerk-Konfiguration",
   "users": "Benutzer & Gruppen",
-  "plugins": "Plugin-Konfiguration"
+  "plugins": "Plugin-Konfiguration",
+  "advanced_settings": "Erweiterte Einstellungen",
+  "use_database_dumps": "Datenbank-Dumps verwenden",
+  "database_dumps_hint": "Erstellt Datenbank-Dumps für PostgreSQL, MySQL, MongoDB vor dem Stoppen (empfohlen!)",
+  "verify_checksums": "Checksums verifizieren",
+  "checksums_hint": "Erstellt SHA256-Checksums für alle Dateien zur Integritätsprüfung (empfohlen!)",
+  "retention_policy": "Aufbewahrungsrichtlinie",
+  "delete_older_than_days": "Löschen älter als (Tage)",
+  "keep_minimum": "Mindestens behalten",
+  "hooks": "Hooks (Skripte)",
+  "pre_backup_script": "Vor-Backup Skript",
+  "post_backup_script": "Nach-Backup Skript"
 }

@@ -4,6 +4,7 @@ import { db } from '../../db/database.js'
 import { listContainers, inspectContainer, stopContainer, startContainer } from '../../docker/client.js'
 import { executeRsync } from '../../tools/rsync.js'
 import { createTarArchive } from '../../tools/tar.js'
+import { dumpDatabaseContainers } from './database-dump.js'
 import type { JobExecutionEngine } from '../engine.js'
 
 interface TargetRow {
@@ -15,13 +16,30 @@ interface TargetConfig {
   path: string
 }
 
+export interface ContainerBackupSettings {
+  id: string
+  skipStopping?: boolean
+  exclusions?: string[]      // Paths to exclude (relative to appdata)
+  backupExternalVolumes?: boolean
+  useDatabaseDump?: boolean
+}
+
+export interface ExternalVolumeConfig {
+  containerName: string
+  volumes: string[]          // Absolute paths to backup
+}
+
 export interface AppdataBackupConfig {
-  source: string       // /unraid/user/appdata
+  source: string             // /unraid/user/appdata
   targetId: string
-  containers: string[] // Container IDs to include
+  containers: string[]       // Container IDs to include
   stopContainers: boolean
-  stopOrder: string[]  // IDs in stop order
+  stopOrder: string[]        // IDs in stop order
   method: 'tar' | 'rsync'
+  useDatabaseDumps?: boolean
+  databaseContainers?: string[]
+  externalVolumes?: ExternalVolumeConfig[]
+  containerSettings?: Record<string, ContainerBackupSettings>
 }
 
 export async function executeAppdataBackup(
@@ -48,6 +66,11 @@ export async function executeAppdataBackup(
   const targetConfig = JSON.parse(target.config) as TargetConfig
   const destPath = path.join(targetConfig.path, 'appdata', new Date().toISOString().split('T')[0])
   await fs.mkdir(destPath, { recursive: true })
+
+  // Database dumps BEFORE stopping containers
+  if (config.useDatabaseDumps && config.databaseContainers && config.databaseContainers.length > 0) {
+    await dumpDatabaseContainers(config.databaseContainers, destPath, engine)
+  }
 
   // Export container configs BEFORE stopping
   engine.log('info', 'system', 'Exporting container configs...')
@@ -78,11 +101,16 @@ export async function executeAppdataBackup(
 
   await fs.writeFile(path.join(destPath, 'containers.json'), JSON.stringify(containerConfigs, null, 2))
 
+  // Determine which containers to stop (respect per-container skipStopping)
+  const stopOrderFiltered = config.stopOrder.filter(id =>
+    !config.containerSettings?.[id]?.skipStopping
+  )
+
   // Stop containers in specified order
   const stopped: string[] = []
-  if (config.stopContainers && config.stopOrder.length > 0) {
-    engine.log('info', 'system', `Stopping ${config.stopOrder.length} containers...`)
-    for (const id of config.stopOrder) {
+  if (config.stopContainers && stopOrderFiltered.length > 0) {
+    engine.log('info', 'system', `Stopping ${stopOrderFiltered.length} containers...`)
+    for (const id of stopOrderFiltered) {
       try {
         const details = await inspectContainer(id).catch(() => ({ Name: id }))
         const name = details.Name ?? id
@@ -117,14 +145,52 @@ export async function executeAppdataBackup(
       engine.log('info', 'system', 'Tar archive created')
     } else {
       engine.log('info', 'system', 'Starting rsync...')
+
+      // Collect global + per-container exclusions
+      const containerExclusions: string[] = []
+      if (config.containerSettings) {
+        for (const settings of Object.values(config.containerSettings)) {
+          if (settings.exclusions) {
+            containerExclusions.push(...settings.exclusions)
+          }
+        }
+      }
+
       const result = await executeRsync({
         source: config.source,
         destination: destPath,
         bwLimit: 51200,
-        excludePatterns: ['*/logs/*', '*/cache/*', '*/*.log'],
+        excludePatterns: ['*/logs/*', '*/cache/*', '*/*.log', ...containerExclusions],
         onProgress: ({ percent, speed }) => engine.log('info', 'system', `Progress: ${percent}% — ${speed}`),
       })
       engine.log('info', 'system', `Rsync done: ${result.bytesTransferred} bytes`)
+    }
+
+    // Backup external volumes
+    if (config.externalVolumes && config.externalVolumes.length > 0) {
+      engine.log('info', 'system', `Backing up external volumes for ${config.externalVolumes.length} containers...`)
+
+      for (const volConfig of config.externalVolumes) {
+        for (const volumePath of volConfig.volumes) {
+          try {
+            const volumeName = path.basename(volumePath)
+            const volumeDestPath = path.join(destPath, 'external-volumes', volConfig.containerName, volumeName)
+            await fs.mkdir(path.dirname(volumeDestPath), { recursive: true })
+
+            engine.log('info', 'system', `Backing up external volume: ${volumePath}`)
+            await executeRsync({
+              source: volumePath,
+              destination: volumeDestPath,
+              bwLimit: 51200,
+              onProgress: ({ percent }) => engine.log('info', 'system', `External volume progress: ${percent}%`),
+            })
+            engine.log('info', 'system', `External volume backed up: ${volumePath}`)
+          } catch (err: unknown) {
+            const msg = err instanceof Error ? err.message : String(err)
+            engine.log('error', 'file', `Failed to backup external volume ${volumePath}: ${msg}`)
+          }
+        }
+      }
     }
   } finally {
     // ALWAYS restart in reverse order

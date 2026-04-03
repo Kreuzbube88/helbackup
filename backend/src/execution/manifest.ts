@@ -3,6 +3,8 @@ import fs from 'fs/promises'
 import { randomUUID } from 'crypto'
 import { db } from '../db/database.js'
 import { exportHELBACKUP } from './steps/helbackup-export.js'
+import { generateChecksums } from './verification.js'
+import type { ChecksumEntry } from './verification.js'
 import type { JobExecutionEngine } from './engine.js'
 
 export interface ManifestEntry {
@@ -19,13 +21,17 @@ export interface Manifest {
   entries: ManifestEntry[]
   containerConfigs?: unknown[]
   helbackupExport: string
+  checksums: ChecksumEntry[]
+  verified: boolean
+  lastVerified?: string
 }
 
 export async function createManifest(
   jobId: string,
   runId: string,
   backupPath: string,
-  engine: JobExecutionEngine
+  engine: JobExecutionEngine,
+  generateChecksumsEnabled = true
 ): Promise<Manifest> {
   engine.log('info', 'system', 'Creating backup manifest...')
 
@@ -42,6 +48,10 @@ export async function createManifest(
     // no container configs — that's fine
   }
 
+  const checksums: ChecksumEntry[] = generateChecksumsEnabled
+    ? await generateChecksums(backupPath, engine)
+    : []
+
   const manifest: Manifest = {
     backupId: randomUUID(),
     jobId,
@@ -51,6 +61,9 @@ export async function createManifest(
     entries,
     containerConfigs,
     helbackupExport: path.relative(backupPath, helbackupExportPath),
+    checksums,
+    verified: false,
+    lastVerified: undefined,
   }
 
   await fs.writeFile(path.join(backupPath, 'manifest.json'), JSON.stringify(manifest, null, 2))
