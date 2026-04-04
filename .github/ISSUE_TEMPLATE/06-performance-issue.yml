@@ -1,0 +1,75 @@
+name: ⚡ Performance Issue
+description: Slow backups, high resource usage, or performance problems
+labels: ["performance"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## ⚡ Performance Issue
+        Help us make HELBACKUP faster!
+
+  - type: input
+    id: version
+    attributes:
+      label: 📦 HELBACKUP Version
+      placeholder: "e.g., 1.0.0"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: issue-type
+    attributes:
+      label: 🐌 Performance Issue Type
+      options:
+        - Slow backup speed
+        - Slow restore speed
+        - High CPU usage
+        - High memory usage
+        - High disk I/O
+        - Slow UI/WebGUI
+    validations:
+      required: true
+
+  - type: textarea
+    id: metrics
+    attributes:
+      label: 📊 Performance Metrics
+      description: Actual vs expected performance
+      placeholder: |
+        Backup Size: 10 GB
+        Time Taken: 45 minutes
+        Expected: ~10-15 minutes
+
+        CPU Usage: 80%
+        Memory: 4 GB
+    validations:
+      required: true
+
+  - type: textarea
+    id: system-specs
+    attributes:
+      label: 💻 System Specifications
+      description: Server hardware and configuration
+      placeholder: |
+        CPU: ...
+        RAM: ...
+        Disk Type: HDD/SSD/NVMe
+        Network: 1 Gbit/10 Gbit
+
+  - type: textarea
+    id: job-details
+    attributes:
+      label: 🔧 Job Details
+      description: What are you backing up?
+      placeholder: |
+        Backup Type: Appdata
+        Number of Containers: 25
+        Total Size: 50 GB
+        Target: Cloud (S3)
+        Encryption: Yes
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: 📋 Logs
+      render: shell

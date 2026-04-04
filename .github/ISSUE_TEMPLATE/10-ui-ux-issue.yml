@@ -1,0 +1,83 @@
+name: 🎨 UI/UX Issue
+description: Visual bugs, usability problems, or design improvements
+labels: ["ui-ux"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## 🎨 UI/UX Issue
+        Help us improve the user experience!
+
+  - type: input
+    id: version
+    attributes:
+      label: 📦 HELBACKUP Version
+      placeholder: "e.g., 1.0.0"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: issue-type
+    attributes:
+      label: 🔍 Issue Type
+      options:
+        - Visual Bug
+        - Layout Problem
+        - Usability Issue
+        - Missing Feature in UI
+        - Design Improvement
+        - Accessibility Issue
+    validations:
+      required: true
+
+  - type: input
+    id: page
+    attributes:
+      label: 📄 Page/Component
+      description: Where is the issue?
+      placeholder: "e.g., Dashboard, Jobs page, Settings"
+    validations:
+      required: true
+
+  - type: input
+    id: browser
+    attributes:
+      label: 🌐 Browser
+      description: Which browser are you using?
+      placeholder: "e.g., Chrome 120, Firefox 121, Safari 17"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: device
+    attributes:
+      label: 📱 Device Type
+      options:
+        - Desktop
+        - Tablet
+        - Mobile
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: 📝 Description
+      description: What's wrong or could be improved?
+      placeholder: "Describe the UI/UX issue..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: ✅ Expected Behavior
+      description: How should it look/work?
+      placeholder: "Describe expected UI/UX..."
+
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: 📸 Screenshots
+      description: Add screenshots or mockups
+      placeholder: "Drag and drop images here..."

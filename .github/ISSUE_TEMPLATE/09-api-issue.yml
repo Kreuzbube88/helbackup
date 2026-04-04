@@ -1,0 +1,73 @@
+name: 🔌 API Issue
+description: Problems with the HELBACKUP API or integrations
+labels: ["api"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## 🔌 API Issue
+        Let's fix your API integration!
+
+  - type: input
+    id: version
+    attributes:
+      label: 📦 HELBACKUP Version
+      placeholder: "e.g., 1.0.0"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: issue-type
+    attributes:
+      label: 🔍 Issue Type
+      options:
+        - Authentication/Token Problem
+        - Endpoint Error
+        - Rate Limiting Issue
+        - Unexpected Response
+        - Missing Documentation
+        - Webhook Problem
+    validations:
+      required: true
+
+  - type: input
+    id: endpoint
+    attributes:
+      label: 🎯 API Endpoint
+      description: Which endpoint has the issue?
+      placeholder: "e.g., GET /api/v1/backups"
+    validations:
+      required: true
+
+  - type: textarea
+    id: request
+    attributes:
+      label: 📤 Request Details
+      description: How are you calling the API?
+      placeholder: |
+        curl -X GET "http://192.168.1.100:3000/api/v1/backups" \
+          -H "Authorization: Bearer helbackup_..."
+      render: shell
+    validations:
+      required: true
+
+  - type: textarea
+    id: response
+    attributes:
+      label: 📥 Response Received
+      description: What response did you get?
+      placeholder: "Paste API response..."
+      render: json
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: ✅ Expected Response
+      description: What did you expect?
+      placeholder: "Describe expected behavior..."
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: 💬 Additional Context
+      description: SDK used, programming language, etc.

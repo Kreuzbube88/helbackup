@@ -1,0 +1,59 @@
+name: ❓ Question/Support
+description: Ask a question or get help using HELBACKUP
+labels: ["question"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## ❓ Question/Support
+
+        💡 **Tip:** Check the [documentation](../docs/) first - it might have your answer!
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Pre-submission Checklist
+      options:
+        - label: I have checked the documentation
+          required: true
+        - label: I have searched existing issues
+          required: true
+
+  - type: dropdown
+    id: category
+    attributes:
+      label: 📚 Question Category
+      options:
+        - General Usage
+        - Backup Configuration
+        - Restore Process
+        - Encryption
+        - API/Integration
+        - Troubleshooting
+        - Best Practices
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: question
+    attributes:
+      label: ❓ Your Question
+      description: What do you need help with?
+      placeholder: "Ask your question..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: 🔍 Context
+      description: What are you trying to achieve?
+      placeholder: "Describe your use case or goal..."
+
+  - type: textarea
+    id: tried
+    attributes:
+      label: 🔧 What Have You Tried?
+      description: Steps you've already attempted
+      placeholder: "Describe what you've tried..."

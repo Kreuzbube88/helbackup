@@ -1,0 +1,53 @@
+name: 🚀 Enhancement
+description: Improve an existing feature (not a new feature)
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## 🚀 Enhancement
+        Make existing features better!
+
+  - type: input
+    id: feature
+    attributes:
+      label: 🎯 Feature to Enhance
+      description: Which existing feature?
+      placeholder: "e.g., GFS Retention, Dashboard, API"
+    validations:
+      required: true
+
+  - type: textarea
+    id: current
+    attributes:
+      label: 📍 Current Behavior
+      description: How does it work now?
+      placeholder: "Describe current implementation..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: improvement
+    attributes:
+      label: ✨ Proposed Improvement
+      description: How should it be improved?
+      placeholder: "Describe your enhancement idea..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: benefit
+    attributes:
+      label: 💪 Benefits
+      description: Why is this improvement valuable?
+      placeholder: |
+        - Saves time
+        - Easier to use
+        - Better performance
+        - etc.
+
+  - type: textarea
+    id: examples
+    attributes:
+      label: 📸 Examples
+      description: Screenshots, mockups, or examples

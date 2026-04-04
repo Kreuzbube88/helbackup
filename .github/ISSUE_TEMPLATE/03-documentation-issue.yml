@@ -1,0 +1,62 @@
+name: 📚 Documentation Issue
+description: Report missing, incorrect, or unclear documentation
+labels: ["documentation"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## 📚 Documentation Issue
+        Help us improve the docs!
+
+  - type: dropdown
+    id: doc-type
+    attributes:
+      label: 📖 Documentation Type
+      options:
+        - Installation Guide
+        - User Guide
+        - API Documentation
+        - Troubleshooting
+        - Best Practices
+        - Other
+    validations:
+      required: true
+
+  - type: input
+    id: location
+    attributes:
+      label: 📍 Documentation Location
+      description: Which file or section?
+      placeholder: "e.g., /docs/de/01-getting-started/installation.md"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: issue-type
+    attributes:
+      label: 🔍 Issue Type
+      options:
+        - Missing information
+        - Incorrect information
+        - Unclear/confusing
+        - Outdated
+        - Typo/grammar
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: 📝 Description
+      description: What's wrong or missing?
+      placeholder: "Describe the documentation issue..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: suggestion
+    attributes:
+      label: ✍️ Suggested Fix
+      description: How should it be corrected/improved?
+      placeholder: "Your suggested improvement..."

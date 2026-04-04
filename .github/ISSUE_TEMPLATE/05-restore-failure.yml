@@ -1,0 +1,69 @@
+name: ♻️ Restore Failure
+description: Restore operation failed or produced errors
+labels: ["restore-failure", "needs-investigation"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## ♻️ Restore Failure
+        Let's get your data restored!
+
+  - type: input
+    id: version
+    attributes:
+      label: 📦 HELBACKUP Version
+      placeholder: "e.g., 1.0.0"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: restore-type
+    attributes:
+      label: 🔄 Restore Type
+      options:
+        - Granular (Single File/Folder)
+        - Container Appdata
+        - Database
+        - Full Server Restore
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: encryption
+    attributes:
+      label: 🔐 Backup Encrypted
+      options:
+        - label: This backup is encrypted
+        - label: I have the recovery key
+
+  - type: textarea
+    id: error-message
+    attributes:
+      label: ❌ Error Message
+      description: Exact error from restore operation
+      placeholder: "Paste error message..."
+      render: shell
+    validations:
+      required: true
+
+  - type: textarea
+    id: backup-info
+    attributes:
+      label: 📦 Backup Information
+      description: Backup date, size, verification status
+      placeholder: |
+        - Backup Date: ...
+        - Size: ...
+        - Verified: Yes/No
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: 📋 Restore Logs
+      description: Complete log output
+      render: shell
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: 💬 Additional Context

@@ -1,0 +1,84 @@
+name: 💾 Backup Failure
+description: Backup job failed or produced errors
+labels: ["backup-failure", "needs-investigation"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## 💾 Backup Failure
+        Let's fix your backup issue!
+
+  - type: input
+    id: version
+    attributes:
+      label: 📦 HELBACKUP Version
+      placeholder: "e.g., 1.0.0"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: backup-type
+    attributes:
+      label: 📂 Backup Type
+      options:
+        - Flash Drive
+        - Appdata
+        - VMs
+        - Docker Images
+        - Databases
+        - Multiple Types
+    validations:
+      required: true
+
+  - type: dropdown
+    id: target-type
+    attributes:
+      label: 🎯 Target Type
+      options:
+        - Local
+        - NAS (SMB)
+        - NAS (NFS)
+        - Cloud (S3/B2/etc)
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: encryption
+    attributes:
+      label: 🔐 Encryption Enabled
+      options:
+        - label: This backup job uses encryption
+
+  - type: textarea
+    id: error-message
+    attributes:
+      label: ❌ Error Message
+      description: Exact error message from logs
+      placeholder: "Paste the error message..."
+      render: shell
+    validations:
+      required: true
+
+  - type: textarea
+    id: job-config
+    attributes:
+      label: ⚙️ Job Configuration
+      description: Job settings (schedule, containers, etc.)
+      placeholder: "Describe your job configuration..."
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: 📋 Full Logs
+      description: Complete log output from failed backup
+      render: shell
+
+  - type: textarea
+    id: troubleshooting
+    attributes:
+      label: 🔧 Troubleshooting Steps Tried
+      description: What have you already tried?
+      placeholder: |
+        - Checked disk space
+        - Verified target connectivity
+        - etc.

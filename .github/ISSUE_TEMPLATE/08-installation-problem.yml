@@ -1,0 +1,75 @@
+name: 📥 Installation Problem
+description: Issues during HELBACKUP installation or initial setup
+labels: ["installation"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## 📥 Installation Problem
+        Let's get HELBACKUP installed!
+
+  - type: input
+    id: unraid-version
+    attributes:
+      label: 🖥️ Unraid Version
+      placeholder: "e.g., 6.12.6"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: install-method
+    attributes:
+      label: 📦 Installation Method
+      options:
+        - Community Apps
+        - Manual Docker Command
+        - Docker Compose
+    validations:
+      required: true
+
+  - type: dropdown
+    id: stage
+    attributes:
+      label: 🔍 At What Stage Does It Fail?
+      options:
+        - Container won't download
+        - Container won't start
+        - WebGUI not accessible
+        - WebGUI loads but errors
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: error
+    attributes:
+      label: ❌ Error Message
+      description: Exact error from Docker logs
+      placeholder: "Paste error message..."
+      render: shell
+    validations:
+      required: true
+
+  - type: textarea
+    id: docker-config
+    attributes:
+      label: ⚙️ Docker Configuration
+      description: Container template settings or docker run command
+      render: yaml
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: 📋 Docker Logs
+      description: Output from `docker logs helbackup`
+      render: shell
+
+  - type: textarea
+    id: troubleshooting
+    attributes:
+      label: 🔧 Troubleshooting Steps Tried
+      placeholder: |
+        - Checked port conflicts
+        - Verified paths exist
+        - Restarted container
+        - etc.
