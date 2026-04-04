@@ -143,6 +143,15 @@ export const api = {
     recover: (recoveryKey: string, newPassword: string) =>
       request<{ success: boolean }>('POST', '/encryption/recover', { recoveryKey, newPassword }),
   },
+
+  decryption: {
+    unlock: (backupId: string, password: string) =>
+      request<{ success: boolean; sessionId: string; expiresIn: number }>('POST', '/decryption/unlock', { backupId, password }),
+    decryptManifest: (backupPath: string, sessionId: string) =>
+      request<unknown>('POST', '/decryption/manifest', { backupPath, sessionId }),
+    decryptArchive: (backupPath: string, sessionId: string, outputDir: string) =>
+      request<{ success: boolean; outputDir: string }>('POST', '/decryption/archive', { backupPath, sessionId, outputDir }),
+  },
 }
 
 export const recovery = {

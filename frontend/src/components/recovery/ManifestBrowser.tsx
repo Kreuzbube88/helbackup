@@ -1,5 +1,8 @@
+import { useState } from 'react';
+import { Lock } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '../common/Button';
+import UnlockBackupDialog from '../encryption/UnlockBackupDialog';
 
 interface ManifestEntry {
   path?: string;
@@ -18,6 +21,7 @@ interface ParsedManifest {
   helbackupExport?: boolean;
   verified?: boolean;
   lastVerified?: string;
+  encrypted?: boolean;
 }
 
 interface Manifest {
@@ -36,6 +40,36 @@ interface Props {
 
 export default function ManifestBrowser({ manifests, onSelect, onRefresh }: Props) {
   const { t } = useTranslation();
+  const [pendingEncrypted, setPendingEncrypted] = useState<Manifest | null>(null);
+  const [unlockedSessions, setUnlockedSessions] = useState<Map<string, string>>(new Map());
+
+  const getBackupId = (m: Manifest) => m.backup_id ?? m.backupId ?? '';
+
+  const isEncrypted = (parsed: ParsedManifest, m: Manifest): boolean => {
+    if (typeof parsed.encrypted === 'boolean') return parsed.encrypted;
+    if (typeof m.encrypted === 'boolean') return m.encrypted as boolean;
+    return false;
+  };
+
+  const handleSelect = (manifest: Manifest) => {
+    const parsed: ParsedManifest = typeof manifest.manifest === 'string'
+      ? JSON.parse(manifest.manifest) as ParsedManifest
+      : manifest as ParsedManifest;
+    const backupId = getBackupId(manifest);
+
+    if (isEncrypted(parsed, manifest) && !unlockedSessions.has(backupId)) {
+      setPendingEncrypted(manifest);
+    } else {
+      onSelect(manifest);
+    }
+  };
+
+  const handleUnlocked = (sessionId: string, manifest: Manifest) => {
+    const backupId = getBackupId(manifest);
+    setUnlockedSessions(new Map(unlockedSessions).set(backupId, sessionId));
+    setPendingEncrypted(null);
+    onSelect(manifest);
+  };
 
   const formatDate = (dateStr: string) => {
     return new Date(dateStr).toLocaleString('de-DE');
@@ -65,8 +99,12 @@ export default function ManifestBrowser({ manifests, onSelect, onRefresh }: Prop
         <div className="space-y-4">
           {manifests.map((manifest) => {
             const parsed: ParsedManifest = typeof manifest.manifest === 'string'
-              ? JSON.parse(manifest.manifest)
-              : manifest;
+              ? JSON.parse(manifest.manifest) as ParsedManifest
+              : manifest as ParsedManifest;
+
+            const backupId = getBackupId(manifest);
+            const encrypted = isEncrypted(parsed, manifest);
+            const unlocked = unlockedSessions.has(backupId);
 
             const totalSize = parsed.entries?.reduce((sum, e) => sum + (e.size ?? 0), 0) ?? 0;
             const fileCount = parsed.entries?.length ?? 0;
@@ -77,15 +115,23 @@ export default function ManifestBrowser({ manifests, onSelect, onRefresh }: Prop
 
             return (
               <div
-                key={manifest.backup_id ?? manifest.backupId}
+                key={backupId}
                 className="border-2 border-[var(--border-default)] p-6 hover:border-blue-500 cursor-pointer"
-                onClick={() => onSelect(manifest)}
+                onClick={() => handleSelect(manifest)}
               >
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
-                    <h3 className="text-xl font-bold mb-2">
-                      {t('recovery.backup_from')} {formatDate(parsed.timestamp ?? manifest.created_at ?? '')}
-                    </h3>
+                    <div className="flex items-center gap-2 mb-2">
+                      <h3 className="text-xl font-bold">
+                        {t('recovery.backup_from')} {formatDate(parsed.timestamp ?? manifest.created_at ?? '')}
+                      </h3>
+                      {encrypted && (
+                        <span className={`flex items-center gap-1 px-2 py-0.5 text-xs font-bold ${unlocked ? 'bg-green-600 text-white' : 'bg-orange-500 text-white'}`}>
+                          <Lock size={10} />
+                          {unlocked ? t('decryption.unlocked') : t('decryption.encrypted')}
+                        </span>
+                      )}
+                    </div>
 
                     <div className="grid grid-cols-3 gap-4 text-sm">
                       <div>
@@ -134,13 +180,21 @@ export default function ManifestBrowser({ manifests, onSelect, onRefresh }: Prop
                   </div>
 
                   <Button variant="primary">
-                    {t('recovery.restore')}
+                    {encrypted && !unlocked ? t('decryption.unlock') : t('recovery.restore')}
                   </Button>
                 </div>
               </div>
             );
           })}
         </div>
+      )}
+
+      {pendingEncrypted && (
+        <UnlockBackupDialog
+          backupId={getBackupId(pendingEncrypted)}
+          onUnlock={(sessionId) => handleUnlocked(sessionId, pendingEncrypted)}
+          onCancel={() => setPendingEncrypted(null)}
+        />
       )}
     </div>
   );

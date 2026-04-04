@@ -192,6 +192,17 @@
     "confirm_understood": "I understand that without this key, recovery is impossible",
     "complete": "Encryption Activated"
   },
+  "decryption": {
+    "unlock_backup": "Unlock Backup",
+    "unlock_hint": "This backup is encrypted. Enter your encryption password.",
+    "encryption_password": "Encryption Password",
+    "unlock": "Unlock",
+    "unlocking": "Unlocking...",
+    "session_expires": "Session expires in",
+    "minutes": "minutes",
+    "encrypted": "Encrypted",
+    "unlocked": "Unlocked"
+  },
   "status": {
     "running": "Running",
     "success": "Success",

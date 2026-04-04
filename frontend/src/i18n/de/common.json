@@ -192,6 +192,17 @@
     "confirm_understood": "Ich verstehe dass ohne diesen Key keine Wiederherstellung möglich ist",
     "complete": "Verschlüsselung aktiviert"
   },
+  "decryption": {
+    "unlock_backup": "Backup entsperren",
+    "unlock_hint": "Dieses Backup ist verschlüsselt. Gib dein Verschlüsselungs-Passwort ein.",
+    "encryption_password": "Verschlüsselungs-Passwort",
+    "unlock": "Entsperren",
+    "unlocking": "Entsperre...",
+    "session_expires": "Session läuft ab in",
+    "minutes": "Minuten",
+    "encrypted": "Verschlüsselt",
+    "unlocked": "Entsperrt"
+  },
   "status": {
     "running": "Läuft",
     "success": "Erfolgreich",

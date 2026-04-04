@@ -4,6 +4,8 @@ import { randomUUID } from 'crypto'
 import { db } from '../db/database.js'
 import { exportHELBACKUP } from './steps/helbackup-export.js'
 import { generateChecksums } from './verification.js'
+import { createManifestEnvelope } from './manifestEnvelope.js'
+import { encryptFileGPG } from '../utils/gpgEncrypt.js'
 import type { ChecksumEntry } from './verification.js'
 import type { JobExecutionEngine } from './engine.js'
 
@@ -24,6 +26,13 @@ export interface Manifest {
   checksums: ChecksumEntry[]
   verified: boolean
   lastVerified?: string
+  encrypted?: boolean
+}
+
+export interface CreateManifestOptions {
+  generateChecksums?: boolean
+  encrypted?: boolean
+  encryptionPassword?: string
 }
 
 export async function createManifest(
@@ -31,8 +40,12 @@ export async function createManifest(
   runId: string,
   backupPath: string,
   engine: JobExecutionEngine,
-  generateChecksumsEnabled = true
+  optionsOrBool: boolean | CreateManifestOptions = true
 ): Promise<Manifest> {
+  const options: CreateManifestOptions = typeof optionsOrBool === 'boolean'
+    ? { generateChecksums: optionsOrBool }
+    : optionsOrBool
+  const generateChecksumsEnabled = options.generateChecksums ?? true
   engine.log('info', 'system', 'Creating backup manifest...')
 
   const helbackupExportPath = await exportHELBACKUP(backupPath, engine)
@@ -64,9 +77,22 @@ export async function createManifest(
     checksums,
     verified: false,
     lastVerified: undefined,
+    encrypted: options.encrypted ?? false,
   }
 
-  await fs.writeFile(path.join(backupPath, 'manifest.json'), JSON.stringify(manifest, null, 2))
+  const manifestPath = path.join(backupPath, 'manifest.json')
+  await fs.writeFile(manifestPath, JSON.stringify(manifest, null, 2))
+
+  // Always create unencrypted envelope for quick inspection
+  await createManifestEnvelope(backupPath, manifest, options.encrypted ?? false, engine)
+
+  // Encrypt manifest if requested
+  if (options.encrypted && options.encryptionPassword) {
+    const encryptedPath = `${manifestPath}.gpg`
+    await encryptFileGPG(manifestPath, encryptedPath, options.encryptionPassword)
+    await fs.unlink(manifestPath)
+    engine.log('info', 'system', 'Manifest encrypted')
+  }
 
   db.prepare(
     'INSERT INTO manifest (backup_id, job_id, manifest, created_at) VALUES (?, ?, ?, ?)'
