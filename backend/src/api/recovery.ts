@@ -1,5 +1,6 @@
 import { FastifyInstance } from 'fastify';
 import { db } from '../db/database.js';
+import { safeJsonParseOrThrow } from '../utils/safeJson.js';
 import fs from 'fs/promises';
 import path from 'path';
 
@@ -33,7 +34,7 @@ export default async function recoveryRoutes(app: FastifyInstance) {
 
         return reply.send({
           ...manifest,
-          manifest: JSON.parse(manifest.manifest as string)
+          manifest: safeJsonParseOrThrow(manifest.manifest as string, 'manifest detail')
         });
       } catch (error: unknown) {
         const err = error as Error;
@@ -61,7 +62,7 @@ export default async function recoveryRoutes(app: FastifyInstance) {
                 await scanDir(fullPath);
               } else if (item.name === 'manifest.json') {
                 const content = await fs.readFile(fullPath, 'utf-8');
-                const manifest = JSON.parse(content) as Record<string, unknown>;
+                const manifest = safeJsonParseOrThrow<Record<string, unknown>>(content, 'scanned manifest');
                 manifests.push({
                   path: fullPath,
                   ...manifest
@@ -98,9 +99,9 @@ export default async function recoveryRoutes(app: FastifyInstance) {
           return reply.status(404).send({ error: 'Manifest not found' });
         }
 
-        const manifest = JSON.parse(manifestRecord.manifest as string) as {
+        const manifest = safeJsonParseOrThrow<{
           containerConfigs?: Array<{ id: string; name: string; image: string; env?: string[]; volumes?: string[]; ports?: Record<string, Array<{ HostPort: string }>>; network?: string; labels?: Record<string, string> }>;
-        };
+        }>(manifestRecord.manifest as string, 'container restore manifest');
 
         if (!manifest.containerConfigs) {
           return reply.status(404).send({ error: 'No container configs in backup' });
@@ -153,9 +154,9 @@ export default async function recoveryRoutes(app: FastifyInstance) {
           return reply.status(404).send({ error: 'Manifest not found' });
         }
 
-        const manifest = JSON.parse(manifestRecord.manifest as string) as {
+        const manifest = safeJsonParseOrThrow<{
           entries?: Array<{ path: string }>;
-        };
+        }>(manifestRecord.manifest as string, 'database restore manifest');
 
         const dumpEntry = manifest.entries?.find((e) =>
           e.path.includes('database-dumps') && e.path.includes(containerId)

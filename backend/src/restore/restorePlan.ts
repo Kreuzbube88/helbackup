@@ -2,6 +2,7 @@ import { db } from '../db/database.js'
 import { exec } from 'child_process'
 import { promisify } from 'util'
 import { logger } from '../utils/logger.js'
+import { safeJsonParseOrThrow } from '../utils/safeJson.js'
 
 const execAsync = promisify(exec)
 
@@ -91,7 +92,7 @@ export async function generateRestorePlan(
     throw new Error(`Manifest not found for backup ID: ${backupId}`)
   }
 
-  const manifest: StoredManifest = JSON.parse(row.manifest) as StoredManifest
+  const manifest = safeJsonParseOrThrow<StoredManifest>(row.manifest, 'restore plan manifest')
   const items: RestoreItem[] = []
   let totalSize = 0
 
