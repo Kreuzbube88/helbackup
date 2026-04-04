@@ -4,6 +4,7 @@ import { recovery as recoveryApi } from '../api';
 import { Button } from '../components/common/Button';
 import ManifestBrowser from '../components/recovery/ManifestBrowser';
 import RestoreWizard from '../components/recovery/RestoreWizard';
+import FullServerRestoreWizard from '../components/recovery/FullServerRestoreWizard';
 import { useTranslation } from 'react-i18next';
 
 interface Manifest {
@@ -21,6 +22,8 @@ export default function RecoveryPage() {
   const [manifests, setManifests] = useState<Manifest[]>([]);
   const [selectedManifest, setSelectedManifest] = useState<Manifest | null>(null);
   const [showWizard, setShowWizard] = useState(false);
+  const [showFullServerWizard, setShowFullServerWizard] = useState(false);
+  const [fullServerManifest, setFullServerManifest] = useState<Manifest | null>(null);
 
   useEffect(() => {
     loadStatus();
@@ -71,6 +74,11 @@ export default function RecoveryPage() {
     setShowWizard(true);
   };
 
+  const handleFullServerRestore = (manifest: Manifest) => {
+    setFullServerManifest(manifest);
+    setShowFullServerWizard(true);
+  };
+
   if (!isRecoveryMode) {
     return (
       <div className="p-8 max-w-2xl mx-auto">
@@ -117,6 +125,18 @@ export default function RecoveryPage() {
     );
   }
 
+  if (showFullServerWizard && fullServerManifest) {
+    return (
+      <FullServerRestoreWizard
+        manifest={fullServerManifest}
+        onClose={() => {
+          setShowFullServerWizard(false);
+          setFullServerManifest(null);
+        }}
+      />
+    );
+  }
+
   return (
     <div className="p-8">
       <div className="bg-red-600 text-white p-4 mb-6 flex items-center justify-between">
@@ -134,6 +154,7 @@ export default function RecoveryPage() {
       <ManifestBrowser
         manifests={manifests}
         onSelect={handleSelectManifest}
+        onFullServerRestore={handleFullServerRestore}
         onRefresh={loadManifests}
       />
     </div>

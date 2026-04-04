@@ -190,6 +190,47 @@ export const dashboard = {
   get: () => request<unknown>('GET', '/dashboard'),
 }
 
+export interface RestoreOptions {
+  includeFlash?: boolean
+  includeAppdata?: boolean
+  includeVMs?: boolean
+  includeDockerImages?: boolean
+  includeSystemConfig?: boolean
+  includeDatabases?: boolean
+}
+
+export interface RestoreItem {
+  type: 'flash' | 'appdata' | 'vm' | 'docker-image' | 'system-config' | 'database'
+  name: string
+  path: string
+  size: number
+  priority: number
+  dependencies: string[]
+  warnings: string[]
+}
+
+export interface RestorePlan {
+  backupId: string
+  timestamp: string
+  items: RestoreItem[]
+  totalSize: number
+  estimatedDuration: number
+  executionOrder: RestoreItem[][]
+  preFlightChecks: {
+    diskSpace: {
+      required: number
+      available: number
+      sufficient: boolean
+    }
+    conflicts: {
+      type: string
+      name: string
+      message: string
+    }[]
+    warnings: string[]
+  }
+}
+
 export const recovery = {
   getStatus: () => request<{ enabled: boolean }>('GET', '/recovery/status'),
   enable: () => request<{ ok: boolean }>('POST', '/recovery/enable'),
@@ -203,4 +244,8 @@ export const recovery = {
     request<{ message: string; files: number; destination: string }>('POST', '/recovery/restore/files', { backupId, files, destination }),
   getDatabaseRestore: (backupId: string, containerId: string, databaseType: string) =>
     request<{ dumpPath: string; restoreCommand: string; instructions: string[] }>('POST', '/recovery/restore/database', { backupId, containerId, databaseType }),
+  generateRestorePlan: (backupId: string, options: RestoreOptions) =>
+    request<RestorePlan>('POST', '/restore-wizard/plan', { backupId, options }),
+  executeFullRestore: (backupId: string, plan: RestorePlan) =>
+    request<{ success: boolean; message: string }>('POST', '/restore-wizard/execute', { backupId, plan }),
 }

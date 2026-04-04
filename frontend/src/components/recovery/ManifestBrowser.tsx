@@ -35,10 +35,11 @@ interface Manifest {
 interface Props {
   manifests: Manifest[];
   onSelect: (manifest: Manifest) => void;
+  onFullServerRestore: (manifest: Manifest) => void;
   onRefresh: () => void;
 }
 
-export default function ManifestBrowser({ manifests, onSelect, onRefresh }: Props) {
+export default function ManifestBrowser({ manifests, onSelect, onFullServerRestore, onRefresh }: Props) {
   const { t } = useTranslation();
   const [pendingEncrypted, setPendingEncrypted] = useState<Manifest | null>(null);
   const [unlockedSessions, setUnlockedSessions] = useState<Map<string, string>>(new Map());
@@ -179,9 +180,19 @@ export default function ManifestBrowser({ manifests, onSelect, onRefresh }: Prop
                     </div>
                   </div>
 
-                  <Button variant="primary">
-                    {encrypted && !unlocked ? t('decryption.unlock') : t('recovery.restore')}
-                  </Button>
+                  <div className="flex flex-col gap-2">
+                    <Button variant="primary">
+                      {encrypted && !unlocked ? t('decryption.unlock') : t('recovery.restore')}
+                    </Button>
+                    {(!encrypted || unlocked) && (
+                      <Button
+                        variant="secondary"
+                        onClick={(e) => { e.stopPropagation(); onFullServerRestore(manifest); }}
+                      >
+                        {t('recovery.full_server_restore_btn')}
+                      </Button>
+                    )}
+                  </div>
                 </div>
               </div>
             );
