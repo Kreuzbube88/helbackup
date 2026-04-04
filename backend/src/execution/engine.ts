@@ -3,6 +3,7 @@ import { randomUUID } from 'crypto'
 import { db } from '../db/database.js'
 import { logger } from '../utils/logger.js'
 import { executeHook } from './hooks.js'
+import { notificationManager } from '../notifications/notificationManager.js'
 
 export interface JobHooks {
   prePath?: string
@@ -72,12 +73,14 @@ interface Summary {
 }
 
 interface JobRow {
+  name: string
   use_encryption: number
 }
 
 export class JobExecutionEngine extends EventEmitter {
   private readonly runId: string
   private readonly jobId: string
+  private readonly jobName: string
   private readonly startedAt: string
   private readonly useEncryption: boolean
   private sequence = 0
@@ -95,7 +98,8 @@ export class JobExecutionEngine extends EventEmitter {
     this.runId = randomUUID()
     this.jobId = jobId
     this.startedAt = new Date().toISOString()
-    const jobRow = db.prepare('SELECT use_encryption FROM jobs WHERE id = ?').get(jobId) as JobRow | undefined
+    const jobRow = db.prepare('SELECT name, use_encryption FROM jobs WHERE id = ?').get(jobId) as JobRow | undefined
+    this.jobName = jobRow?.name ?? jobId
     this.useEncryption = (jobRow?.use_encryption ?? 0) === 1
 
     db.prepare(
@@ -106,6 +110,8 @@ export class JobExecutionEngine extends EventEmitter {
   }
 
   async execute(steps: JobStep[], hooks?: JobHooks): Promise<void> {
+    void notificationManager.notify({ event: 'backup_started', jobName: this.jobName, timestamp: new Date().toISOString() })
+
     try {
       // Execute pre-backup hook
       if (hooks?.prePath) {
@@ -154,6 +160,15 @@ export class JobExecutionEngine extends EventEmitter {
         })
       }
 
+      void notificationManager.notify({
+        event: 'backup_success',
+        jobName: this.jobName,
+        backupId: this.runId,
+        timestamp: new Date().toISOString(),
+        duration,
+        size: this.summary.bytesTransferred,
+      })
+
       this.emit('job:complete')
       logger.info({ runId: this.runId }, 'Job execution completed')
     } catch (err: unknown) {
@@ -164,6 +179,14 @@ export class JobExecutionEngine extends EventEmitter {
       ).run('failed', new Date().toISOString(), duration, this.runId)
 
       this.saveSummary(duration * 1000)
+
+      void notificationManager.notify({
+        event: 'backup_failed',
+        jobName: this.jobName,
+        timestamp: new Date().toISOString(),
+        duration,
+        error: message,
+      })
 
       this.emit('job:error', { error: message })
       logger.error({ runId: this.runId, error: message }, 'Job execution failed')

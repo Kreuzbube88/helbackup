@@ -9,6 +9,7 @@ import { useToast } from '../components/common/Toast'
 import { ConfirmModal } from '../components/common/ConfirmModal'
 import { useUnsavedChanges } from '../hooks/useUnsavedChanges'
 import { api } from '../api'
+import { NotificationSettings } from '../components/notifications/NotificationSettings'
 
 const LANG_OPTIONS = [
   { value: 'de', label: 'Deutsch' },
@@ -134,6 +135,10 @@ export function Settings() {
           </form>
         </Card>
       </div>
+
+        <Card>
+          <NotificationSettings />
+        </Card>
 
       <ConfirmModal
         open={showPwConfirm}

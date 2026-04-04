@@ -203,6 +203,15 @@
     "encrypted": "Verschlüsselt",
     "unlocked": "Entsperrt"
   },
+  "notifications": {
+    "title": "Benachrichtigungen",
+    "select_channel": "Kanal wählen",
+    "enabled": "Aktiviert",
+    "events": "Ereignisse",
+    "save": "Speichern",
+    "test": "Test senden",
+    "saved": "Benachrichtigungen gespeichert"
+  },
   "status": {
     "running": "Läuft",
     "success": "Erfolgreich",

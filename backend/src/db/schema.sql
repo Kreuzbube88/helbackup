@@ -126,3 +126,22 @@ CREATE INDEX IF NOT EXISTS idx_logs_category ON logs(category);
 CREATE INDEX IF NOT EXISTS idx_logs_level ON logs(level);
 CREATE INDEX IF NOT EXISTS idx_job_history_job_id ON job_history(job_id);
 CREATE INDEX IF NOT EXISTS idx_manifest_backup_id ON manifest(backup_id);
+
+CREATE TABLE IF NOT EXISTS notification_config (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  channel TEXT NOT NULL UNIQUE,
+  enabled INTEGER DEFAULT 1,
+  config TEXT NOT NULL,
+  events TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  updated_at TEXT
+);
+
+CREATE TABLE IF NOT EXISTS notification_log (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  channel TEXT NOT NULL,
+  event TEXT NOT NULL,
+  success INTEGER NOT NULL,
+  error_message TEXT,
+  sent_at TEXT NOT NULL
+);

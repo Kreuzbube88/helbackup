@@ -203,6 +203,15 @@
     "encrypted": "Encrypted",
     "unlocked": "Unlocked"
   },
+  "notifications": {
+    "title": "Notifications",
+    "select_channel": "Select channel",
+    "enabled": "Enabled",
+    "events": "Events",
+    "save": "Save",
+    "test": "Send test",
+    "saved": "Notifications saved"
+  },
   "status": {
     "running": "Running",
     "success": "Success",

@@ -152,6 +152,28 @@ export const api = {
     decryptArchive: (backupPath: string, sessionId: string, outputDir: string) =>
       request<{ success: boolean; outputDir: string }>('POST', '/decryption/archive', { backupPath, sessionId, outputDir }),
   },
+
+  notifications: {
+    getAll: () => request<unknown[]>('GET', '/notifications'),
+    get: (channel: string) => request<unknown>('GET', `/notifications/${channel}`),
+    save: (data: { channel: string; enabled: boolean; config: Record<string, unknown>; events: string[] }) =>
+      request<{ success: boolean }>('POST', '/notifications', data),
+    delete: (channel: string) => request<{ success: boolean }>('DELETE', `/notifications/${channel}`),
+    test: (channel: string, config: Record<string, unknown>) =>
+      request<{ success: boolean }>('POST', '/notifications/test', { channel, config }),
+    getLog: () => request<unknown[]>('GET', '/notifications/log'),
+  },
+}
+
+export const notifications = {
+  getAll: () => request<unknown[]>('GET', '/notifications'),
+  get: (channel: string) => request<unknown>('GET', `/notifications/${channel}`),
+  save: (data: { channel: string; enabled: boolean; config: Record<string, unknown>; events: string[] }) =>
+    request<{ success: boolean }>('POST', '/notifications', data),
+  delete: (channel: string) => request<{ success: boolean }>('DELETE', `/notifications/${channel}`),
+  test: (channel: string, config: Record<string, unknown>) =>
+    request<{ success: boolean }>('POST', '/notifications/test', { channel, config }),
+  getLog: () => request<unknown[]>('GET', '/notifications/log'),
 }
 
 export const recovery = {

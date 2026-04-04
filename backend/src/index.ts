@@ -20,6 +20,8 @@ import { executionRoutes } from './api/execution.js'
 import recoveryRoutes from './api/recovery.js'
 import { encryptionRoutes } from './api/encryption.js'
 import { decryptionRoutes } from './api/decryption.js'
+import { notificationRoutes } from './api/notifications.js'
+import { notificationManager } from './notifications/notificationManager.js'
 
 declare module 'fastify' {
   interface FastifyInstance {
@@ -54,6 +56,9 @@ let recoveryMode = false
 // Initialize scheduler
 initScheduler()
 
+// Load notification channels
+notificationManager.loadChannels()
+
 // Register routes
 await app.register(setupRoutes)
 await app.register(authRoutes)
@@ -67,6 +72,7 @@ await app.register(executionRoutes)
 await app.register(recoveryRoutes)
 await app.register(encryptionRoutes)
 await app.register(decryptionRoutes)
+await app.register(notificationRoutes)
 
 app.get('/api/recovery/status', async (_request, reply) => {
   return reply.send({ enabled: recoveryMode })
