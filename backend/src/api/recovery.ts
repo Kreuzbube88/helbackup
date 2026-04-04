@@ -214,8 +214,7 @@ export default async function recoveryRoutes(app: FastifyInstance) {
           return reply.status(404).send({ error: 'Manifest not found' });
         }
 
-        // manifest parsed but not used yet — placeholder for future restore logic
-        JSON.parse(manifestRecord.manifest as string);
+        // manifest available for future restore logic
 
         return reply.send({
           message: 'File restore initiated',

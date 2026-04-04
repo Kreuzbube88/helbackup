@@ -20,6 +20,7 @@ export interface Manifest {
   runId: string
   timestamp: string
   helbackupVersion: string
+  backupPath: string
   entries: ManifestEntry[]
   containerConfigs?: unknown[]
   helbackupExport: string
@@ -71,6 +72,7 @@ export async function createManifest(
     runId,
     timestamp: new Date().toISOString(),
     helbackupVersion: 'v1.0',
+    backupPath,
     entries,
     containerConfigs,
     helbackupExport: path.relative(backupPath, helbackupExportPath),

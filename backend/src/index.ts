@@ -24,6 +24,7 @@ import { notificationRoutes } from './api/notifications.js'
 import { dashboardRoutes } from './api/dashboard.js'
 import { gfsRetentionRoutes } from './api/gfsRetention.js'
 import { restoreWizardRoutes } from './api/restoreWizard.js'
+import { verificationRoutes } from './api/verification.js'
 import { notificationManager } from './notifications/notificationManager.js'
 
 declare module 'fastify' {
@@ -35,6 +36,10 @@ declare module 'fastify' {
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const PORT = Number(process.env.PORT ?? 3000)
 const JWT_SECRET = process.env.JWT_SECRET ?? 'change-me-in-production'
+
+if (JWT_SECRET === 'change-me-in-production') {
+  logger.warn('JWT_SECRET is using the default value — set JWT_SECRET env var before exposing to network')
+}
 
 const app = Fastify({ logger: false })
 
@@ -79,6 +84,7 @@ await app.register(notificationRoutes)
 await app.register(dashboardRoutes)
 await app.register(gfsRetentionRoutes)
 await app.register(restoreWizardRoutes)
+await app.register(verificationRoutes)
 
 app.get('/api/recovery/status', async (_request, reply) => {
   return reply.send({ enabled: recoveryMode })

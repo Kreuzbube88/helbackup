@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '../common/Button';
+import { recovery } from '../../api';
 
 interface ChecksumEntry {
   path: string;
@@ -11,6 +12,7 @@ interface VerifyResults {
   passed: number;
   failed: number;
   missing: number;
+  error?: string;
 }
 
 interface Props {
@@ -19,21 +21,22 @@ interface Props {
   onComplete: () => void;
 }
 
-export default function VerifyBackup({ checksums, onComplete }: Props) {
+export default function VerifyBackup({ backupId, checksums, onComplete }: Props) {
   const { t } = useTranslation();
   const [verifying, setVerifying] = useState(false);
   const [results, setResults] = useState<VerifyResults | null>(null);
 
   const handleVerify = async () => {
     setVerifying(true);
-    // TODO: replace with real API call when backend verification endpoint is added
-    await new Promise<void>((resolve) => setTimeout(resolve, 2000));
-    setResults({
-      passed: checksums.length,
-      failed: 0,
-      missing: 0
-    });
-    setVerifying(false);
+    try {
+      const result = await recovery.verifyBackup(backupId);
+      setResults({ passed: result.passed, failed: result.failed, missing: result.missing });
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      setResults({ passed: 0, failed: checksums.length, missing: 0, error: msg });
+    } finally {
+      setVerifying(false);
+    }
   };
 
   if (verifying) {

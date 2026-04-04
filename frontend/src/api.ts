@@ -248,4 +248,6 @@ export const recovery = {
     request<RestorePlan>('POST', '/restore-wizard/plan', { backupId, options }),
   executeFullRestore: (backupId: string, plan: RestorePlan) =>
     request<{ success: boolean; message: string }>('POST', '/restore-wizard/execute', { backupId, plan }),
+  verifyBackup: (backupId: string) =>
+    request<{ passed: number; failed: number; missing: number }>('POST', '/verification/verify', { backupId }),
 }
