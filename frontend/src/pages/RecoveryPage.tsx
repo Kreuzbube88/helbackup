@@ -6,6 +6,7 @@ import ManifestBrowser from '../components/recovery/ManifestBrowser';
 import RestoreWizard from '../components/recovery/RestoreWizard';
 import FullServerRestoreWizard from '../components/recovery/FullServerRestoreWizard';
 import { useTranslation } from 'react-i18next';
+import { useToast } from '../components/common/Toast';
 
 interface Manifest {
   backup_id?: string;
@@ -18,6 +19,7 @@ interface Manifest {
 export default function RecoveryPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [isRecoveryMode, setIsRecoveryMode] = useState(false);
   const [manifests, setManifests] = useState<Manifest[]>([]);
   const [selectedManifest, setSelectedManifest] = useState<Manifest | null>(null);
@@ -52,9 +54,10 @@ export default function RecoveryPage() {
     try {
       await recoveryApi.enable();
       setIsRecoveryMode(true);
+      toast(t('recovery.recovery_mode_enabled', 'Recovery mode enabled'), 'success');
     } catch (error: unknown) {
       const err = error as Error;
-      alert(`Failed to enable recovery mode: ${err.message}`);
+      toast(`${t('recovery.failed_enable', 'Failed to enable recovery mode')}: ${err.message}`, 'error');
     }
   };
 
@@ -62,10 +65,11 @@ export default function RecoveryPage() {
     try {
       await recoveryApi.disable();
       setIsRecoveryMode(false);
+      toast(t('recovery.recovery_mode_disabled', 'Recovery mode disabled'), 'success');
       navigate('/');
     } catch (error: unknown) {
       const err = error as Error;
-      alert(`Failed to disable recovery mode: ${err.message}`);
+      toast(`${t('recovery.failed_disable', 'Failed to disable recovery mode')}: ${err.message}`, 'error');
     }
   };
 
@@ -87,13 +91,13 @@ export default function RecoveryPage() {
             {t('recovery.disaster_recovery_mode')}
           </h1>
 
-          <p className="mb-6 text-lg">
+          <p className="mb-6 text-lg text-gray-800">
             {t('recovery.warning_message')}
           </p>
 
           <div className="bg-white border-2 border-red-500 p-6 mb-6 text-left">
-            <h2 className="font-bold mb-2">{t('recovery.when_to_use')}</h2>
-            <ul className="list-disc list-inside space-y-2">
+            <h2 className="font-bold mb-2 text-gray-900">{t('recovery.when_to_use')}</h2>
+            <ul className="list-disc list-inside space-y-2 text-gray-800">
               <li>{t('recovery.use_case_1')}</li>
               <li>{t('recovery.use_case_2')}</li>
               <li>{t('recovery.use_case_3')}</li>

@@ -48,6 +48,32 @@ export function LogsPage() {
     return () => { es.close() }
   }, [runId])
 
+  if (!runId) {
+    return (
+      <div className="flex-1 p-6 overflow-auto">
+        <div className="flex items-center gap-4 mb-5">
+          <Button variant="ghost" size="sm" onClick={() => navigate('/jobs')}>
+            <ArrowLeft size={14} />
+            {t('common:buttons.back')}
+          </Button>
+          <h1 className="text-lg font-semibold text-[var(--text-primary)]">{t('logs.title')}</h1>
+        </div>
+        <div className="flex flex-col items-center justify-center py-24 gap-4 text-center">
+          <span className="text-5xl">📋</span>
+          <p className="text-base font-semibold text-[var(--text-primary)]">
+            {t('logs.no_logs_title', 'No Logs Available')}
+          </p>
+          <p className="text-sm text-[var(--text-secondary)] max-w-sm">
+            {t('logs.no_logs_message', 'Run a backup job to see logs here. Logs appear after job execution starts.')}
+          </p>
+          <Button variant="primary" onClick={() => navigate('/jobs')}>
+            {t('logs.view_jobs', 'View Jobs')}
+          </Button>
+        </div>
+      </div>
+    )
+  }
+
   const filteredLogs = logs.filter(log => {
     if (filters.level !== 'all' && log.level !== filters.level) return false
     if (filters.category !== 'all' && log.category !== filters.category) return false

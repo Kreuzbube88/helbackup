@@ -150,12 +150,16 @@ app.get('/api/recovery/status', async (_request, reply) => {
   return reply.send({ enabled: recoveryMode })
 })
 
-app.post('/api/recovery/enable', async (_request, reply) => {
+app.post('/api/recovery/enable', {
+  schema: { body: { type: 'object', additionalProperties: true } }
+}, async (_request, reply) => {
   recoveryMode = true
   return reply.send({ ok: true })
 })
 
-app.post('/api/recovery/disable', async (_request, reply) => {
+app.post('/api/recovery/disable', {
+  schema: { body: { type: 'object', additionalProperties: true } }
+}, async (_request, reply) => {
   recoveryMode = false
   return reply.send({ ok: true })
 })
