@@ -32,5 +32,7 @@
   "keep_minimum": "Mindestens behalten",
   "hooks": "Hooks (Skripte)",
   "pre_backup_script": "Vor-Backup Skript",
-  "post_backup_script": "Nach-Backup Skript"
+  "post_backup_script": "Nach-Backup Skript",
+  "encrypt_backup": "Backup verschlüsseln",
+  "encryption_hint": "AES-256 Verschlüsselung (Cloud: Rclone Crypt, Lokal: GPG)"
 }

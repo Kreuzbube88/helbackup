@@ -1,4 +1,7 @@
+import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
+import { api } from '../../api'
+import EncryptionSetupWizard from '../encryption/EncryptionSetupWizard'
 
 export interface AdvancedSettingsValue {
   useDatabaseDumps: boolean
@@ -7,6 +10,7 @@ export interface AdvancedSettingsValue {
   retentionMinimum: number
   preBackupScript?: string
   postBackupScript?: string
+  useEncryption: boolean
 }
 
 interface Props {
@@ -16,6 +20,14 @@ interface Props {
 
 export default function AdvancedSettings({ value, onChange }: Props) {
   const { t } = useTranslation('jobs')
+  const [encryptionConfigured, setEncryptionConfigured] = useState(false)
+  const [showEncryptionSetup, setShowEncryptionSetup] = useState(false)
+
+  useEffect(() => {
+    api.encryption.checkStatus()
+      .then(({ configured }) => setEncryptionConfigured(configured))
+      .catch(() => { /* non-critical — encryption stays unconfigured */ })
+  }, [])
 
   return (
     <div className="space-y-6">
@@ -92,6 +104,40 @@ export default function AdvancedSettings({ value, onChange }: Props) {
           />
         </div>
       </div>
+
+      {/* Encryption */}
+      <div className="flex items-start gap-4">
+        <input
+          type="checkbox"
+          id="useEncryption"
+          checked={value.useEncryption}
+          onChange={(e) => {
+            if (e.target.checked && !encryptionConfigured) {
+              setShowEncryptionSetup(true)
+            } else {
+              onChange({ ...value, useEncryption: e.target.checked })
+            }
+          }}
+          className="w-5 h-5 mt-0.5 flex-shrink-0"
+        />
+        <div>
+          <label htmlFor="useEncryption" className="font-bold cursor-pointer">
+            {t('encrypt_backup')}
+          </label>
+          <p className="text-sm opacity-70">{t('encryption_hint')}</p>
+        </div>
+      </div>
+
+      {showEncryptionSetup && (
+        <EncryptionSetupWizard
+          onComplete={() => {
+            setShowEncryptionSetup(false)
+            setEncryptionConfigured(true)
+            onChange({ ...value, useEncryption: true })
+          }}
+          onCancel={() => setShowEncryptionSetup(false)}
+        />
+      )}
 
       {/* Hooks */}
       <div className="border-2 border-[var(--border-default)] p-4 space-y-4">

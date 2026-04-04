@@ -98,6 +98,16 @@ CREATE TABLE IF NOT EXISTS audit_log (
   bytes_written INTEGER
 );
 
+-- Encryption configuration (single row, like admin)
+CREATE TABLE IF NOT EXISTS encryption_config (
+  id                       INTEGER PRIMARY KEY CHECK (id = 1),
+  encryption_password_hash TEXT NOT NULL,
+  recovery_key_hash        TEXT NOT NULL,
+  master_key_salt          TEXT NOT NULL,
+  created_at               TEXT NOT NULL,
+  last_password_change     TEXT
+);
+
 CREATE INDEX IF NOT EXISTS idx_sessions_expires ON restore_sessions(expires_at);
 CREATE INDEX IF NOT EXISTS idx_audit_timestamp ON audit_log(timestamp);
 

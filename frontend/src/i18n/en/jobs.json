@@ -32,5 +32,7 @@
   "keep_minimum": "Keep minimum",
   "hooks": "Hooks (Scripts)",
   "pre_backup_script": "Pre-backup script",
-  "post_backup_script": "Post-backup script"
+  "post_backup_script": "Post-backup script",
+  "encrypt_backup": "Encrypt backup",
+  "encryption_hint": "AES-256 encryption (Cloud: Rclone Crypt, Local: GPG)"
 }

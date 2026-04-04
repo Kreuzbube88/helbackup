@@ -135,6 +135,14 @@ export const api = {
     stopContainer: (id: string) => request<{ ok: boolean }>('POST', `/docker/containers/${id}/stop`),
     startContainer: (id: string) => request<{ ok: boolean }>('POST', `/docker/containers/${id}/start`),
   },
+
+  encryption: {
+    checkStatus: () => request<{ configured: boolean }>('GET', '/encryption/status'),
+    setup: (password: string) => request<{ success: boolean; recoveryKey: string }>('POST', '/encryption/setup', { password }),
+    verify: (password: string) => request<{ valid: boolean }>('POST', '/encryption/verify', { password }),
+    recover: (recoveryKey: string, newPassword: string) =>
+      request<{ success: boolean }>('POST', '/encryption/recover', { recoveryKey, newPassword }),
+  },
 }
 
 export const recovery = {

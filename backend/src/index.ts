@@ -18,6 +18,7 @@ import { nasRoutes } from './api/nas.js'
 import { initScheduler, stopScheduler } from './scheduler/index.js'
 import { executionRoutes } from './api/execution.js'
 import recoveryRoutes from './api/recovery.js'
+import { encryptionRoutes } from './api/encryption.js'
 
 declare module 'fastify' {
   interface FastifyInstance {
@@ -63,6 +64,7 @@ await app.register(toolsRoutes)
 await app.register(nasRoutes)
 await app.register(executionRoutes)
 await app.register(recoveryRoutes)
+await app.register(encryptionRoutes)
 
 app.get('/api/recovery/status', async (_request, reply) => {
   return reply.send({ enabled: recoveryMode })
