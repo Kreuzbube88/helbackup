@@ -48,6 +48,39 @@ async function initDb(): Promise<Database.Database> {
     "ALTER TABLE targets ADD COLUMN gfs_daily_keep INTEGER DEFAULT 7",
     "ALTER TABLE targets ADD COLUMN gfs_weekly_keep INTEGER DEFAULT 4",
     "ALTER TABLE targets ADD COLUMN gfs_monthly_keep INTEGER DEFAULT 12",
+    // Phase 10: API tokens
+    `CREATE TABLE IF NOT EXISTS api_tokens (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL,
+      token TEXT UNIQUE NOT NULL,
+      scopes TEXT NOT NULL,
+      expires_at TEXT,
+      last_used_at TEXT,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      revoked INTEGER DEFAULT 0
+    )`,
+    "CREATE INDEX IF NOT EXISTS idx_api_tokens_token ON api_tokens(token)",
+    // Phase 10: Webhooks
+    `CREATE TABLE IF NOT EXISTS webhooks (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL,
+      url TEXT NOT NULL,
+      secret TEXT,
+      events TEXT NOT NULL,
+      enabled INTEGER DEFAULT 1,
+      created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    )`,
+    `CREATE TABLE IF NOT EXISTS webhook_deliveries (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      webhook_id INTEGER NOT NULL,
+      event TEXT NOT NULL,
+      payload TEXT NOT NULL,
+      response_status INTEGER,
+      response_body TEXT,
+      attempted_at TEXT NOT NULL DEFAULT (datetime('now')),
+      retry_count INTEGER DEFAULT 0,
+      FOREIGN KEY (webhook_id) REFERENCES webhooks(id)
+    )`,
   ]) {
     try { db.exec(sql) } catch { /* column already exists */ }
   }

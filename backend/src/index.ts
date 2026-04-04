@@ -3,6 +3,9 @@ import fastifyJwt from '@fastify/jwt'
 import fastifyCookie from '@fastify/cookie'
 import fastifyCors from '@fastify/cors'
 import fastifyStatic from '@fastify/static'
+import fastifyRateLimit from '@fastify/rate-limit'
+import swagger from '@fastify/swagger'
+import swaggerUi from '@fastify/swagger-ui'
 import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -26,6 +29,13 @@ import { gfsRetentionRoutes } from './api/gfsRetention.js'
 import { restoreWizardRoutes } from './api/restoreWizard.js'
 import { verificationRoutes } from './api/verification.js'
 import { notificationManager } from './notifications/notificationManager.js'
+import { tokenRoutes } from './api/tokens.js'
+import { webhookRoutes } from './api/webhooks.js'
+import { statusRoutesV1 } from './api/v1/status.js'
+import { backupsRoutesV1 } from './api/v1/backups.js'
+import { jobsRoutesV1 } from './api/v1/jobs.js'
+import { widgetRoutesV1 } from './api/v1/widget.js'
+import { metricsRoutes } from './metrics/prometheus.js'
 
 declare module 'fastify' {
   interface FastifyInstance {
@@ -41,10 +51,53 @@ if (JWT_SECRET === 'change-me-in-production') {
   logger.warn('JWT_SECRET is using the default value — set JWT_SECRET env var before exposing to network')
 }
 
-const app = Fastify({ logger: false })
+const app = Fastify({ logger: false, bodyLimit: 100 * 1024 * 1024 })
 
 await app.register(fastifyCors, {
-  origin: process.env.NODE_ENV === 'development' ? 'http://localhost:5173' : false,
+  origin: process.env.CORS_ORIGIN ?? (process.env.NODE_ENV === 'development' ? 'http://localhost:5173' : false),
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+})
+
+await app.register(fastifyRateLimit, {
+  max: 100,
+  timeWindow: '1 minute',
+  allowList: ['127.0.0.1', '::1'],
+  keyGenerator: (request) => {
+    const token = request.headers.authorization?.substring(7)
+    return token ?? request.ip
+  },
+  errorResponseBuilder: (_request, context) => ({
+    success: false,
+    error: {
+      code: 'RATE_LIMIT',
+      message: `Rate limit exceeded. Try again in ${Math.ceil(Number(context.after) / 1000)} seconds.`,
+    },
+  }),
+})
+
+await app.register(swagger, {
+  openapi: {
+    info: {
+      title: 'HELBACKUP API',
+      description: 'Backup automation API for Unraid',
+      version: '1.0.0',
+    },
+    components: {
+      securitySchemes: {
+        apiToken: {
+          type: 'http',
+          scheme: 'bearer',
+          description: 'API Token (format: helbackup_...)',
+        },
+      },
+    },
+  },
+})
+
+await app.register(swaggerUi, {
+  routePrefix: '/api/docs',
+  uiConfig: { docExpansion: 'list', deepLinking: false },
 })
 
 await app.register(fastifyCookie)
@@ -85,6 +138,13 @@ await app.register(dashboardRoutes)
 await app.register(gfsRetentionRoutes)
 await app.register(restoreWizardRoutes)
 await app.register(verificationRoutes)
+await app.register(tokenRoutes)
+await app.register(webhookRoutes)
+await app.register(statusRoutesV1)
+await app.register(backupsRoutesV1)
+await app.register(jobsRoutesV1)
+await app.register(widgetRoutesV1)
+await app.register(metricsRoutes)
 
 app.get('/api/recovery/status', async (_request, reply) => {
   return reply.send({ enabled: recoveryMode })

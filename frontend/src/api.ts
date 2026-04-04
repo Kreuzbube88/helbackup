@@ -173,6 +173,13 @@ export const api = {
       request<{ success: boolean }>('POST', '/notifications/test', { channel, config }),
     getLog: () => request<unknown[]>('GET', '/notifications/log'),
   },
+
+  tokens: {
+    list: () => request<{ success: boolean; data: unknown }>('GET', '/tokens'),
+    create: (data: { name: string; scopes: string[]; expiresInDays?: number }) =>
+      request<{ success: boolean; data: unknown }>('POST', '/tokens', data),
+    revoke: (id: number) => request<{ success: boolean; data: unknown }>('DELETE', `/tokens/${id}`),
+  },
 }
 
 export const notifications = {
@@ -229,6 +236,18 @@ export interface RestorePlan {
     }[]
     warnings: string[]
   }
+}
+
+interface ApiTokenResponse {
+  success: boolean
+  data: unknown
+}
+
+export const api_tokens = {
+  list: () => request<ApiTokenResponse>('GET', '/tokens'),
+  create: (data: { name: string; scopes: string[]; expiresInDays?: number }) =>
+    request<ApiTokenResponse>('POST', '/tokens', data),
+  revoke: (id: number) => request<ApiTokenResponse>('DELETE', `/tokens/${id}`),
 }
 
 export const recovery = {

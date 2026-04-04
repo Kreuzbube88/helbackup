@@ -7,6 +7,7 @@ import {
   History,
   RefreshCw,
   Settings,
+  Key,
 } from 'lucide-react'
 
 interface NavItem {
@@ -20,8 +21,9 @@ const NAV_ITEMS: NavItem[] = [
   { to: '/jobs',      icon: <Briefcase size={16} />,       labelKey: 'nav.jobs' },
   { to: '/targets',   icon: <HardDrive size={16} />,       labelKey: 'nav.targets' },
   { to: '/history',   icon: <History size={16} />,         labelKey: 'nav.history' },
-  { to: '/recovery',  icon: <RefreshCw size={16} />,       labelKey: 'nav.recovery' },
-  { to: '/settings',  icon: <Settings size={16} />,        labelKey: 'nav.settings' },
+  { to: '/recovery',    icon: <RefreshCw size={16} />,  labelKey: 'nav.recovery' },
+  { to: '/api-tokens',  icon: <Key size={16} />,        labelKey: 'nav.api_tokens' },
+  { to: '/settings',    icon: <Settings size={16} />,   labelKey: 'nav.settings' },
 ]
 
 export function Sidebar() {
