@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { Button } from '../common/Button'
+import { ConfirmModal } from '../common/ConfirmModal'
 import { recovery as recoveryApi, type RestoreOptions, type RestorePlan } from '../../api'
 
 interface Manifest {
@@ -49,6 +50,7 @@ export default function FullServerRestoreWizard({ manifest, onClose }: Props) {
   const [loading, setLoading] = useState(false)
   const [executing, setExecuting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [confirmOpen, setConfirmOpen] = useState(false)
 
   const backupId = manifest.backup_id ?? manifest.backupId ?? ''
 
@@ -66,14 +68,14 @@ export default function FullServerRestoreWizard({ manifest, onClose }: Props) {
     }
   }
 
-  const handleExecute = async () => {
+  const handleExecute = () => {
     if (!plan) return
-    const confirmed = window.confirm(
-      t('recovery.full_server_restore_confirm')
-    )
-    if (!confirmed) return
+    setConfirmOpen(true)
+  }
 
-    setExecuting(true)
+  const doExecute = async () => {
+    if (!plan) return
+    setConfirmOpen(false)
     setError(null)
     try {
       await recoveryApi.executeFullRestore(backupId, plan)
@@ -230,6 +232,16 @@ export default function FullServerRestoreWizard({ manifest, onClose }: Props) {
             {t('recovery.back')}
           </Button>
         </div>
+
+        <ConfirmModal
+          open={confirmOpen}
+          onConfirm={() => { void doExecute() }}
+          onCancel={() => setConfirmOpen(false)}
+          title={t('recovery.full_server_restore_title')}
+          message={t('recovery.full_server_restore_confirm')}
+          variant="danger"
+          loading={executing}
+        />
       </div>
     )
   }

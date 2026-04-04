@@ -39,7 +39,9 @@
     "copy": "Kopieren",
     "copied": "In die Zwischenablage kopiert",
     "name_required": "Token-Name ist erforderlich",
-    "scope_required": "Mindestens eine Berechtigung erforderlich"
+    "scope_required": "Mindestens eine Berechtigung erforderlich",
+    "revoke_confirm_title": "Token widerrufen",
+    "revoke_confirm_message": "Dieser Token wird dauerhaft widerrufen und kann nicht mehr verwendet werden. Dies kann nicht rückgängig gemacht werden."
   },
   "nav": {
     "dashboard": "Dashboard",

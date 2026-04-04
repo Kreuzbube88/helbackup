@@ -5,6 +5,7 @@ import { Briefcase, Calendar, Zap, Play } from 'lucide-react'
 import { api, type Job } from '../api'
 import { Card } from '../components/common/Card'
 import { Button } from '../components/common/Button'
+import { ConfirmModal } from '../components/common/ConfirmModal'
 import { useToast } from '../components/common/Toast'
 
 export function Jobs() {
@@ -14,6 +15,7 @@ export function Jobs() {
   const [jobs, setJobs] = useState<Job[]>([])
   const [loading, setLoading] = useState(true)
   const [executing, setExecuting] = useState<Set<string>>(new Set())
+  const [executeConfirmId, setExecuteConfirmId] = useState<string | null>(null)
 
   useEffect(() => {
     api.jobs.getAll()
@@ -104,7 +106,7 @@ export function Jobs() {
                       variant="primary"
                       size="sm"
                       disabled={executing.has(job.id)}
-                      onClick={() => { void handleExecute(job.id) }}
+                      onClick={() => setExecuteConfirmId(job.id)}
                     >
                       <Play size={12} />
                       {executing.has(job.id) ? t('executing') : t('execute')}
@@ -116,6 +118,15 @@ export function Jobs() {
           </div>
         )}
       </div>
+
+      <ConfirmModal
+        open={executeConfirmId !== null}
+        onConfirm={() => { if (executeConfirmId !== null) { void handleExecute(executeConfirmId); setExecuteConfirmId(null) } }}
+        onCancel={() => setExecuteConfirmId(null)}
+        title={t('execute_confirm_title')}
+        message={t('execute_confirm_message')}
+        variant="warning"
+      />
     </div>
   )
 }

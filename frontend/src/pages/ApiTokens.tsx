@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Key, Copy, Trash2, Plus } from 'lucide-react'
 import { Button } from '../components/common/Button'
+import { ConfirmModal } from '../components/common/ConfirmModal'
 import { useToast } from '../components/common/Toast'
 import { api } from '../api'
 
@@ -32,6 +33,7 @@ export function ApiTokens() {
   const [tokens, setTokens] = useState<ApiToken[]>([])
   const [loading, setLoading] = useState(true)
   const [creating, setCreating] = useState(false)
+  const [revokeConfirmId, setRevokeConfirmId] = useState<number | null>(null)
 
   const [newName, setNewName] = useState('')
   const [newScopes, setNewScopes] = useState<string[]>(['read'])
@@ -90,6 +92,8 @@ export function ApiTokens() {
       toast(t('api_tokens.revoked'), 'success')
     } catch (error: unknown) {
       toast((error as Error).message, 'error')
+    } finally {
+      setRevokeConfirmId(null)
     }
   }
 
@@ -250,7 +254,7 @@ export function ApiTokens() {
                         <Button
                           variant="danger"
                           size="sm"
-                          onClick={() => void handleRevoke(token.id)}
+                          onClick={() => setRevokeConfirmId(token.id)}
                         >
                           <Trash2 size={12} /> {t('api_tokens.revoke')}
                         </Button>
@@ -263,6 +267,15 @@ export function ApiTokens() {
           </table>
         )}
       </div>
+
+      <ConfirmModal
+        open={revokeConfirmId !== null}
+        onConfirm={() => { if (revokeConfirmId !== null) void handleRevoke(revokeConfirmId) }}
+        onCancel={() => setRevokeConfirmId(null)}
+        title={t('api_tokens.revoke_confirm_title')}
+        message={t('api_tokens.revoke_confirm_message')}
+        variant="danger"
+      />
     </div>
   )
 }

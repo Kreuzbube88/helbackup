@@ -48,7 +48,9 @@
     "copy": "Copy",
     "copied": "Copied to clipboard",
     "name_required": "Token name is required",
-    "scope_required": "At least one scope is required"
+    "scope_required": "At least one scope is required",
+    "revoke_confirm_title": "Revoke Token",
+    "revoke_confirm_message": "This token will be permanently revoked and can no longer be used. This cannot be undone."
   },
   "tools": {
     "flash_backup": "Flash Drive Backup",
