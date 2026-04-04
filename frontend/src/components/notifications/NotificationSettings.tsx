@@ -177,8 +177,8 @@ export function NotificationSettings() {
       case 'telegram':
         return (
           <div className="flex flex-col gap-3">
-            <Input label="Bot Token" value={(cfg.botToken as string) ?? ''} onChange={e => setChannelConfig(c => ({ ...c, botToken: e.target.value }))} placeholder="110201543:AAHdqTcvCH1vGWJxfSeofSAs0K5PALDsaw" />
-            <Input label="Chat ID" value={(cfg.chatId as string) ?? ''} onChange={e => setChannelConfig(c => ({ ...c, chatId: e.target.value }))} placeholder="123456789" />
+            <Input label="Bot Token" value={(cfg.botToken as string) ?? ''} onChange={e => setChannelConfig(c => ({ ...c, botToken: e.target.value }))} placeholder="123456789:ABCdefGHIjklMNOpqrsTUVwxyz1234567890" />
+            <Input label="Chat ID" value={(cfg.chatId as string) ?? ''} onChange={e => setChannelConfig(c => ({ ...c, chatId: e.target.value }))} placeholder="-1001234567890" />
             <p className="text-xs text-[var(--text-secondary)]">
               Create a bot via @BotFather, start a chat, then get the chat_id from
               https://api.telegram.org/bot&lt;TOKEN&gt;/getUpdates
