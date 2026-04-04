@@ -22,6 +22,7 @@ import { encryptionRoutes } from './api/encryption.js'
 import { decryptionRoutes } from './api/decryption.js'
 import { notificationRoutes } from './api/notifications.js'
 import { dashboardRoutes } from './api/dashboard.js'
+import { gfsRetentionRoutes } from './api/gfsRetention.js'
 import { notificationManager } from './notifications/notificationManager.js'
 
 declare module 'fastify' {
@@ -75,6 +76,7 @@ await app.register(encryptionRoutes)
 await app.register(decryptionRoutes)
 await app.register(notificationRoutes)
 await app.register(dashboardRoutes)
+await app.register(gfsRetentionRoutes)
 
 app.get('/api/recovery/status', async (_request, reply) => {
   return reply.send({ enabled: recoveryMode })

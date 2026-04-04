@@ -241,5 +241,32 @@
     "cancelled": "Abgebrochen",
     "enabled": "Aktiv",
     "disabled": "Inaktiv"
+  },
+  "gfs": {
+    "title": "GFS Retention",
+    "select_scheme": "Retention-Schema wählen",
+    "simple_retention": "Einfache Retention",
+    "simple_description": "Backups für X Tage behalten",
+    "gfs_retention": "GFS Retention",
+    "gfs_description": "Grandfather-Father-Son: täglich, wöchentlich, monatlich",
+    "estimated_savings": "Geschätzte Ersparnis",
+    "configuration": "Konfiguration",
+    "daily": "Täglich",
+    "daily_hint": "Letzte X Tage behalten (je eine pro Tag)",
+    "weekly": "Wöchentlich",
+    "weekly_hint": "Letzte X Wochen behalten (Sonntage)",
+    "monthly": "Monatlich",
+    "monthly_hint": "Letzte X Monate behalten (1.–3. des Monats)",
+    "total_backups": "Gesamt behalten",
+    "cleanup_preview": "Cleanup-Vorschau",
+    "execute_cleanup": "Cleanup ausführen",
+    "keep": "Behalten",
+    "delete": "Löschen",
+    "space_saved": "Platz gespart",
+    "config_saved": "Konfiguration gespeichert",
+    "load_error": "Konfiguration konnte nicht geladen werden",
+    "confirm_cleanup_title": "Cleanup bestätigen",
+    "confirm_cleanup_message": "{{count}} Backups löschen und {{space}} GB freigeben?",
+    "cleanup_success": "Cleanup erfolgreich abgeschlossen"
   }
 }

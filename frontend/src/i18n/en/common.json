@@ -241,5 +241,32 @@
     "cancelled": "Cancelled",
     "enabled": "Enabled",
     "disabled": "Disabled"
+  },
+  "gfs": {
+    "title": "GFS Retention",
+    "select_scheme": "Select retention scheme",
+    "simple_retention": "Simple Retention",
+    "simple_description": "Keep backups for X days",
+    "gfs_retention": "GFS Retention",
+    "gfs_description": "Grandfather-Father-Son: daily, weekly, monthly",
+    "estimated_savings": "Estimated savings",
+    "configuration": "Configuration",
+    "daily": "Daily",
+    "daily_hint": "Keep last X days (one per day)",
+    "weekly": "Weekly",
+    "weekly_hint": "Keep last X weeks (Sundays)",
+    "monthly": "Monthly",
+    "monthly_hint": "Keep last X months (1st–3rd of month)",
+    "total_backups": "Total kept",
+    "cleanup_preview": "Cleanup Preview",
+    "execute_cleanup": "Run cleanup",
+    "keep": "Keep",
+    "delete": "Delete",
+    "space_saved": "Space saved",
+    "config_saved": "Configuration saved",
+    "load_error": "Failed to load configuration",
+    "confirm_cleanup_title": "Confirm cleanup",
+    "confirm_cleanup_message": "Delete {{count}} backups and free {{space}} GB?",
+    "cleanup_success": "Cleanup completed successfully"
   }
 }

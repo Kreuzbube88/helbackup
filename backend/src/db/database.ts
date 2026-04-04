@@ -43,6 +43,11 @@ async function initDb(): Promise<Database.Database> {
     "ALTER TABLE targets ADD COLUMN encryption_method TEXT",
     // Phase 8.5.1: store encrypted password for runtime use
     "ALTER TABLE encryption_config ADD COLUMN encrypted_password TEXT",
+    // Phase 9.2: GFS retention
+    "ALTER TABLE targets ADD COLUMN retention_scheme TEXT DEFAULT 'simple'",
+    "ALTER TABLE targets ADD COLUMN gfs_daily_keep INTEGER DEFAULT 7",
+    "ALTER TABLE targets ADD COLUMN gfs_weekly_keep INTEGER DEFAULT 4",
+    "ALTER TABLE targets ADD COLUMN gfs_monthly_keep INTEGER DEFAULT 12",
   ]) {
     try { db.exec(sql) } catch { /* column already exists */ }
   }

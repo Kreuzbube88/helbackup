@@ -116,6 +116,16 @@ export const api = {
     update: (id: string, data: Partial<{ name: string; type: string; config: Record<string, unknown>; enabled: boolean }>) =>
       request<Target>('PUT', `/targets/${id}`, data),
     delete: (id: string) => request<{ ok: boolean }>('DELETE', `/targets/${id}`),
+    getGFSConfig: (targetId: number) =>
+      request<{ retentionScheme: string; gfsConfig: { dailyKeep: number; weeklyKeep: number; monthlyKeep: number }; simpleRetention: { days: number; minimumBackups: number } }>('GET', `/targets/${targetId}/gfs`),
+    updateGFSConfig: (targetId: number, data: { retentionScheme: string; gfsConfig: { dailyKeep: number; weeklyKeep: number; monthlyKeep: number } }) =>
+      request<{ success: boolean }>('POST', `/targets/${targetId}/gfs`, data),
+    previewGFSCleanup: (targetId: number) =>
+      request<unknown>('GET', `/targets/${targetId}/gfs/preview`),
+    executeGFSCleanup: (targetId: number) =>
+      request<unknown>('POST', `/targets/${targetId}/gfs/cleanup`),
+    calculateGFSSavings: (data: { backupSizeGB: number; backupsPerWeek: number; currentRetentionDays: number; gfsConfig: { dailyKeep: number; weeklyKeep: number; monthlyKeep: number } }) =>
+      request<{ simple: { backupsKept: number; storageGB: number }; gfs: { backupsKept: number; storageGB: number }; savings: { storageGB: number; percent: number } }>('POST', '/gfs/calculator', data),
   },
 
   nas: {
