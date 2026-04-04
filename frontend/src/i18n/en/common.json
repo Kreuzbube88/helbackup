@@ -212,6 +212,28 @@
     "test": "Send test",
     "saved": "Notifications saved"
   },
+  "dashboard": {
+    "run_now": "Run Backup",
+    "system_status": "System Status",
+    "success_rate": "Success Rate (30 Days)",
+    "last_30_days": "Last 30 days",
+    "backup_history": "Backup History (30 Days)",
+    "storage": "Storage Usage",
+    "storage_unavailable": "No local targets configured",
+    "total_backups": "Total Backups",
+    "oldest_backup": "Oldest Backup",
+    "weekly_growth": "Weekly Growth",
+    "recent_jobs": "Recent Jobs",
+    "no_jobs_yet": "No jobs run yet",
+    "quick_actions": "Quick Actions",
+    "last_backup": "Last Backup",
+    "next_scheduled": "Next Scheduled",
+    "confirm_run_title": "Run Backup",
+    "confirm_run_now": "Run the first enabled backup job now?",
+    "no_enabled_jobs": "No enabled jobs found",
+    "backup_started": "Backup started",
+    "load_error": "Failed to load dashboard"
+  },
   "status": {
     "running": "Running",
     "success": "Success",

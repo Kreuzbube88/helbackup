@@ -212,6 +212,28 @@
     "test": "Test senden",
     "saved": "Benachrichtigungen gespeichert"
   },
+  "dashboard": {
+    "run_now": "Backup starten",
+    "system_status": "Systemstatus",
+    "success_rate": "Erfolgsrate (30 Tage)",
+    "last_30_days": "Letzte 30 Tage",
+    "backup_history": "Backup-Verlauf (30 Tage)",
+    "storage": "Speichernutzung",
+    "storage_unavailable": "Keine lokalen Ziele konfiguriert",
+    "total_backups": "Backups gesamt",
+    "oldest_backup": "Ältestes Backup",
+    "weekly_growth": "Wöchentliches Wachstum",
+    "recent_jobs": "Letzte Jobs",
+    "no_jobs_yet": "Noch keine Jobs ausgeführt",
+    "quick_actions": "Schnellaktionen",
+    "last_backup": "Letztes Backup",
+    "next_scheduled": "Nächste Ausführung",
+    "confirm_run_title": "Backup starten",
+    "confirm_run_now": "Das erste aktivierte Backup jetzt ausführen?",
+    "no_enabled_jobs": "Keine aktiven Jobs gefunden",
+    "backup_started": "Backup gestartet",
+    "load_error": "Dashboard konnte nicht geladen werden"
+  },
   "status": {
     "running": "Läuft",
     "success": "Erfolgreich",

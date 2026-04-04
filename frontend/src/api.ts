@@ -176,6 +176,10 @@ export const notifications = {
   getLog: () => request<unknown[]>('GET', '/notifications/log'),
 }
 
+export const dashboard = {
+  get: () => request<unknown>('GET', '/dashboard'),
+}
+
 export const recovery = {
   getStatus: () => request<{ enabled: boolean }>('GET', '/recovery/status'),
   enable: () => request<{ ok: boolean }>('POST', '/recovery/enable'),
