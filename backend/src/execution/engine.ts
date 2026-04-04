@@ -71,10 +71,15 @@ interface Summary {
   warnings: number
 }
 
+interface JobRow {
+  use_encryption: number
+}
+
 export class JobExecutionEngine extends EventEmitter {
   private readonly runId: string
   private readonly jobId: string
   private readonly startedAt: string
+  private readonly useEncryption: boolean
   private sequence = 0
   private summary: Summary = {
     filesCopied: 0,
@@ -90,6 +95,8 @@ export class JobExecutionEngine extends EventEmitter {
     this.runId = randomUUID()
     this.jobId = jobId
     this.startedAt = new Date().toISOString()
+    const jobRow = db.prepare('SELECT use_encryption FROM jobs WHERE id = ?').get(jobId) as JobRow | undefined
+    this.useEncryption = (jobRow?.use_encryption ?? 0) === 1
 
     db.prepare(
       'INSERT INTO job_history (id, job_id, status, started_at) VALUES (?, ?, ?, ?)'
@@ -165,35 +172,38 @@ export class JobExecutionEngine extends EventEmitter {
   }
 
   private async executeStep(step: JobStep): Promise<void> {
+    // Inject job-level encryption flag into every step config
+    const cfg = { ...step.config, useEncryption: this.useEncryption }
+
     switch (step.type) {
       case 'flash': {
         const { executeFlashBackup } = await import('./steps/flash.js')
-        await executeFlashBackup(step.config as unknown as Parameters<typeof executeFlashBackup>[0], this)
+        await executeFlashBackup(cfg as unknown as Parameters<typeof executeFlashBackup>[0], this)
         break
       }
       case 'appdata': {
         const { executeAppdataBackup } = await import('./steps/appdata.js')
-        await executeAppdataBackup(step.config as unknown as Parameters<typeof executeAppdataBackup>[0], this)
+        await executeAppdataBackup(cfg as unknown as Parameters<typeof executeAppdataBackup>[0], this)
         break
       }
       case 'vms': {
         const { executeVMBackup } = await import('./steps/vms.js')
-        await executeVMBackup(step.config as unknown as Parameters<typeof executeVMBackup>[0], this)
+        await executeVMBackup(cfg as unknown as Parameters<typeof executeVMBackup>[0], this)
         break
       }
       case 'docker_images': {
         const { executeDockerImageExport } = await import('./steps/docker-images.js')
-        await executeDockerImageExport(step.config as unknown as Parameters<typeof executeDockerImageExport>[0], this)
+        await executeDockerImageExport(cfg as unknown as Parameters<typeof executeDockerImageExport>[0], this)
         break
       }
       case 'system_config': {
         const { executeSystemConfigBackup } = await import('./steps/system-config.js')
-        await executeSystemConfigBackup(step.config as unknown as Parameters<typeof executeSystemConfigBackup>[0], this)
+        await executeSystemConfigBackup(cfg as unknown as Parameters<typeof executeSystemConfigBackup>[0], this)
         break
       }
       case 'cloud': {
         const { executeCloudBackup } = await import('./steps/cloud.js')
-        await executeCloudBackup(step.config as unknown as Parameters<typeof executeCloudBackup>[0], this)
+        await executeCloudBackup(cfg as unknown as Parameters<typeof executeCloudBackup>[0], this)
         break
       }
       default:

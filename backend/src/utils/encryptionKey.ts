@@ -1,7 +1,7 @@
 import crypto from 'node:crypto'
 import bcrypt from 'bcryptjs'
 import { db } from '../db/database.js'
-import { getMasterKeySalt } from './masterKey.js'
+import { getMasterKeySalt, encryptData, decryptData } from './masterKey.js'
 import { logger } from './logger.js'
 
 interface EncryptionConfigRow {
@@ -9,6 +9,7 @@ interface EncryptionConfigRow {
   encryption_password_hash: string
   recovery_key_hash: string
   master_key_salt: string
+  encrypted_password: string | null
   created_at: string
   last_password_change: string | null
 }
@@ -46,10 +47,14 @@ export async function setupEncryption(password: string): Promise<string> {
   const recoveryKeyHash = await hashRecoveryKey(recoveryKey)
   const salt = getMasterKeySalt()
 
+  // Encrypt the actual password for runtime use
+  const encryptedPassword = encryptData(password, salt)
+
   db.prepare(`
-    INSERT INTO encryption_config (id, encryption_password_hash, recovery_key_hash, master_key_salt, created_at)
-    VALUES (1, ?, ?, ?, ?)
-  `).run(passwordHash, recoveryKeyHash, salt, new Date().toISOString())
+    INSERT INTO encryption_config
+      (id, encryption_password_hash, recovery_key_hash, master_key_salt, encrypted_password, created_at)
+    VALUES (1, ?, ?, ?, ?, ?)
+  `).run(passwordHash, recoveryKeyHash, salt, encryptedPassword, new Date().toISOString())
 
   logger.warn('Encryption configured — recovery key generated')
 
@@ -68,6 +73,26 @@ export async function verifyEncryptionPassword(password: string): Promise<boolea
   return bcrypt.compare(password, config.encryption_password_hash)
 }
 
+export function getEncryptionPassword(): string {
+  const config = db.prepare('SELECT * FROM encryption_config WHERE id = 1').get() as
+    | EncryptionConfigRow
+    | undefined
+
+  if (!config) {
+    throw new Error('Encryption not configured')
+  }
+
+  if (!config.encrypted_password) {
+    throw new Error('Encrypted password not stored — re-run encryption setup')
+  }
+
+  try {
+    return decryptData(config.encrypted_password, config.master_key_salt)
+  } catch (err: unknown) {
+    throw new Error(`Failed to decrypt encryption password: ${err instanceof Error ? err.message : String(err)}`)
+  }
+}
+
 export async function resetEncryptionPassword(recoveryKey: string, newPassword: string): Promise<void> {
   const config = db.prepare('SELECT * FROM encryption_config WHERE id = 1').get() as
     | EncryptionConfigRow
@@ -83,12 +108,13 @@ export async function resetEncryptionPassword(recoveryKey: string, newPassword: 
   }
 
   const passwordHash = await bcrypt.hash(newPassword, 10)
+  const encryptedPassword = encryptData(newPassword, config.master_key_salt)
 
   db.prepare(`
     UPDATE encryption_config
-    SET encryption_password_hash = ?, last_password_change = ?
+    SET encryption_password_hash = ?, encrypted_password = ?, last_password_change = ?
     WHERE id = 1
-  `).run(passwordHash, new Date().toISOString())
+  `).run(passwordHash, encryptedPassword, new Date().toISOString())
 
   logger.warn('Encryption password reset via recovery key')
 }

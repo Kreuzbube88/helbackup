@@ -104,6 +104,7 @@ CREATE TABLE IF NOT EXISTS encryption_config (
   encryption_password_hash TEXT NOT NULL,
   recovery_key_hash        TEXT NOT NULL,
   master_key_salt          TEXT NOT NULL,
+  encrypted_password       TEXT,
   created_at               TEXT NOT NULL,
   last_password_change     TEXT
 );

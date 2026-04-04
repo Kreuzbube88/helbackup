@@ -9,16 +9,17 @@ export interface RcloneCryptConfig {
   salt?: string
 }
 
-export async function createRcloneCryptRemote(config: RcloneCryptConfig): Promise<string> {
+export async function createRcloneCryptRemote(
+  config: RcloneCryptConfig,
+  rcloneConfigPath?: string
+): Promise<string> {
   const cryptRemoteName = `helbackup-crypt-${Date.now()}`
 
   const obscuredPassword = await obscurePassword(config.password)
   const obscuredSalt = config.salt ? await obscurePassword(config.salt) : ''
 
-  const configDir = '/app/data/rclone'
-  await fs.mkdir(configDir, { recursive: true })
-
-  const configPath = path.join(configDir, 'rclone.conf')
+  const resolvedPath = rcloneConfigPath ?? '/app/data/rclone/rclone.conf'
+  await fs.mkdir(path.dirname(resolvedPath), { recursive: true })
 
   const cryptConfig = [
     `\n[${cryptRemoteName}]`,
@@ -29,9 +30,9 @@ export async function createRcloneCryptRemote(config: RcloneCryptConfig): Promis
     `filename_encryption = standard`,
     `directory_name_encryption = true`,
     '',
-  ].filter(line => line !== undefined).join('\n')
+  ].filter(Boolean).join('\n')
 
-  await fs.appendFile(configPath, cryptConfig)
+  await fs.appendFile(resolvedPath, cryptConfig)
 
   logger.info(`Created Rclone crypt remote: ${cryptRemoteName}`)
 

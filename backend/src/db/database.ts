@@ -41,6 +41,8 @@ async function initDb(): Promise<Database.Database> {
     // Phase 8.5: encryption support
     "ALTER TABLE jobs ADD COLUMN use_encryption INTEGER NOT NULL DEFAULT 0",
     "ALTER TABLE targets ADD COLUMN encryption_method TEXT",
+    // Phase 8.5.1: store encrypted password for runtime use
+    "ALTER TABLE encryption_config ADD COLUMN encrypted_password TEXT",
   ]) {
     try { db.exec(sql) } catch { /* column already exists */ }
   }

@@ -2,6 +2,8 @@ import { spawn } from 'child_process'
 import { createWriteStream } from 'fs'
 import { executeRsync } from '../../tools/rsync.js'
 import { JobExecutionEngine } from '../engine.js'
+import { getEncryptionPassword } from '../../utils/encryptionKey.js'
+import { encryptFileGPG } from '../../utils/gpgEncrypt.js'
 import path from 'path'
 import fs from 'fs/promises'
 
@@ -10,6 +12,7 @@ export interface VMBackupConfig {
   destination: string
   targetId: string
   includeDisks: boolean
+  useEncryption: boolean
 }
 
 interface VMInfo {
@@ -154,6 +157,29 @@ export async function executeVMBackup(
       engine.log('error', 'system', `Failed to backup VM ${vmName}: ${message}`, undefined, {
         error: { code: 'VM_BACKUP_FAILED', stack, suggestion: 'Check if VM exists and virsh is available' },
       })
+    }
+  }
+
+  if (config.useEncryption) {
+    engine.log('info', 'system', 'Encrypting VM backups...')
+    try {
+      const encryptionPassword = getEncryptionPassword()
+      const entries = await fs.readdir(destPath)
+
+      for (const file of entries) {
+        if (!file.endsWith('.xml')) continue
+        const xmlPath = path.join(destPath, file)
+        const encryptedPath = `${xmlPath}.gpg`
+        await encryptFileGPG(xmlPath, encryptedPath, encryptionPassword)
+        await fs.unlink(xmlPath)
+        engine.log('info', 'system', `Encrypted: ${file}`)
+      }
+
+      engine.log('info', 'system', 'VM backups encrypted')
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err)
+      engine.log('error', 'system', `VM encryption failed: ${msg}`)
+      throw err
     }
   }
 

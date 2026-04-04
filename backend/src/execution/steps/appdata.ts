@@ -1,3 +1,4 @@
+import { spawn } from 'node:child_process'
 import path from 'path'
 import fs from 'fs/promises'
 import { db } from '../../db/database.js'
@@ -5,6 +6,8 @@ import { listContainers, inspectContainer, stopContainer, startContainer } from 
 import { executeRsync } from '../../tools/rsync.js'
 import { createTarArchive } from '../../tools/tar.js'
 import { dumpDatabaseContainers } from './database-dump.js'
+import { getEncryptionPassword } from '../../utils/encryptionKey.js'
+import { encryptFileGPG } from '../../utils/gpgEncrypt.js'
 import type { JobExecutionEngine } from '../engine.js'
 
 interface TargetRow {
@@ -40,6 +43,7 @@ export interface AppdataBackupConfig {
   databaseContainers?: string[]
   externalVolumes?: ExternalVolumeConfig[]
   containerSettings?: Record<string, ContainerBackupSettings>
+  useEncryption: boolean
 }
 
 export async function executeAppdataBackup(
@@ -213,6 +217,37 @@ export async function executeAppdataBackup(
           })
         }
       }
+    }
+  }
+
+  if (config.useEncryption) {
+    engine.log('info', 'system', 'Encrypting appdata backup...')
+    try {
+      const encryptionPassword = getEncryptionPassword()
+
+      if (config.method === 'tar') {
+        const tarFile = path.join(destPath, 'appdata.tar.gz')
+        const encryptedFile = `${tarFile}.gpg`
+        await encryptFileGPG(tarFile, encryptedFile, encryptionPassword)
+        await fs.unlink(tarFile)
+      } else {
+        // rsync method: tar the destination directory, then encrypt
+        const tarFile = path.join(destPath, 'appdata-rsync.tar.gz')
+        await new Promise<void>((resolve, reject) => {
+          const tar = spawn('tar', ['-czf', tarFile, '-C', destPath, '.', '--exclude=appdata-rsync.tar.gz'])
+          tar.on('close', (code) => code === 0 ? resolve() : reject(new Error(`tar failed with code ${code}`)))
+          tar.on('error', reject)
+        })
+        const encryptedFile = `${tarFile}.gpg`
+        await encryptFileGPG(tarFile, encryptedFile, encryptionPassword)
+        await fs.unlink(tarFile)
+      }
+
+      engine.log('info', 'system', 'Appdata backup encrypted')
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err)
+      engine.log('error', 'system', `Appdata encryption failed: ${msg}`)
+      throw err
     }
   }
 

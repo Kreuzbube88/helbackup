@@ -1,5 +1,7 @@
 import { spawn } from 'child_process'
 import { JobExecutionEngine } from '../engine.js'
+import { getEncryptionPassword } from '../../utils/encryptionKey.js'
+import { encryptFileGPG } from '../../utils/gpgEncrypt.js'
 import path from 'path'
 import fs from 'fs/promises'
 
@@ -7,6 +9,7 @@ export interface DockerImageExportConfig {
   images: string[]
   destination: string
   targetId: string
+  useEncryption: boolean
 }
 
 async function exportDockerImage(
@@ -75,6 +78,29 @@ export async function executeDockerImageExport(
   }
 
   await fs.writeFile(path.join(destPath, 'manifest.json'), JSON.stringify(manifest, null, 2))
+
+  if (config.useEncryption) {
+    engine.log('info', 'system', 'Encrypting Docker images...')
+    try {
+      const encryptionPassword = getEncryptionPassword()
+      const entries = await fs.readdir(destPath)
+
+      for (const file of entries) {
+        if (!file.endsWith('.tar')) continue
+        const tarPath = path.join(destPath, file)
+        const encryptedPath = `${tarPath}.gpg`
+        await encryptFileGPG(tarPath, encryptedPath, encryptionPassword)
+        await fs.unlink(tarPath)
+        engine.log('info', 'system', `Encrypted: ${file}`)
+      }
+
+      engine.log('info', 'system', 'Docker images encrypted')
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err)
+      engine.log('error', 'system', `Docker image encryption failed: ${msg}`)
+      throw err
+    }
+  }
 
   engine.log('info', 'system', 'Docker image export completed')
 }

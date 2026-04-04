@@ -1,5 +1,8 @@
+import { spawn } from 'node:child_process'
 import { executeRsync } from '../../tools/rsync.js'
 import { JobExecutionEngine } from '../engine.js'
+import { getEncryptionPassword } from '../../utils/encryptionKey.js'
+import { encryptFileGPG } from '../../utils/gpgEncrypt.js'
 import path from 'path'
 import fs from 'fs/promises'
 
@@ -7,6 +10,7 @@ export interface SystemConfigBackupConfig {
   destination: string
   targetId: string
   includeItems: string[]
+  useEncryption: boolean
 }
 
 const CONFIG_PATHS: Record<string, string> = {
@@ -96,6 +100,30 @@ export async function executeSystemConfigBackup(
   }
 
   await fs.writeFile(path.join(destPath, 'manifest.json'), JSON.stringify(manifest, null, 2))
+
+  if (config.useEncryption) {
+    engine.log('info', 'system', 'Encrypting system config...')
+    try {
+      const encryptionPassword = getEncryptionPassword()
+      const tarFile = path.join(destPath, 'system-config.tar.gz')
+
+      await new Promise<void>((resolve, reject) => {
+        const tar = spawn('tar', ['-czf', tarFile, '-C', destPath, '.', '--exclude=system-config.tar.gz'])
+        tar.on('close', (code) => code === 0 ? resolve() : reject(new Error(`tar failed with code ${code}`)))
+        tar.on('error', reject)
+      })
+
+      const encryptedFile = `${tarFile}.gpg`
+      await encryptFileGPG(tarFile, encryptedFile, encryptionPassword)
+      await fs.unlink(tarFile)
+
+      engine.log('info', 'system', 'System config encrypted')
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err)
+      engine.log('error', 'system', `System config encryption failed: ${msg}`)
+      throw err
+    }
+  }
 
   engine.log('info', 'system', 'System config backup completed')
 }
