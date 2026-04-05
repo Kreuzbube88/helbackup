@@ -12,8 +12,6 @@ interface JobRow {
   enabled: number
   schedule: string | null
   steps: string
-  last_run: string | null
-  next_run: string | null
 }
 
 export async function jobsRoutesV1(app: FastifyInstance): Promise<void> {
