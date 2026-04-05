@@ -81,12 +81,14 @@ export async function executeRsync(options: RsyncOptions): Promise<RsyncResult> 
     })
 
     rsync.on('close', (code: number | null) => {
-      if (code === 0) {
+      // 0 = success, 23 = partial transfer (some files unreadable), 24 = vanished files — treat as warnings
+      if (code === 0 || code === 23 || code === 24) {
         const statsMatch = lastOutput.match(/Total transferred file size: ([\d,]+) bytes/)
         if (statsMatch) bytesTransferred = parseInt(statsMatch[1].replace(/,/g, ''))
         const filesMatch = lastOutput.match(/Number of regular files transferred: ([\d,]+)/)
         const filesTransferred = filesMatch ? parseInt(filesMatch[1].replace(/,/g, '')) : 0
-        logger.info(`Rsync completed. Transferred: ${bytesTransferred} bytes, ${filesTransferred} files`)
+        if (code !== 0) logger.warn(`Rsync completed with warnings (exit ${code}). Transferred: ${bytesTransferred} bytes`)
+        else logger.info(`Rsync completed. Transferred: ${bytesTransferred} bytes, ${filesTransferred} files`)
         resolve({ success: true, bytesTransferred, filesTransferred })
       } else {
         const error = `Rsync failed with exit code ${code}`
