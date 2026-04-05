@@ -135,4 +135,22 @@ export async function jobsRoutes(app: FastifyInstance): Promise<void> {
       return reply.send(history)
     }
   )
+
+  app.get(
+    '/api/history',
+    { preHandler: [app.authenticate] },
+    async (_request: FastifyRequest, reply: FastifyReply) => {
+      interface HistoryWithName extends JobHistoryRow { job_name: string }
+      const rows = db
+        .prepare(`
+          SELECT jh.*, j.name AS job_name
+          FROM job_history jh
+          LEFT JOIN jobs j ON j.id = jh.job_id
+          ORDER BY jh.started_at DESC
+          LIMIT 200
+        `)
+        .all() as HistoryWithName[]
+      return reply.send(rows)
+    }
+  )
 }

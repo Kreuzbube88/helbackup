@@ -273,6 +273,18 @@
     "test": "Test senden",
     "saved": "Benachrichtigungen gespeichert"
   },
+  "history": {
+    "title": "Verlauf",
+    "empty": "Noch keine Jobs ausgeführt",
+    "load_error": "Verlauf konnte nicht geladen werden",
+    "job": "Job",
+    "started": "Gestartet",
+    "duration": "Dauer",
+    "status": "Status",
+    "view_logs": "Logs anzeigen",
+    "seconds": "s",
+    "running_label": "läuft"
+  },
   "dashboard": {
     "run_now": "Backup starten",
     "system_status": "Systemstatus",

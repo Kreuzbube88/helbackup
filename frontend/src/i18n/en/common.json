@@ -273,6 +273,18 @@
     "test": "Send test",
     "saved": "Notifications saved"
   },
+  "history": {
+    "title": "History",
+    "empty": "No jobs run yet",
+    "load_error": "Failed to load history",
+    "job": "Job",
+    "started": "Started",
+    "duration": "Duration",
+    "status": "Status",
+    "view_logs": "View logs",
+    "seconds": "s",
+    "running_label": "running"
+  },
   "dashboard": {
     "run_now": "Run Backup",
     "system_status": "System Status",

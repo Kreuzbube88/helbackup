@@ -21,6 +21,7 @@ import { Settings } from './pages/Settings'
 import { LogsPage } from './pages/LogsPage'
 import RecoveryPage from './pages/RecoveryPage'
 import { ApiTokens } from './pages/ApiTokens'
+import { HistoryPage } from './pages/HistoryPage'
 
 function ProtectedLayout() {
   const { isAuthenticated, setAuth, logout } = useStore()
@@ -100,7 +101,7 @@ export function App() {
               <Route path="/settings" element={<Settings />} />
               <Route path="/logs/:runId" element={<LogsPage />} />
               <Route path="/logs" element={<Navigate to="/jobs" replace />} />
-              <Route path="/history" element={<Navigate to="/jobs" replace />} />
+              <Route path="/history" element={<HistoryPage />} />
               <Route path="/recovery" element={<RecoveryPage />} />
               <Route path="/api-tokens" element={<ApiTokens />} />
               <Route path="*" element={<Navigate to="/" replace />} />
