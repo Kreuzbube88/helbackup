@@ -13,6 +13,18 @@ interface ToastContextValue {
   toast: (message: string, variant?: ToastVariant) => void
 }
 
+// Fallback UUID generator for non-HTTPS contexts
+function generateId(): string {
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    try {
+      return crypto.randomUUID()
+    } catch {
+      // Fall through to fallback
+    }
+  }
+  return `${Date.now()}-${Math.random().toString(36).substring(2, 11)}`
+}
+
 const ToastContext = createContext<ToastContextValue | null>(null)
 
 const variantStyles: Record<ToastVariant, string> = {
@@ -41,7 +53,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const toast = useCallback((message: string, variant: ToastVariant = 'info') => {
-    const id = crypto.randomUUID()
+    const id = generateId()
     setToasts(prev => [...prev, { id, message, variant }])
     const timer = setTimeout(() => dismiss(id), 5000)
     timers.current.set(id, timer)
@@ -56,7 +68,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   return (
     <ToastContext.Provider value={{ toast }}>
       {children}
-      <div className="fixed top-4 right-4 z-[100] flex flex-col gap-2 max-w-sm w-full pointer-events-none">
+      <div className="fixed bottom-4 right-4 z-[100] flex flex-col-reverse gap-2 max-w-sm w-full pointer-events-none">
         {toasts.map(item => (
           <div
             key={item.id}

@@ -135,6 +135,9 @@ export function Settings() {
           </form>
         </Card>
         <Card>
+          <h2 className="text-sm font-semibold text-[var(--text-secondary)] mb-6 uppercase tracking-wider">
+            {t('settings:notifications.title', 'Notifications')}
+          </h2>
           <NotificationSettings />
         </Card>
       </div>

@@ -203,12 +203,7 @@ export function NotificationSettings() {
   }
 
   return (
-    <div className="flex flex-col gap-6">
-      <h2 className="text-sm font-semibold text-[var(--text-secondary)] uppercase tracking-wider">
-        {t('notifications.title')}
-      </h2>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* Channel list */}
         <div className="flex flex-col gap-2">
           {CHANNELS.map(ch => {
@@ -286,6 +281,5 @@ export function NotificationSettings() {
           </div>
         )}
       </div>
-    </div>
   )
 }

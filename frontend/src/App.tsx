@@ -98,6 +98,7 @@ export function App() {
               <Route path="/targets" element={<Targets />} />
               <Route path="/settings" element={<Settings />} />
               <Route path="/logs/:runId" element={<LogsPage />} />
+              <Route path="/logs" element={<Navigate to="/jobs" replace />} />
               <Route path="/recovery" element={<RecoveryPage />} />
               <Route path="/api-tokens" element={<ApiTokens />} />
               <Route path="*" element={<Navigate to="/" replace />} />

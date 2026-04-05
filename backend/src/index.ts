@@ -146,24 +146,6 @@ await app.register(jobsRoutesV1)
 await app.register(widgetRoutesV1)
 await app.register(metricsRoutes)
 
-app.get('/api/recovery/status', async (_request, reply) => {
-  return reply.send({ enabled: recoveryMode })
-})
-
-app.post('/api/recovery/enable', {
-  schema: { body: { type: 'object', additionalProperties: true } }
-}, async (_request, reply) => {
-  recoveryMode = true
-  return reply.send({ ok: true })
-})
-
-app.post('/api/recovery/disable', {
-  schema: { body: { type: 'object', additionalProperties: true } }
-}, async (_request, reply) => {
-  recoveryMode = false
-  return reply.send({ ok: true })
-})
-
 // Serve React SPA in production
 const distPath = path.join(__dirname, '../frontend/dist')
 await app.register(fastifyStatic, {
