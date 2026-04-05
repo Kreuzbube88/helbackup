@@ -60,11 +60,11 @@ export async function executeAppdataBackup(
 
   // Use local copies to avoid mutating the caller's config object on retry
   const containers = helbackupId
-    ? config.containers.filter(id => id !== helbackupId)
-    : [...config.containers]
+    ? (config.containers ?? []).filter(id => id !== helbackupId)
+    : [...(config.containers ?? [])]
   const stopOrder = helbackupId
-    ? config.stopOrder.filter(id => id !== helbackupId)
-    : [...config.stopOrder]
+    ? (config.stopOrder ?? []).filter(id => id !== helbackupId)
+    : [...(config.stopOrder ?? [])]
 
   if (helbackupId) {
     engine.log('warn', 'system', 'HELBACKUP container excluded from backup scope')
