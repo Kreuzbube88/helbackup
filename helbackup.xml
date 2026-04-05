@@ -86,6 +86,10 @@ This container has write access to /boot and /mnt/user for automated restore cap
     Description="⚠️ Unraid user array (READ-WRITE for automated restore). PROTECTED: Write operations only allowed during explicit restore sessions with multi-step confirmation!"
     Type="Path" Display="always" Required="true" Mask="false">/mnt/user</Config>
   
+  <Config Name="Cache Drive" Target="/mnt/cache" Default="/mnt/cache" Mode="ro"
+    Description="Unraid cache drive (read-only) - Required if VM disks are stored on cache (e.g. /mnt/cache/domains/)"
+    Type="Path" Display="advanced" Required="false" Mask="false">/mnt/cache</Config>
+
   <Config Name="Libvirt Configs" Target="/unraid/libvirt" Default="/etc/libvirt" Mode="ro"
     Description="VM configurations (read-only) - For VM backup"
     Type="Path" Display="advanced" Required="false" Mask="false">/etc/libvirt</Config>
