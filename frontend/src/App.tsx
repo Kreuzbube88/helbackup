@@ -30,7 +30,7 @@ import { FirstBackupWizard } from './components/onboarding/FirstBackupWizard'
 
 function ProtectedLayout() {
   const { isAuthenticated, setAuth, logout } = useStore()
-  const [showOnboarding, setShowOnboarding] = useState(() => !isOnboardingDone())
+  const [showOnboarding, setShowOnboarding] = useState(false)
   const [showFirstWizard, setShowFirstWizard] = useState(false)
 
   useEffect(() => {
@@ -42,6 +42,12 @@ function ProtectedLayout() {
     })
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  useEffect(() => {
+    if (isAuthenticated && !isOnboardingDone()) {
+      setShowOnboarding(true)
+    }
+  }, [isAuthenticated])
 
   if (!isAuthenticated) return <Navigate to="/login" replace />
 
