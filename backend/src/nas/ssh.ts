@@ -44,7 +44,15 @@ export async function executeSSHCommand(config: SSHConfig, command: string): Pro
         let output = ''
         let errorOutput = ''
 
+        // Timeout for command execution (60s) in addition to the connection timeout
+        const execTimeout = setTimeout(() => {
+          stream.destroy()
+          conn.end()
+          reject(new Error(`SSH command timed out after 60s: ${command}`))
+        }, 60_000)
+
         stream.on('close', (code: number) => {
+          clearTimeout(execTimeout)
           conn.end()
           if (code === 0) {
             resolve({ success: true, output })

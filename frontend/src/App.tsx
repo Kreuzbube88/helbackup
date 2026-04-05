@@ -22,6 +22,7 @@ import { LogsPage } from './pages/LogsPage'
 import RecoveryPage from './pages/RecoveryPage'
 import { ApiTokens } from './pages/ApiTokens'
 import { HistoryPage } from './pages/HistoryPage'
+import { ErrorBoundary } from './components/common/ErrorBoundary'
 
 function ProtectedLayout() {
   const { isAuthenticated, setAuth, logout } = useStore()
@@ -44,7 +45,9 @@ function ProtectedLayout() {
       <div className="flex flex-1 overflow-hidden">
         <Sidebar />
         <main className="flex-1 overflow-auto flex">
-          <Outlet />
+          <ErrorBoundary>
+            <Outlet />
+          </ErrorBoundary>
         </main>
       </div>
     </div>

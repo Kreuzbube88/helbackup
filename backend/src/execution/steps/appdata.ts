@@ -58,9 +58,15 @@ export async function executeAppdataBackup(
     c.Names.some(n => n.toLowerCase().includes('helbackup'))
   )?.Id
 
+  // Use local copies to avoid mutating the caller's config object on retry
+  const containers = helbackupId
+    ? config.containers.filter(id => id !== helbackupId)
+    : [...config.containers]
+  const stopOrder = helbackupId
+    ? config.stopOrder.filter(id => id !== helbackupId)
+    : [...config.stopOrder]
+
   if (helbackupId) {
-    config.containers = config.containers.filter(id => id !== helbackupId)
-    config.stopOrder = config.stopOrder.filter(id => id !== helbackupId)
     engine.log('warn', 'system', 'HELBACKUP container excluded from backup scope')
   }
 
@@ -79,7 +85,7 @@ export async function executeAppdataBackup(
   // Export container configs BEFORE stopping
   engine.log('info', 'system', 'Exporting container configs...')
   const containerConfigs: unknown[] = []
-  for (const containerId of config.containers) {
+  for (const containerId of containers) {
     try {
       const details = await inspectContainer(containerId)
       containerConfigs.push({
@@ -106,7 +112,7 @@ export async function executeAppdataBackup(
   await fs.writeFile(path.join(destPath, 'containers.json'), JSON.stringify(containerConfigs, null, 2))
 
   // Determine which containers to stop (respect per-container skipStopping)
-  const stopOrderFiltered = config.stopOrder.filter(id =>
+  const stopOrderFiltered = stopOrder.filter(id =>
     !config.containerSettings?.[id]?.skipStopping
   )
 
