@@ -77,7 +77,7 @@ export function Settings() {
   }
 
   return (
-    <div className="flex-1 p-6 overflow-auto max-w-6xl relative">
+    <div className="flex-1 p-6 overflow-auto relative">
       {/* Background watermark */}
       <div className="fixed inset-0 pointer-events-none opacity-5 flex items-center justify-center">
         <img src="/logo.png" alt="" className="w-1/2 max-w-2xl" />
