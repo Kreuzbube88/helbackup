@@ -17,6 +17,7 @@ export interface RsyncOptions {
 export interface RsyncResult {
   success: boolean
   bytesTransferred: number
+  filesTransferred: number
   error?: string
 }
 
@@ -83,8 +84,10 @@ export async function executeRsync(options: RsyncOptions): Promise<RsyncResult> 
       if (code === 0) {
         const statsMatch = lastOutput.match(/Total transferred file size: ([\d,]+) bytes/)
         if (statsMatch) bytesTransferred = parseInt(statsMatch[1].replace(/,/g, ''))
-        logger.info(`Rsync completed. Transferred: ${bytesTransferred} bytes`)
-        resolve({ success: true, bytesTransferred })
+        const filesMatch = lastOutput.match(/Number of regular files transferred: ([\d,]+)/)
+        const filesTransferred = filesMatch ? parseInt(filesMatch[1].replace(/,/g, '')) : 0
+        logger.info(`Rsync completed. Transferred: ${bytesTransferred} bytes, ${filesTransferred} files`)
+        resolve({ success: true, bytesTransferred, filesTransferred })
       } else {
         const error = `Rsync failed with exit code ${code}`
         logger.error(error)

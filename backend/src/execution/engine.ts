@@ -310,6 +310,11 @@ export class JobExecutionEngine extends EventEmitter {
     this.emit('log', event)
   }
 
+  addTransferred(files: number, bytes: number): void {
+    this.summary.filesCopied += files
+    this.summary.bytesTransferred += bytes
+  }
+
   getRunId(): string {
     return this.runId
   }

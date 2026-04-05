@@ -68,13 +68,14 @@ export async function executeSystemConfigBackup(
           const stats = await fs.stat(sourcePath)
 
           if (stats.isDirectory()) {
-            await executeRsync({
+            const rsyncResult = await executeRsync({
               source: sourcePath,
               destination: itemDestPath,
               onProgress: (() => { let last = -1; return (data: { percent: number }) => {
                 if (Math.floor(data.percent / 10) > Math.floor(last / 10)) { last = data.percent; engine.log('debug', 'system', `Progress: ${data.percent}%`) }
               } })(),
             })
+            engine.addTransferred(rsyncResult.filesTransferred, rsyncResult.bytesTransferred)
           } else {
             const destFile = path.join(itemDestPath, path.basename(sourcePath))
             await fs.copyFile(sourcePath, destFile)

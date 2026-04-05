@@ -180,7 +180,8 @@ export async function executeAppdataBackup(
           if (Math.floor(percent / 10) > Math.floor(last / 10)) { last = percent; engine.log('info', 'system', `Progress: ${percent}% — ${speed}`) }
         } })(),
       })
-      engine.log('info', 'system', `Rsync done: ${result.bytesTransferred} bytes`)
+      engine.addTransferred(result.filesTransferred, result.bytesTransferred)
+      engine.log('info', 'system', `Rsync done: ${result.filesTransferred} files, ${result.bytesTransferred} bytes`)
     }
 
     // Backup external volumes
