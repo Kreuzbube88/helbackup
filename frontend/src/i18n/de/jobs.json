@@ -36,5 +36,16 @@
   "encrypt_backup": "Backup verschlüsseln",
   "encryption_hint": "AES-256 Verschlüsselung (Cloud: Rclone Crypt, Lokal: GPG)",
   "execute_confirm_title": "Backup jetzt starten",
-  "execute_confirm_message": "Dieser Backup-Job wird sofort gestartet. Fortfahren?"
+  "execute_confirm_message": "Dieser Backup-Job wird sofort gestartet. Fortfahren?",
+  "create_new": "Neuen Job erstellen",
+  "created": "Job erfolgreich erstellt",
+  "create_error": "Job konnte nicht erstellt werden",
+  "deleted": "Job erfolgreich gelöscht",
+  "delete_error": "Job konnte nicht gelöscht werden",
+  "delete_confirm_title": "Job löschen?",
+  "delete_confirm_message": "Diese Aktion kann nicht rückgängig gemacht werden. Die zugehörige Backup-Historie wird ebenfalls gelöscht.",
+  "name": "Name",
+  "schedule": "Zeitplan (Cron)",
+  "enabled": "Aktiviert",
+  "invalid_cron": "Ungültiger Cron-Ausdruck (5 Felder erwartet)"
 }

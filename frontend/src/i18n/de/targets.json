@@ -5,5 +5,16 @@
   "load_error": "Fehler beim Laden der Ziele",
   "type_synology": "Synology NAS",
   "type_rclone": "Rclone (Cloud)",
-  "type_local": "Lokales Dateisystem"
+  "type_local": "Lokales Dateisystem",
+  "type_nas": "NAS (SSH/Rsync)",
+  "create_new": "Neues Ziel erstellen",
+  "created": "Ziel erfolgreich erstellt",
+  "create_error": "Ziel konnte nicht erstellt werden",
+  "deleted": "Ziel erfolgreich gelöscht",
+  "delete_error": "Ziel konnte nicht gelöscht werden",
+  "delete_confirm_title": "Ziel löschen?",
+  "delete_confirm_message": "Diese Aktion kann nicht rückgängig gemacht werden. Backups auf diesem Ziel bleiben erhalten.",
+  "name": "Name",
+  "type": "Typ",
+  "enabled": "Aktiviert"
 }

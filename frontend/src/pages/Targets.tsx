@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { HardDrive, Cloud, Server } from 'lucide-react'
+import { HardDrive, Cloud, Server, Trash2 } from 'lucide-react'
 import { api, type Target } from '../api'
 import { Card } from '../components/common/Card'
 import { Button } from '../components/common/Button'
+import { ConfirmModal } from '../components/common/ConfirmModal'
 import { useToast } from '../components/common/Toast'
+import { TargetCreateModal } from '../components/targets/TargetCreateModal'
 
 const TYPE_ICONS: Record<string, React.ReactNode> = {
   synology: <Server size={16} />,
@@ -17,14 +19,33 @@ export function Targets() {
   const { toast } = useToast()
   const [targets, setTargets] = useState<Target[]>([])
   const [loading, setLoading] = useState(true)
+  const [showCreateModal, setShowCreateModal] = useState(false)
+  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null)
 
-  useEffect(() => {
+  function loadTargets() {
+    setLoading(true)
     api.targets.getAll()
       .then(setTargets)
       .catch(() => toast(t('load_error'), 'error'))
       .finally(() => setLoading(false))
+  }
+
+  useEffect(() => {
+    loadTargets()
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  const handleDeleteTarget = async (): Promise<void> => {
+    if (!deleteTargetId) return
+    try {
+      await api.targets.delete(deleteTargetId)
+      toast(t('deleted'), 'success')
+      loadTargets()
+    } catch (err: unknown) {
+      toast(err instanceof Error ? err.message : t('delete_error'), 'error')
+    }
+    setDeleteTargetId(null)
+  }
 
   if (loading) {
     return (
@@ -43,7 +64,7 @@ export function Targets() {
       <div className="relative">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-xl font-semibold text-[var(--text-primary)]">{t('title')}</h1>
-          <Button variant="primary" size="sm">
+          <Button variant="primary" size="sm" onClick={() => setShowCreateModal(true)}>
             {t('create')}
           </Button>
         </div>
@@ -69,22 +90,42 @@ export function Targets() {
                       </p>
                     </div>
                   </div>
-                  <span
-                    className={[
-                      'px-2 py-0.5 text-xs rounded',
-                      target.enabled
-                        ? 'bg-green-500/15 text-green-400'
-                        : 'bg-[var(--bg-elevated)] text-[var(--text-muted)]',
-                    ].join(' ')}
-                  >
-                    {target.enabled ? t('common:status.enabled') : t('common:status.disabled')}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span
+                      className={[
+                        'px-2 py-0.5 text-xs rounded',
+                        target.enabled
+                          ? 'bg-green-500/15 text-green-400'
+                          : 'bg-[var(--bg-elevated)] text-[var(--text-muted)]',
+                      ].join(' ')}
+                    >
+                      {target.enabled ? t('common:status.enabled') : t('common:status.disabled')}
+                    </span>
+                    <Button variant="ghost" size="sm" onClick={() => setDeleteTargetId(target.id)}>
+                      <Trash2 size={12} />
+                    </Button>
+                  </div>
                 </div>
               </Card>
             ))}
           </div>
         )}
       </div>
+
+      <TargetCreateModal
+        open={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        onSuccess={loadTargets}
+      />
+
+      <ConfirmModal
+        open={deleteTargetId !== null}
+        onConfirm={() => { void handleDeleteTarget() }}
+        onCancel={() => setDeleteTargetId(null)}
+        title={t('delete_confirm_title')}
+        message={t('delete_confirm_message')}
+        variant="danger"
+      />
     </div>
   )
 }

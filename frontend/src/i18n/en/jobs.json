@@ -36,5 +36,16 @@
   "encrypt_backup": "Encrypt backup",
   "encryption_hint": "AES-256 encryption (Cloud: Rclone Crypt, Local: GPG)",
   "execute_confirm_title": "Run Backup Now",
-  "execute_confirm_message": "This will start the backup job immediately. Continue?"
+  "execute_confirm_message": "This will start the backup job immediately. Continue?",
+  "create_new": "Create New Job",
+  "created": "Job created successfully",
+  "create_error": "Failed to create job",
+  "deleted": "Job deleted successfully",
+  "delete_error": "Failed to delete job",
+  "delete_confirm_title": "Delete Job?",
+  "delete_confirm_message": "This action cannot be undone. All associated backup history will also be deleted.",
+  "name": "Name",
+  "schedule": "Schedule (Cron)",
+  "enabled": "Enabled",
+  "invalid_cron": "Invalid cron expression (5 fields expected)"
 }

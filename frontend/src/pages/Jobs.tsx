@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
-import { Briefcase, Calendar, Zap, Play } from 'lucide-react'
+import { Briefcase, Calendar, Zap, Play, Trash2 } from 'lucide-react'
 import { api, type Job } from '../api'
 import { Card } from '../components/common/Card'
 import { Button } from '../components/common/Button'
 import { ConfirmModal } from '../components/common/ConfirmModal'
 import { useToast } from '../components/common/Toast'
+import { JobCreateModal } from '../components/jobs/JobCreateModal'
 
 export function Jobs() {
   const { t } = useTranslation('jobs')
@@ -16,14 +17,33 @@ export function Jobs() {
   const [loading, setLoading] = useState(true)
   const [executing, setExecuting] = useState<Set<string>>(new Set())
   const [executeConfirmId, setExecuteConfirmId] = useState<string | null>(null)
+  const [showCreateModal, setShowCreateModal] = useState(false)
+  const [deleteJobId, setDeleteJobId] = useState<string | null>(null)
 
-  useEffect(() => {
+  function loadJobs() {
+    setLoading(true)
     api.jobs.getAll()
       .then(setJobs)
       .catch(() => toast(t('load_error'), 'error'))
       .finally(() => setLoading(false))
+  }
+
+  useEffect(() => {
+    loadJobs()
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  const handleDeleteJob = async (): Promise<void> => {
+    if (!deleteJobId) return
+    try {
+      await api.jobs.delete(deleteJobId)
+      toast(t('deleted'), 'success')
+      loadJobs()
+    } catch (err: unknown) {
+      toast(err instanceof Error ? err.message : t('delete_error'), 'error')
+    }
+    setDeleteJobId(null)
+  }
 
   const handleExecute = async (jobId: string): Promise<void> => {
     setExecuting(prev => new Set(prev).add(jobId))
@@ -54,7 +74,7 @@ export function Jobs() {
       <div className="relative">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-xl font-semibold text-[var(--text-primary)]">{t('title')}</h1>
-          <Button variant="primary" size="sm">
+          <Button variant="primary" size="sm" onClick={() => setShowCreateModal(true)}>
             {t('create')}
           </Button>
         </div>
@@ -103,6 +123,13 @@ export function Jobs() {
                       {job.enabled ? t('common:status.enabled') : t('common:status.disabled')}
                     </span>
                     <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setDeleteJobId(job.id)}
+                    >
+                      <Trash2 size={12} />
+                    </Button>
+                    <Button
                       variant="primary"
                       size="sm"
                       disabled={executing.has(job.id)}
@@ -126,6 +153,21 @@ export function Jobs() {
         title={t('execute_confirm_title')}
         message={t('execute_confirm_message')}
         variant="warning"
+      />
+
+      <JobCreateModal
+        open={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        onSuccess={loadJobs}
+      />
+
+      <ConfirmModal
+        open={deleteJobId !== null}
+        onConfirm={() => { void handleDeleteJob() }}
+        onCancel={() => setDeleteJobId(null)}
+        title={t('delete_confirm_title')}
+        message={t('delete_confirm_message')}
+        variant="danger"
       />
     </div>
   )
