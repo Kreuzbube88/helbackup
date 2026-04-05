@@ -62,9 +62,11 @@ export async function executeAppdataBackup(
   const containers = helbackupId
     ? (config.containers ?? []).filter(id => id !== helbackupId)
     : [...(config.containers ?? [])]
+  // Fallback: old jobs may not have stopOrder — use containers as default order
+  const rawStopOrder = (config.stopOrder ?? []).length > 0 ? (config.stopOrder ?? []) : (config.containers ?? [])
   const stopOrder = helbackupId
-    ? (config.stopOrder ?? []).filter(id => id !== helbackupId)
-    : [...(config.stopOrder ?? [])]
+    ? rawStopOrder.filter(id => id !== helbackupId)
+    : [...rawStopOrder]
 
   if (helbackupId) {
     engine.log('warn', 'system', 'HELBACKUP container excluded from backup scope')
