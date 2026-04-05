@@ -5,6 +5,40 @@ import fs from 'fs/promises';
 import path from 'path';
 
 export default async function recoveryRoutes(app: FastifyInstance) {
+  // Recovery mode state
+  let recoveryMode = false
+
+  // Get recovery mode status
+  app.get('/api/recovery/status', async (_request, reply) => {
+    return reply.send({ enabled: recoveryMode })
+  })
+
+  // Enable recovery mode
+  app.post('/api/recovery/enable', {
+    schema: {
+      body: {
+        type: 'object',
+        additionalProperties: true
+      }
+    }
+  }, async (_request, reply) => {
+    recoveryMode = true
+    return reply.send({ ok: true })
+  })
+
+  // Disable recovery mode
+  app.post('/api/recovery/disable', {
+    schema: {
+      body: {
+        type: 'object',
+        additionalProperties: true
+      }
+    }
+  }, async (_request, reply) => {
+    recoveryMode = false
+    return reply.send({ ok: true })
+  })
+
   // List all backup manifests
   app.get('/api/recovery/manifests', async (request, reply) => {
     try {

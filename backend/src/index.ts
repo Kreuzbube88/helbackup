@@ -112,8 +112,6 @@ app.decorate('authenticate', async (request: import('fastify').FastifyRequest, r
   }
 })
 
-let recoveryMode = false
-
 // Initialize scheduler
 initScheduler()
 
