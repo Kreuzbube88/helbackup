@@ -1,7 +1,7 @@
-import { spawn } from 'child_process'
 import type { JobExecutionEngine } from '../engine.js'
 import { getEncryptionPassword } from '../../utils/encryptionKey.js'
 import { encryptFileGPG } from '../../utils/gpgEncrypt.js'
+import { saveImage } from '../../docker/client.js'
 import path from 'path'
 import fs from 'fs/promises'
 
@@ -17,29 +17,12 @@ async function exportDockerImage(
   destPath: string,
   engine: JobExecutionEngine
 ): Promise<void> {
-  return new Promise((resolve, reject) => {
-    engine.log('info', 'system', `Exporting Docker image: ${imageName}`)
-
-    const outputFile = path.join(destPath, `${imageName.replace(/[:/]/g, '_')}.tar`)
-    const docker = spawn('docker', ['save', '-o', outputFile, imageName])
-
-    docker.stderr.on('data', (data: Buffer) => {
-      engine.log('debug', 'system', data.toString().trim())
-    })
-
-    docker.on('close', async (code: number | null) => {
-      if (code === 0) {
-        const stats = await fs.stat(outputFile)
-        engine.log('info', 'file', `Image exported: ${imageName}`, undefined, {
-          file: { path: outputFile, size: stats.size, result: 'copied' },
-        })
-        resolve()
-      } else {
-        reject(new Error(`Failed to export image ${imageName}`))
-      }
-    })
-
-    docker.on('error', reject)
+  engine.log('info', 'system', `Exporting Docker image: ${imageName}`)
+  const outputFile = path.join(destPath, `${imageName.replace(/[:/]/g, '_')}.tar`)
+  await saveImage(imageName, outputFile)
+  const stats = await fs.stat(outputFile)
+  engine.log('info', 'file', `Image exported: ${imageName}`, undefined, {
+    file: { path: outputFile, size: stats.size, result: 'copied' },
   })
 }
 

@@ -83,3 +83,14 @@ export async function listImages(): Promise<DockerImage[]> {
   if (statusCode !== 200) throw new Error(`Docker API error: ${statusCode}`)
   return (await body.json()) as DockerImage[]
 }
+
+export async function saveImage(imageName: string, destFile: string): Promise<void> {
+  const { pipeline } = await import('node:stream/promises')
+  const { createWriteStream } = await import('node:fs')
+  const { statusCode, body } = await dockerPool.request({
+    path: `/images/${encodeURIComponent(imageName)}/get`,
+    method: 'GET',
+  })
+  if (statusCode !== 200) throw new Error(`Docker API error saving image: ${statusCode}`)
+  await pipeline(body, createWriteStream(destFile))
+}
