@@ -136,7 +136,7 @@ export function ApiTokens() {
               <Copy size={12} /> {t('api_tokens.copy')}
             </Button>
             <Button variant="ghost" size="sm" onClick={() => setCreatedToken(null)}>
-              {t('common.buttons.close')}
+              {t('common:buttons.close')}
             </Button>
           </div>
         </div>
