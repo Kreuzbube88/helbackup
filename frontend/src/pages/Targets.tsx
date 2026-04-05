@@ -13,10 +13,9 @@ import { TargetEditModal } from '../components/targets/TargetEditModal'
 import { useKeyboardShortcut } from '../hooks/useKeyboardShortcut'
 
 const TYPE_ICONS: Record<string, React.ReactNode> = {
-  synology: <Server size={16} />,
-  rclone:   <Cloud size={16} />,
-  local:    <HardDrive size={16} />,
-  nas:      <Server size={16} />,
+  nas:    <Server size={16} />,
+  rclone: <Cloud size={16} />,
+  local:  <HardDrive size={16} />,
 }
 
 export function Targets() {

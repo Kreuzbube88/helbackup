@@ -44,7 +44,7 @@ export function TargetEditModal({ target, open, onClose, onSuccess }: Props) {
     setName(target.name)
     setEnabled(target.enabled)
     const cfg = target.config
-    const t2 = (target.type === 'synology' ? 'nas' : target.type) as TargetType
+    const t2 = target.type as TargetType
     setType(t2)
     if (t2 === 'local') {
       setLocalPath((cfg.path as string) ?? '')

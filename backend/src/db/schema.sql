@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS settings (
 CREATE TABLE IF NOT EXISTS targets (
   id         TEXT PRIMARY KEY,
   name       TEXT NOT NULL,
-  type       TEXT NOT NULL CHECK (type IN ('synology', 'rclone', 'local')),
+  type       TEXT NOT NULL CHECK (type IN ('nas', 'rclone', 'local')),
   config     TEXT NOT NULL DEFAULT '{}',
   enabled    INTEGER NOT NULL DEFAULT 1,
   created_at TEXT NOT NULL DEFAULT (datetime('now')),

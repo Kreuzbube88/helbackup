@@ -3,7 +3,6 @@
   "create": "Ziel erstellen",
   "empty": "Keine Ziele vorhanden. Füge dein erstes Backup-Ziel hinzu.",
   "load_error": "Fehler beim Laden der Ziele",
-  "type_synology": "Synology NAS",
   "type_rclone": "Rclone (Cloud)",
   "type_local": "Lokales Dateisystem",
   "type_nas": "NAS (SSH/Rsync)",
