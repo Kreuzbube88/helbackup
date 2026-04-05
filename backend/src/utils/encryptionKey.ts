@@ -22,12 +22,13 @@ export function generateEncryptionRecoveryKey(): string {
   return blocks.join('-')
 }
 
-export async function hashRecoveryKey(key: string): Promise<string> {
+// Use recoveryKey.ts helpers for consistent hashing (bcrypt cost 12)
+async function hashKey(key: string): Promise<string> {
   const normalized = key.replace(/-/g, '').toUpperCase()
-  return bcrypt.hash(normalized, 10)
+  return bcrypt.hash(normalized, 12)
 }
 
-export async function verifyRecoveryKey(key: string, hash: string): Promise<boolean> {
+async function verifyKey(key: string, hash: string): Promise<boolean> {
   const normalized = key.replace(/-/g, '').toUpperCase()
   return bcrypt.compare(normalized, hash)
 }
@@ -43,8 +44,8 @@ export async function setupEncryption(password: string): Promise<string> {
   }
 
   const recoveryKey = generateEncryptionRecoveryKey()
-  const passwordHash = await bcrypt.hash(password, 10)
-  const recoveryKeyHash = await hashRecoveryKey(recoveryKey)
+  const passwordHash = await bcrypt.hash(password, 12)
+  const recoveryKeyHash = await hashKey(recoveryKey)
   const salt = getMasterKeySalt()
 
   // Encrypt the actual password for runtime use
@@ -102,12 +103,12 @@ export async function resetEncryptionPassword(recoveryKey: string, newPassword: 
     throw new Error('Encryption not configured')
   }
 
-  const valid = await verifyRecoveryKey(recoveryKey, config.recovery_key_hash)
+  const valid = await verifyKey(recoveryKey, config.recovery_key_hash)
   if (!valid) {
     throw new Error('Invalid recovery key')
   }
 
-  const passwordHash = await bcrypt.hash(newPassword, 10)
+  const passwordHash = await bcrypt.hash(newPassword, 12)
   const encryptedPassword = encryptData(newPassword, config.master_key_salt)
 
   db.prepare(`

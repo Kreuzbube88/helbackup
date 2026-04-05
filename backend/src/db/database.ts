@@ -82,7 +82,13 @@ async function initDb(): Promise<Database.Database> {
       FOREIGN KEY (webhook_id) REFERENCES webhooks(id)
     )`,
   ]) {
-    try { db.exec(sql) } catch { /* column already exists */ }
+    try { db.exec(sql) } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err)
+      // Silently ignore "already exists" errors — safe to retry migrations
+      if (!msg.includes('already exists') && !msg.includes('duplicate column')) {
+        logger.warn({ sql, err: msg }, 'Migration warning')
+      }
+    }
   }
 
   logger.info({ path: DB_PATH }, 'Database initialized')

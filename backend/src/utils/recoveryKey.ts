@@ -11,7 +11,7 @@ export function generateRecoveryKey(): string {
 
 export async function hashRecoveryKey(key: string): Promise<string> {
   const normalized = key.replace(/-/g, '').toUpperCase()
-  return bcrypt.hash(normalized, 10)
+  return bcrypt.hash(normalized, 12)
 }
 
 export async function verifyRecoveryKey(key: string, hash: string): Promise<boolean> {

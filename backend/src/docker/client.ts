@@ -38,7 +38,7 @@ export async function listContainers(): Promise<Container[]> {
     method: 'GET',
   })
   if (statusCode !== 200) throw new Error(`Docker API error: ${statusCode}`)
-  return body.json() as Promise<Container[]>
+  return (await body.json()) as Container[]
 }
 
 export async function inspectContainer(id: string): Promise<ContainerInspect> {
@@ -47,7 +47,7 @@ export async function inspectContainer(id: string): Promise<ContainerInspect> {
     method: 'GET',
   })
   if (statusCode !== 200) throw new Error(`Docker API error: ${statusCode}`)
-  return body.json() as Promise<ContainerInspect>
+  return (await body.json()) as ContainerInspect
 }
 
 export async function stopContainer(id: string): Promise<void> {

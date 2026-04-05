@@ -39,7 +39,7 @@ export async function webhookRoutes(app: FastifyInstance): Promise<void> {
         .all() as Omit<WebhookRow, 'secret'>[]
       return successResponse(reply, webhooks)
     } catch (error: unknown) {
-      return errorResponse(reply, ErrorCodes.INTERNAL_ERROR, (error as Error).message, 500)
+      return errorResponse(reply, ErrorCodes.INTERNAL_ERROR, error instanceof Error ? error.message : String(error), 500)
     }
   })
 
@@ -66,7 +66,7 @@ export async function webhookRoutes(app: FastifyInstance): Promise<void> {
         logger.info(`Webhook created: ${name} (ID: ${result.lastInsertRowid})`)
         return successResponse(reply, { id: result.lastInsertRowid }, 201)
       } catch (error: unknown) {
-        return errorResponse(reply, ErrorCodes.INTERNAL_ERROR, (error as Error).message, 500)
+        return errorResponse(reply, ErrorCodes.INTERNAL_ERROR, error instanceof Error ? error.message : String(error), 500)
       }
     }
   )
@@ -76,10 +76,12 @@ export async function webhookRoutes(app: FastifyInstance): Promise<void> {
     { preHandler: [app.authenticate] },
     async (request, reply) => {
       try {
+        const existing = db.prepare('SELECT id FROM webhooks WHERE id = ?').get(request.params.id)
+        if (!existing) return errorResponse(reply, ErrorCodes.NOT_FOUND, 'Webhook not found', 404)
         db.prepare('DELETE FROM webhooks WHERE id = ?').run(request.params.id)
         return successResponse(reply, { deleted: true })
       } catch (error: unknown) {
-        return errorResponse(reply, ErrorCodes.INTERNAL_ERROR, (error as Error).message, 500)
+        return errorResponse(reply, ErrorCodes.INTERNAL_ERROR, error instanceof Error ? error.message : String(error), 500)
       }
     }
   )
@@ -97,7 +99,7 @@ export async function webhookRoutes(app: FastifyInstance): Promise<void> {
         })
         return successResponse(reply, { sent: true })
       } catch (error: unknown) {
-        return errorResponse(reply, ErrorCodes.INTERNAL_ERROR, (error as Error).message, 500)
+        return errorResponse(reply, ErrorCodes.INTERNAL_ERROR, error instanceof Error ? error.message : String(error), 500)
       }
     }
   )

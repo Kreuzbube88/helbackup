@@ -17,7 +17,7 @@ export async function dockerRoutes(app: FastifyInstance): Promise<void> {
           !c.Names.some(n => isHelbackup(n.replace('/', '')))
         )
         return reply.send(filtered)
-      } catch (error) {
+      } catch (error: unknown) {
         app.log.error(error)
         return reply.status(500).send({ error: 'Failed to list containers' })
       }
@@ -31,7 +31,7 @@ export async function dockerRoutes(app: FastifyInstance): Promise<void> {
       try {
         const details = await inspectContainer(request.params.id)
         return reply.send(details)
-      } catch (error) {
+      } catch (error: unknown) {
         app.log.error(error)
         return reply.status(500).send({ error: 'Failed to inspect container' })
       }
@@ -49,7 +49,7 @@ export async function dockerRoutes(app: FastifyInstance): Promise<void> {
         }
         await stopContainer(request.params.id)
         return reply.send({ ok: true })
-      } catch (error) {
+      } catch (error: unknown) {
         app.log.error(error)
         return reply.status(500).send({ error: 'Failed to stop container' })
       }
@@ -63,7 +63,7 @@ export async function dockerRoutes(app: FastifyInstance): Promise<void> {
       try {
         await startContainer(request.params.id)
         return reply.send({ ok: true })
-      } catch (error) {
+      } catch (error: unknown) {
         app.log.error(error)
         return reply.status(500).send({ error: 'Failed to start container' })
       }
