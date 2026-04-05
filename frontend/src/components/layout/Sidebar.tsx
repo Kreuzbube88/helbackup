@@ -8,6 +8,7 @@ import {
   RefreshCw,
   Settings,
   Key,
+  Bell,
 } from 'lucide-react'
 
 interface NavItem {
@@ -22,8 +23,9 @@ const NAV_ITEMS: NavItem[] = [
   { to: '/targets',   icon: <HardDrive size={16} />,       labelKey: 'nav.targets' },
   { to: '/history',   icon: <History size={16} />,         labelKey: 'nav.history' },
   { to: '/recovery',    icon: <RefreshCw size={16} />,  labelKey: 'nav.recovery' },
-  { to: '/api-tokens',  icon: <Key size={16} />,        labelKey: 'nav.api_tokens' },
-  { to: '/settings',    icon: <Settings size={16} />,   labelKey: 'nav.settings' },
+  { to: '/api-tokens',       icon: <Key  size={16} />,     labelKey: 'nav.api_tokens' },
+  { to: '/notification-log', icon: <Bell size={16} />,    labelKey: 'nav.notification_log' },
+  { to: '/settings',         icon: <Settings size={16} />, labelKey: 'nav.settings' },
 ]
 
 export function Sidebar() {

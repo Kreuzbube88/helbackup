@@ -22,6 +22,7 @@ import { LogsPage } from './pages/LogsPage'
 import RecoveryPage from './pages/RecoveryPage'
 import { ApiTokens } from './pages/ApiTokens'
 import { HistoryPage } from './pages/HistoryPage'
+import { NotificationLogPage } from './pages/NotificationLogPage'
 import { ErrorBoundary } from './components/common/ErrorBoundary'
 
 function ProtectedLayout() {
@@ -107,6 +108,7 @@ export function App() {
               <Route path="/history" element={<HistoryPage />} />
               <Route path="/recovery" element={<RecoveryPage />} />
               <Route path="/api-tokens" element={<ApiTokens />} />
+              <Route path="/notification-log" element={<NotificationLogPage />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Route>
           </>
