@@ -2,7 +2,7 @@ import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify'
 import { randomUUID } from 'node:crypto'
 import { db } from '../db/database.js'
 import { activeExecutions } from '../execution/active.js'
-import { requireScope } from '../middleware/tokenAuth.js'
+import { tokenAuth } from '../middleware/tokenAuth.js'
 
 // Short-lived SSE tokens: token → { runId, expiresAt }
 const sseTokens = new Map<string, { runId: string; expiresAt: number }>()
@@ -23,7 +23,17 @@ export async function logsRoutes(app: FastifyInstance): Promise<void> {
   // POST /api/logs/:runId/stream-token — issue short-lived SSE token (60s TTL)
   app.post<{ Params: { runId: string } }>(
     '/api/logs/:runId/stream-token',
-    { preHandler: [requireScope('read')] },
+    {
+      preHandler: [async (request: FastifyRequest, reply: FastifyReply) => {
+        // Accept JWT (UI) or API token (HELDASH)
+        const auth = request.headers.authorization ?? ''
+        if (auth.startsWith('Bearer helbackup_')) {
+          await tokenAuth(request, reply, 'read')
+        } else {
+          await app.authenticate(request, reply)
+        }
+      }],
+    },
     async (request: FastifyRequest<{ Params: { runId: string } }>, reply: FastifyReply) => {
       const sseToken = randomUUID()
       sseTokens.set(sseToken, { runId: request.params.runId, expiresAt: Date.now() + 60_000 })
