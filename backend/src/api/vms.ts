@@ -1,48 +1,31 @@
 import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify'
-import { spawn } from 'child_process'
+import fs from 'fs/promises'
+import path from 'path'
 
 export interface VmInfo {
   name: string
-  state: string
 }
 
-function parseVirshList(output: string): VmInfo[] {
-  const lines = output.split('\n')
+const LIBVIRT_QEMU_DIR = '/unraid/libvirt/qemu'
+
+async function listVMs(): Promise<VmInfo[]> {
+  const entries = await fs.readdir(LIBVIRT_QEMU_DIR)
+  const xmlFiles = entries.filter(f => f.endsWith('.xml'))
+
   const vms: VmInfo[] = []
-
-  for (const line of lines) {
-    // Skip header lines and separators
-    if (!line.trim() || line.trim().startsWith('Id') || line.trim().startsWith('-')) continue
-
-    // Format: " 1     Windows10    running" or " -     Ubuntu-22    shut off"
-    const match = line.match(/^\s+[-\d]+\s+(\S+)\s+(.+?)\s*$/)
-    if (match) {
-      vms.push({ name: match[1], state: match[2].trim() })
+  for (const file of xmlFiles) {
+    try {
+      const xml = await fs.readFile(path.join(LIBVIRT_QEMU_DIR, file), 'utf8')
+      const match = xml.match(/<name>([^<]+)<\/name>/)
+      if (match) {
+        vms.push({ name: match[1] })
+      }
+    } catch {
+      // skip unreadable files
     }
   }
 
-  return vms
-}
-
-async function listVMs(): Promise<VmInfo[]> {
-  return new Promise((resolve, reject) => {
-    const virsh = spawn('virsh', ['list', '--all'])
-    let stdout = ''
-    let stderr = ''
-
-    virsh.stdout.on('data', (data: Buffer) => { stdout += data.toString() })
-    virsh.stderr.on('data', (data: Buffer) => { stderr += data.toString() })
-
-    virsh.on('close', (code: number | null) => {
-      if (code !== 0) {
-        reject(new Error(`virsh list failed (code ${code}): ${stderr}`))
-        return
-      }
-      resolve(parseVirshList(stdout))
-    })
-
-    virsh.on('error', (err: Error) => reject(err))
-  })
+  return vms.sort((a, b) => a.name.localeCompare(b.name))
 }
 
 export async function vmRoutes(app: FastifyInstance): Promise<void> {

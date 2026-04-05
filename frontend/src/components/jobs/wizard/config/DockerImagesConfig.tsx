@@ -30,6 +30,7 @@ export function DockerImagesConfig({ value, onChange, targets }: Props) {
         const tags = imgs
           .flatMap(img => img.RepoTags ?? [])
           .filter(tag => tag !== '<none>:<none>')
+          .sort((a, b) => a.localeCompare(b))
         setAvailable(tags)
       })
       .catch(() => setError(t('fetch_error_images')))

@@ -97,7 +97,6 @@ export interface DockerImage {
 
 export interface VmInfo {
   name: string
-  state: string
 }
 
 export const api = {

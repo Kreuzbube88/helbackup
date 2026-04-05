@@ -62,23 +62,17 @@ export default function VMSelector({ value, includeDisks, onChange, onIncludeDis
 
       {!loading && !error && vms.length > 0 && (
         <div className="space-y-1 max-h-48 overflow-y-auto border border-[var(--border-default)] p-2">
-          {vms.map(vm => {
-            const isRunning = vm.state === 'running'
-            return (
-              <label key={vm.name} className="flex items-center gap-2 text-sm cursor-pointer hover:bg-[var(--bg-elevated)] px-1 py-0.5">
-                <input
-                  type="checkbox"
-                  checked={value.includes(vm.name)}
-                  onChange={() => toggle(vm.name)}
-                  className="accent-[var(--theme-primary)]"
-                />
-                <span className="flex-1 text-[var(--text-primary)]">{vm.name}</span>
-                <span className={`text-xs px-1.5 py-0.5 rounded ${isRunning ? 'text-[var(--status-success)]' : 'text-[var(--text-muted)]'}`}>
-                  {isRunning ? t('vm_state_running') : t('vm_state_off')}
-                </span>
-              </label>
-            )
-          })}
+          {vms.map(vm => (
+            <label key={vm.name} className="flex items-center gap-2 text-sm cursor-pointer hover:bg-[var(--bg-elevated)] px-1 py-0.5">
+              <input
+                type="checkbox"
+                checked={value.includes(vm.name)}
+                onChange={() => toggle(vm.name)}
+                className="accent-[var(--theme-primary)]"
+              />
+              <span className="text-[var(--text-primary)]">{vm.name}</span>
+            </label>
+          ))}
         </div>
       )}
 

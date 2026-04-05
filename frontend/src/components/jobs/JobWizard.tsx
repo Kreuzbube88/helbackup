@@ -308,10 +308,14 @@ export function JobWizard({ job, open, onClose, onSuccess }: Props) {
             <Button
               type="button"
               variant="primary"
-              disabled={
-                (step === 1 && !basicInfo.name.trim()) ||
-                (step === 2 && Object.values(backupSteps).every(v => v === null))
-              }
+              disabled={(() => {
+                if (step === 1) return !basicInfo.name.trim()
+                if (step === 2) {
+                  const enabled = Object.values(backupSteps).filter(v => v !== null) as Array<{ targetId: string }>
+                  return enabled.length === 0 || enabled.some(v => !v.targetId)
+                }
+                return false
+              })()}
               onClick={() => setStep((step + 1) as WizardStep)}
             >
               {t('common:buttons.next')}

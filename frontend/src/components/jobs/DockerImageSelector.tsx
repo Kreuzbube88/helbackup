@@ -18,7 +18,11 @@ export default function DockerImageSelector({ value, onChange }: Props) {
     setLoading(true)
     setError(null)
     api.docker.listContainers()
-      .then(setContainers)
+      .then(data => setContainers([...data].sort((a, b) => {
+        const nameA = a.Names[0]?.replace('/', '') ?? ''
+        const nameB = b.Names[0]?.replace('/', '') ?? ''
+        return nameA.localeCompare(nameB)
+      })))
       .catch(() => setError(t('fetch_error_containers')))
       .finally(() => setLoading(false))
   }
