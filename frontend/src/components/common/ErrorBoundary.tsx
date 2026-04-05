@@ -1,5 +1,6 @@
 import { Component, type ReactNode } from 'react'
 import { AlertTriangle } from 'lucide-react'
+import i18next from 'i18next'
 
 interface Props {
   children: ReactNode
@@ -31,16 +32,16 @@ export class ErrorBoundary extends Component<Props, State> {
         <div className="border border-red-500/40 bg-red-500/10 p-6 max-w-md w-full space-y-3">
           <div className="flex items-center gap-2 text-red-400">
             <AlertTriangle size={16} />
-            <span className="font-semibold text-sm">Unexpected Error</span>
+            <span className="font-semibold text-sm">{i18next.t('unexpected_error')}</span>
           </div>
           <p className="text-xs text-[var(--text-muted)] font-mono">
-            {this.state.error?.message ?? 'An unknown error occurred'}
+            {this.state.error?.message ?? i18next.t('unknown_error')}
           </p>
           <button
             onClick={() => this.setState({ hasError: false, error: null })}
             className="text-xs text-[var(--theme-primary)] hover:underline"
           >
-            Try again
+            {i18next.t('try_again')}
           </button>
         </div>
       </div>

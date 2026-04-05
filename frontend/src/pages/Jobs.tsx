@@ -82,7 +82,7 @@ export function Jobs() {
     return (
       <div className="flex-1 flex flex-col items-center justify-center gap-4 text-center p-8">
         <p className="text-sm text-red-400">{t('load_error')}</p>
-        <Button variant="secondary" size="sm" onClick={loadJobs}>{t('common:buttons.retry', 'Retry')}</Button>
+        <Button variant="secondary" size="sm" onClick={loadJobs}>{t('common:buttons.retry')}</Button>
       </div>
     )
   }

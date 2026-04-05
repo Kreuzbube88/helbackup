@@ -1,4 +1,8 @@
 {
+  "initializing": "INITIALISIERUNG...",
+  "unexpected_error": "Unerwarteter Fehler",
+  "unknown_error": "Ein unbekannter Fehler ist aufgetreten",
+  "try_again": "Erneut versuchen",
   "buttons": {
     "save": "Speichern",
     "cancel": "Abbrechen",
@@ -320,7 +324,11 @@
     "confirm_run_now": "Das erste aktivierte Backup jetzt ausführen?",
     "no_enabled_jobs": "Keine aktiven Jobs gefunden",
     "backup_started": "Backup gestartet",
-    "load_error": "Dashboard konnte nicht geladen werden"
+    "load_error": "Dashboard konnte nicht geladen werden",
+    "chart_start": "Vor 30 Tagen",
+    "chart_end": "Heute",
+    "storage_free": "frei",
+    "storage_percent_used": "{{value}}% genutzt"
   },
   "status": {
     "running": "Läuft",

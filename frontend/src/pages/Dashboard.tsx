@@ -321,8 +321,8 @@ export function Dashboard() {
           })}
         </div>
         <div className="flex justify-between mt-1 text-xs text-[var(--text-muted)]">
-          <span>30d ago</span>
-          <span>Today</span>
+          <span>{t('dashboard.chart_start')}</span>
+          <span>{t('dashboard.chart_end')}</span>
         </div>
       </Card>
 
@@ -342,7 +342,7 @@ export function Dashboard() {
                 <span className="font-mono text-[var(--text-primary)]">
                   {formatBytes(data.storage.totalUsed)}
                 </span>
-                <span>{formatBytes(data.storage.totalAvailable)} free</span>
+                <span>{formatBytes(data.storage.totalAvailable)} {t('dashboard.storage_free')}</span>
               </div>
               <div className="w-full h-2 bg-[var(--bg-elevated)] rounded overflow-hidden">
                 <div
@@ -357,7 +357,7 @@ export function Dashboard() {
                 />
               </div>
               <div className="text-xs text-[var(--text-muted)] mt-1">
-                {data.storage.percentage}% used
+                {t('dashboard.storage_percent_used', { value: data.storage.percentage })}
               </div>
             </>
           ) : (

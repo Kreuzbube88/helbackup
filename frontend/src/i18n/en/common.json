@@ -1,4 +1,8 @@
 {
+  "initializing": "INITIALIZING...",
+  "unexpected_error": "Unexpected Error",
+  "unknown_error": "An unknown error occurred",
+  "try_again": "Try again",
   "buttons": {
     "save": "Save",
     "cancel": "Cancel",
@@ -320,7 +324,11 @@
     "confirm_run_now": "Run the first enabled backup job now?",
     "no_enabled_jobs": "No enabled jobs found",
     "backup_started": "Backup started",
-    "load_error": "Failed to load dashboard"
+    "load_error": "Failed to load dashboard",
+    "chart_start": "30d ago",
+    "chart_end": "Today",
+    "storage_free": "free",
+    "storage_percent_used": "{{value}}% used"
   },
   "status": {
     "running": "Running",
