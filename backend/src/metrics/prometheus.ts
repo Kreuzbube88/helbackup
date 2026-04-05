@@ -1,6 +1,7 @@
 import { FastifyInstance } from 'fastify'
 import { Registry, Gauge, Histogram, collectDefaultMetrics } from 'prom-client'
 import { db } from '../db/database.js'
+import { activeExecutions } from '../execution/active.js'
 
 const register = new Registry()
 collectDefaultMetrics({ register })
@@ -25,6 +26,18 @@ export const backupDurationHistogram = new Histogram({
   help: 'Backup duration in seconds',
   labelNames: ['job_name'] as const,
   buckets: [30, 60, 300, 600, 1800, 3600],
+  registers: [register],
+})
+
+export const activeJobsGauge = new Gauge({
+  name: 'helbackup_active_jobs',
+  help: 'Number of currently running backup jobs',
+  registers: [register],
+})
+
+export const recoveryModeGauge = new Gauge({
+  name: 'helbackup_recovery_mode_enabled',
+  help: '1 if recovery mode is enabled, 0 otherwise',
   registers: [register],
 })
 
@@ -70,10 +83,22 @@ function updateBackupMetrics(): void {
   } catch { /* job_history table may not exist yet */ }
 }
 
+interface RecoveryRow { enabled: number }
+
+function updateRuntimeMetrics(): void {
+  activeJobsGauge.set(activeExecutions.size)
+
+  try {
+    const row = db.prepare('SELECT enabled FROM recovery_config LIMIT 1').get() as RecoveryRow | undefined
+    recoveryModeGauge.set(row?.enabled === 1 ? 1 : 0)
+  } catch { /* table may not exist yet */ }
+}
+
 export async function metricsRoutes(app: FastifyInstance): Promise<void> {
   app.get('/metrics', async (_request, reply) => {
     updateStorageMetrics()
     updateBackupMetrics()
+    updateRuntimeMetrics()
     void reply.header('Content-Type', register.contentType)
     return reply.send(await register.metrics())
   })

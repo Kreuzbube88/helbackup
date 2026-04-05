@@ -36,6 +36,7 @@ import { backupsRoutesV1 } from './api/v1/backups.js'
 import { jobsRoutesV1 } from './api/v1/jobs.js'
 import { widgetRoutesV1 } from './api/v1/widget.js'
 import { metricsRoutes } from './metrics/prometheus.js'
+import { healthRoutes } from './api/health.js'
 
 declare module 'fastify' {
   interface FastifyInstance {
@@ -144,6 +145,7 @@ await app.register(backupsRoutesV1)
 await app.register(jobsRoutesV1)
 await app.register(widgetRoutesV1)
 await app.register(metricsRoutes)
+await app.register(healthRoutes)
 
 // Serve React SPA in production
 const distPath = path.join(__dirname, '../frontend/dist')

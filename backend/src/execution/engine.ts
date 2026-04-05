@@ -4,6 +4,7 @@ import { db } from '../db/database.js'
 import { logger } from '../utils/logger.js'
 import { executeHook } from './hooks.js'
 import { notificationManager } from '../notifications/notificationManager.js'
+import { backupDurationHistogram } from '../metrics/prometheus.js'
 
 export interface JobHooks {
   prePath?: string
@@ -147,6 +148,7 @@ export class JobExecutionEngine extends EventEmitter {
       ).run('success', new Date().toISOString(), duration, this.runId)
 
       this.saveSummary(duration * 1000)
+      backupDurationHistogram.observe({ job_name: this.jobName }, duration)
       this.log('info', 'system',
         `Backup completed: ${this.summary.filesCopied} files copied, ${this.summary.errors} errors`
       )
@@ -179,6 +181,7 @@ export class JobExecutionEngine extends EventEmitter {
       ).run('failed', new Date().toISOString(), duration, this.runId)
 
       this.saveSummary(duration * 1000)
+      backupDurationHistogram.observe({ job_name: this.jobName }, duration)
 
       void notificationManager.notify({
         event: 'backup_failed',
