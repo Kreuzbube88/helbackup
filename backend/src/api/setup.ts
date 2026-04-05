@@ -39,7 +39,7 @@ export async function setupRoutes(app: FastifyInstance): Promise<void> {
 
       const recoveryKey = generateRecoveryKey()
       const [passwordHash, recoveryKeyHash] = await Promise.all([
-        bcrypt.hash(password, 10),
+        bcrypt.hash(password, 12),
         hashRecoveryKey(recoveryKey),
       ])
 

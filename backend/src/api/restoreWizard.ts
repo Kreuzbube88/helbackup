@@ -7,6 +7,7 @@ export async function restoreWizardRoutes(app: FastifyInstance): Promise<void> {
   // Generate restore plan from a manifest in the DB
   app.post<{ Body: { backupId: string; options: RestoreOptions } }>(
     '/api/restore-wizard/plan',
+    { preHandler: [app.authenticate] },
     async (request, reply) => {
       try {
         const { backupId, options } = request.body
@@ -25,6 +26,7 @@ export async function restoreWizardRoutes(app: FastifyInstance): Promise<void> {
   // Execute full server restore in background
   app.post<{ Body: { backupId: string; plan: RestorePlan } }>(
     '/api/restore-wizard/execute',
+    { preHandler: [app.authenticate] },
     async (request, reply) => {
       try {
         const { backupId, plan } = request.body

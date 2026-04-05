@@ -22,8 +22,16 @@ interface DecryptArchiveBody {
   outputDir: string
 }
 
+const ALLOWED_PATH_BASES = ['/app/', '/unraid/', '/mnt/']
+
+function isSafePath(p: string): boolean {
+  if (!path.isAbsolute(p)) return false
+  const resolved = path.resolve(p)
+  return ALLOWED_PATH_BASES.some(base => resolved.startsWith(base))
+}
+
 export async function decryptionRoutes(app: FastifyInstance): Promise<void> {
-  app.post<{ Body: UnlockBody }>('/api/decryption/unlock', async (request, reply) => {
+  app.post<{ Body: UnlockBody }>('/api/decryption/unlock', { preHandler: [app.authenticate] }, async (request, reply) => {
     try {
       const { backupId, password } = request.body
 
@@ -40,9 +48,13 @@ export async function decryptionRoutes(app: FastifyInstance): Promise<void> {
     }
   })
 
-  app.post<{ Body: DecryptManifestBody }>('/api/decryption/manifest', async (request, reply) => {
+  app.post<{ Body: DecryptManifestBody }>('/api/decryption/manifest', { preHandler: [app.authenticate] }, async (request, reply) => {
     try {
       const { backupPath, sessionId } = request.body
+
+      if (!isSafePath(backupPath)) {
+        return reply.status(400).send({ error: 'Invalid backup path' })
+      }
 
       const password = encryptionSessions.getPassword(sessionId)
       if (!password) {
@@ -52,22 +64,29 @@ export async function decryptionRoutes(app: FastifyInstance): Promise<void> {
       const encryptedManifest = path.join(backupPath, 'manifest.json.gpg')
       const tempManifest = `/tmp/manifest-${Date.now()}.json`
 
-      await decryptFileGPG(encryptedManifest, tempManifest, password)
-
-      const manifestContent = await fs.readFile(tempManifest, 'utf-8')
-      const manifest: unknown = JSON.parse(manifestContent)
-
-      await fs.unlink(tempManifest)
-
-      return reply.send(manifest)
+      try {
+        await decryptFileGPG(encryptedManifest, tempManifest, password)
+        const manifestContent = await fs.readFile(tempManifest, 'utf-8')
+        const manifest: unknown = JSON.parse(manifestContent)
+        return reply.send(manifest)
+      } finally {
+        await fs.unlink(tempManifest).catch(() => { /* already gone */ })
+      }
     } catch (error: unknown) {
       return reply.status(500).send({ error: error instanceof Error ? error.message : 'Unknown error' })
     }
   })
 
-  app.post<{ Body: DecryptArchiveBody }>('/api/decryption/archive', async (request, reply) => {
+  app.post<{ Body: DecryptArchiveBody }>('/api/decryption/archive', { preHandler: [app.authenticate] }, async (request, reply) => {
     try {
       const { backupPath, sessionId, outputDir } = request.body
+
+      if (!isSafePath(backupPath)) {
+        return reply.status(400).send({ error: 'Invalid backup path' })
+      }
+      if (!isSafePath(outputDir)) {
+        return reply.status(400).send({ error: 'Invalid output directory' })
+      }
 
       const password = encryptionSessions.getPassword(sessionId)
       if (!password) {
@@ -77,11 +96,13 @@ export async function decryptionRoutes(app: FastifyInstance): Promise<void> {
       const encryptedArchive = path.join(backupPath, 'backup-archive.tar.gz.gpg')
       const tempArchive = `/tmp/backup-${Date.now()}.tar.gz`
 
-      await decryptFileGPG(encryptedArchive, tempArchive, password)
-      await extractTarArchive(tempArchive, outputDir)
-      await fs.unlink(tempArchive)
-
-      return reply.send({ success: true, outputDir })
+      try {
+        await decryptFileGPG(encryptedArchive, tempArchive, password)
+        await extractTarArchive(tempArchive, outputDir)
+        return reply.send({ success: true, outputDir })
+      } finally {
+        await fs.unlink(tempArchive).catch(() => { /* already gone */ })
+      }
     } catch (error: unknown) {
       return reply.status(500).send({ error: error instanceof Error ? error.message : 'Unknown error' })
     }

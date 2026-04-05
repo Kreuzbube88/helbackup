@@ -4,17 +4,25 @@ import { safeJsonParseOrThrow } from '../utils/safeJson.js';
 import fs from 'fs/promises';
 import path from 'path';
 
+const ALLOWED_SCAN_BASES = ['/app/data/', '/app/config/', '/unraid/', '/mnt/']
+
+function isSafePath(p: string): boolean {
+  return path.isAbsolute(p) && !p.includes('..')
+}
+
 export default async function recoveryRoutes(app: FastifyInstance) {
-  // Recovery mode state
-  let recoveryMode = false
+  // Load persisted recovery mode from settings table
+  const settingRow = db.prepare("SELECT value FROM settings WHERE key = 'recovery_mode'").get() as { value: string } | undefined
+  let recoveryMode = settingRow?.value === '1'
 
   // Get recovery mode status
-  app.get('/api/recovery/status', async (_request, reply) => {
+  app.get('/api/recovery/status', { preHandler: [app.authenticate] }, async (_request, reply) => {
     return reply.send({ enabled: recoveryMode })
   })
 
   // Enable recovery mode
   app.post('/api/recovery/enable', {
+    preHandler: [app.authenticate],
     schema: {
       body: {
         type: 'object',
@@ -22,12 +30,14 @@ export default async function recoveryRoutes(app: FastifyInstance) {
       }
     }
   }, async (_request, reply) => {
+    db.prepare("INSERT OR REPLACE INTO settings (key, value) VALUES ('recovery_mode', '1')").run()
     recoveryMode = true
     return reply.send({ ok: true })
   })
 
   // Disable recovery mode
   app.post('/api/recovery/disable', {
+    preHandler: [app.authenticate],
     schema: {
       body: {
         type: 'object',
@@ -35,12 +45,13 @@ export default async function recoveryRoutes(app: FastifyInstance) {
       }
     }
   }, async (_request, reply) => {
+    db.prepare("INSERT OR REPLACE INTO settings (key, value) VALUES ('recovery_mode', '0')").run()
     recoveryMode = false
     return reply.send({ ok: true })
   })
 
   // List all backup manifests
-  app.get('/api/recovery/manifests', async (request, reply) => {
+  app.get('/api/recovery/manifests', { preHandler: [app.authenticate] }, async (_request, reply) => {
     try {
       const manifests = db.prepare(
         'SELECT * FROM manifest ORDER BY created_at DESC'
@@ -48,14 +59,14 @@ export default async function recoveryRoutes(app: FastifyInstance) {
 
       return reply.send(manifests);
     } catch (error: unknown) {
-      const err = error as Error;
-      return reply.status(500).send({ error: err.message });
+      return reply.status(500).send({ error: error instanceof Error ? error.message : String(error) });
     }
   });
 
   // Get specific manifest details
   app.get<{ Params: { backupId: string } }>(
     '/api/recovery/manifests/:backupId',
+    { preHandler: [app.authenticate] },
     async (request, reply) => {
       try {
         const manifest = db.prepare(
@@ -71,8 +82,7 @@ export default async function recoveryRoutes(app: FastifyInstance) {
           manifest: safeJsonParseOrThrow(manifest.manifest as string, 'manifest detail')
         });
       } catch (error: unknown) {
-        const err = error as Error;
-        return reply.status(500).send({ error: err.message });
+        return reply.status(500).send({ error: error instanceof Error ? error.message : String(error) });
       }
     }
   );
@@ -80,9 +90,15 @@ export default async function recoveryRoutes(app: FastifyInstance) {
   // Scan backup directory for manifests (if DB lost)
   app.post<{ Body: { path: string } }>(
     '/api/recovery/scan',
+    { preHandler: [app.authenticate] },
     async (request, reply) => {
       try {
         const scanPath = request.body.path;
+
+        if (!isSafePath(scanPath) || !ALLOWED_SCAN_BASES.some(base => path.resolve(scanPath).startsWith(base))) {
+          return reply.status(400).send({ error: 'Scan path must be within an allowed directory (/app/data, /unraid, /mnt)' });
+        }
+
         const manifests: Record<string, unknown>[] = [];
 
         async function scanDir(dir: string) {
@@ -112,8 +128,7 @@ export default async function recoveryRoutes(app: FastifyInstance) {
 
         return reply.send({ manifests, count: manifests.length });
       } catch (error: unknown) {
-        const err = error as Error;
-        return reply.status(500).send({ error: err.message });
+        return reply.status(500).send({ error: error instanceof Error ? error.message : String(error) });
       }
     }
   );
@@ -121,6 +136,7 @@ export default async function recoveryRoutes(app: FastifyInstance) {
   // Restore container configs from backup
   app.post<{ Body: { backupId: string; containers: string[] } }>(
     '/api/recovery/restore/containers',
+    { preHandler: [app.authenticate] },
     async (request, reply) => {
       try {
         const { backupId, containers } = request.body;
@@ -160,15 +176,13 @@ export default async function recoveryRoutes(app: FastifyInstance) {
               command: cmd
             });
           } catch (error: unknown) {
-            const err = error as Error;
-            failed.push({ id: containerId, error: err.message });
+            failed.push({ id: containerId, error: error instanceof Error ? error.message : String(error) });
           }
         }
 
         return reply.send({ restored, failed });
       } catch (error: unknown) {
-        const err = error as Error;
-        return reply.status(500).send({ error: err.message });
+        return reply.status(500).send({ error: error instanceof Error ? error.message : String(error) });
       }
     }
   );
@@ -176,6 +190,7 @@ export default async function recoveryRoutes(app: FastifyInstance) {
   // Restore database from dump
   app.post<{ Body: { backupId: string; containerId: string; databaseType: string } }>(
     '/api/recovery/restore/database',
+    { preHandler: [app.authenticate] },
     async (request, reply) => {
       try {
         const { backupId, containerId, databaseType } = request.body;
@@ -228,8 +243,7 @@ export default async function recoveryRoutes(app: FastifyInstance) {
           ]
         });
       } catch (error: unknown) {
-        const err = error as Error;
-        return reply.status(500).send({ error: err.message });
+        return reply.status(500).send({ error: error instanceof Error ? error.message : String(error) });
       }
     }
   );
@@ -237,6 +251,7 @@ export default async function recoveryRoutes(app: FastifyInstance) {
   // Restore files from backup
   app.post<{ Body: { backupId: string; files: string[]; destination: string } }>(
     '/api/recovery/restore/files',
+    { preHandler: [app.authenticate] },
     async (request, reply) => {
       try {
         const { backupId, files, destination } = request.body;
@@ -257,8 +272,7 @@ export default async function recoveryRoutes(app: FastifyInstance) {
           destination
         });
       } catch (error: unknown) {
-        const err = error as Error;
-        return reply.status(500).send({ error: err.message });
+        return reply.status(500).send({ error: error instanceof Error ? error.message : String(error) });
       }
     }
   );

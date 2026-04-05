@@ -11,6 +11,8 @@ interface JobRow {
   steps: string
   created_at: string
   updated_at: string
+  pre_backup_script: string | null
+  post_backup_script: string | null
 }
 
 interface JobHistoryRow {

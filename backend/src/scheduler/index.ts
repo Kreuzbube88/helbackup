@@ -1,6 +1,8 @@
 import schedule from 'node-schedule'
 import { db } from '../db/database.js'
 import { logger } from '../utils/logger.js'
+import { JobExecutionEngine, type JobStep } from '../execution/engine.js'
+import { activeExecutions } from '../execution/active.js'
 
 interface JobRow {
   id: string
@@ -8,6 +10,8 @@ interface JobRow {
   schedule: string
   steps: string
   enabled: number
+  pre_backup_script: string | null
+  post_backup_script: string | null
 }
 
 const activeJobs = new Map<string, schedule.Job>()
@@ -31,7 +35,33 @@ export function scheduleJob(job: JobRow): void {
 
   const scheduled = schedule.scheduleJob(job.schedule, () => {
     logger.info({ jobId: job.id, jobName: job.name }, 'Executing scheduled job')
-    // Execution implemented in Phase 5
+
+    let steps: JobStep[]
+    try {
+      steps = JSON.parse(job.steps) as JobStep[]
+    } catch {
+      logger.error({ jobId: job.id }, 'Invalid job steps JSON — skipping scheduled run')
+      return
+    }
+
+    const engine = new JobExecutionEngine(job.id)
+    const runId = engine.getRunId()
+    activeExecutions.set(runId, engine)
+
+    const hooks = {
+      prePath: job.pre_backup_script ?? undefined,
+      postPath: job.post_backup_script ?? undefined,
+    }
+
+    void (async () => {
+      try {
+        await engine.execute(steps, hooks)
+      } catch (err: unknown) {
+        logger.error({ runId, jobId: job.id, err }, 'Scheduled job execution failed')
+      } finally {
+        activeExecutions.delete(runId)
+      }
+    })()
   })
 
   if (scheduled) {

@@ -45,10 +45,11 @@ declare module 'fastify' {
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const PORT = Number(process.env.PORT ?? 3000)
-const JWT_SECRET = process.env.JWT_SECRET ?? 'change-me-in-production'
+const JWT_SECRET = process.env.JWT_SECRET
 
-if (JWT_SECRET === 'change-me-in-production') {
-  logger.warn('JWT_SECRET is using the default value — set JWT_SECRET env var before exposing to network')
+if (!JWT_SECRET) {
+  logger.fatal('JWT_SECRET environment variable is required — aborting startup')
+  process.exit(1)
 }
 
 const app = Fastify({ logger: false, bodyLimit: 100 * 1024 * 1024 })
@@ -102,7 +103,7 @@ await app.register(swaggerUi, {
 
 await app.register(fastifyCookie)
 
-await app.register(fastifyJwt, { secret: JWT_SECRET })
+await app.register(fastifyJwt, { secret: JWT_SECRET as string })
 
 app.decorate('authenticate', async (request: import('fastify').FastifyRequest, reply: import('fastify').FastifyReply) => {
   try {

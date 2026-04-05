@@ -26,14 +26,23 @@ interface UpdateTargetBody {
   enabled?: boolean
 }
 
+const SENSITIVE_KEYS = new Set(['password', 'privateKey', 'ssh_key', 'api_key', 'token', 'client_secret', 'secret'])
+
+function sanitizeConfig(config: Record<string, unknown>): Record<string, unknown> {
+  const result: Record<string, unknown> = {}
+  for (const [k, v] of Object.entries(config)) {
+    result[k] = SENSITIVE_KEYS.has(k) ? '***' : v
+  }
+  return result
+}
+
 function parseTarget(row: TargetRow) {
+  let rawConfig: Record<string, unknown> = {}
+  try { rawConfig = JSON.parse(row.config) as Record<string, unknown> } catch { /* default empty */ }
   return {
     ...row,
     enabled: row.enabled === 1,
-    config: (() => {
-      try { return JSON.parse(row.config) as Record<string, unknown> }
-      catch { return {} }
-    })(),
+    config: sanitizeConfig(rawConfig),
   }
 }
 
