@@ -55,10 +55,12 @@ export async function createTarArchive(options: TarOptions): Promise<TarResult> 
     })
 
     tar.on('close', (code: number | null) => {
-      if (code === 0) {
+      // exit code 1 = warnings (files changed/unreadable), not fatal
+      if (code === 0 || code === 1) {
         stat(options.destination)
           .then(stats => {
-            logger.info(`Tar archive created: ${options.destination} (${stats.size} bytes)`)
+            if (code === 1) logger.warn(`Tar completed with warnings: ${options.destination}`)
+            else logger.info(`Tar archive created: ${options.destination} (${stats.size} bytes)`)
             resolve({ success: true, filesProcessed, archiveSize: stats.size })
           })
           .catch(err => reject(err))
