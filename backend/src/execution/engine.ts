@@ -281,12 +281,10 @@ export class JobExecutionEngine extends EventEmitter {
     }
 
     const ts = new Date().toISOString()
-    const id = randomUUID()
 
-    db.prepare(
-      'INSERT INTO logs (id, run_id, step_id, sequence, level, category, message, metadata, ts) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
+    const result = db.prepare(
+      'INSERT INTO logs (run_id, step_id, sequence, level, category, message, metadata, ts) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
     ).run(
-      id,
       this.runId,
       stepId ?? null,
       this.sequence,
@@ -298,7 +296,7 @@ export class JobExecutionEngine extends EventEmitter {
     )
 
     const event: LogEvent = {
-      id,
+      id: String(result.lastInsertRowid),
       run_id: this.runId,
       step_id: stepId ?? null,
       sequence: this.sequence,
