@@ -47,7 +47,7 @@
 This container has write access to /boot and /mnt/user for automated restore capability. All write operations are protected by session-based security - writes only occur during explicit restore operations with multi-step confirmation.[br][br]
 [b]Documentation:[/b] https://github.com/Kreuzbube88/helbackup</Overview>
   <Category>Backup:</Category>
-  <WebUI>http://[IP]:[PORT:8080]</WebUI>
+  <WebUI>http://[IP]:[PORT:3000]</WebUI>
   <TemplateURL>https://raw.githubusercontent.com/Kreuzbube88/heltemplates/main/helbackup.xml</TemplateURL>
   <Icon>https://github.com/Kreuzbube88/helbackup/blob/main/frontend/public/favicon.png?raw=true</Icon>
   <ExtraParams/>
