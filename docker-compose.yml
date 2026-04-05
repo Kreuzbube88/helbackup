@@ -10,6 +10,7 @@ services:
       - JWT_SECRET=${JWT_SECRET:?Set JWT_SECRET in .env}
       - TZ=${TZ:-Europe/Berlin}
       - LOG_LEVEL=${LOG_LEVEL:-info}
+      - LIBVIRT_DEFAULT_URI=qemu:///system
     volumes:
       - /mnt/user/appdata/helbackup/config:/app/config
       - /mnt/user/appdata/helbackup/data:/app/data
@@ -18,3 +19,4 @@ services:
       - /mnt/user:/unraid/user:ro
       - /var/run/docker.sock:/var/run/docker.sock
       - /etc/libvirt:/unraid/libvirt:ro
+      - /var/run/libvirt/libvirt-sock:/var/run/libvirt/libvirt-sock

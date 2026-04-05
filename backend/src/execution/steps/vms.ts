@@ -21,32 +21,58 @@ interface VMInfo {
   diskPaths: string[]
 }
 
-async function getVMInfo(vmName: string): Promise<VMInfo> {
+// ── virsh helpers ──────────────────────────────────────────────────────────────
+
+function runVirsh(args: string[]): Promise<string> {
   return new Promise((resolve, reject) => {
-    const virsh = spawn('virsh', ['dumpxml', vmName])
-    let xml = ''
-
-    virsh.stdout.on('data', (data: Buffer) => {
-      xml += data.toString()
+    const proc = spawn('virsh', args)
+    let stdout = ''
+    let stderr = ''
+    proc.stdout.on('data', (d: Buffer) => { stdout += d.toString() })
+    proc.stderr.on('data', (d: Buffer) => { stderr += d.toString() })
+    proc.on('close', (code) => {
+      if (code !== 0) reject(new Error(`virsh ${args[0]} failed: ${stderr.trim()}`))
+      else resolve(stdout)
     })
-
-    virsh.on('close', (code: number | null) => {
-      if (code !== 0) {
-        reject(new Error(`Failed to get VM info for ${vmName}`))
-        return
-      }
-
-      const diskMatches = xml.matchAll(/<source file=['"]([^'"]+)['"]/g)
-      const diskPaths = Array.from(diskMatches, (m) => m[1])
-
-      const uuidMatch = xml.match(/<uuid>([^<]+)<\/uuid>/)
-      const uuid = uuidMatch ? uuidMatch[1] : ''
-
-      resolve({ name: vmName, uuid, diskPaths })
-    })
-
-    virsh.on('error', reject)
+    proc.on('error', reject)
   })
+}
+
+async function getVMState(vmName: string): Promise<string> {
+  const out = await runVirsh(['domstate', vmName])
+  return out.trim()
+}
+
+async function shutdownVM(vmName: string, engine: JobExecutionEngine): Promise<void> {
+  await runVirsh(['shutdown', vmName])
+  engine.log('info', 'system', `Waiting for VM ${vmName} to shut down...`)
+
+  const deadline = Date.now() + 120_000
+  while (Date.now() < deadline) {
+    await new Promise(r => setTimeout(r, 5000))
+    const state = await getVMState(vmName)
+    if (state === 'shut off') return
+    engine.log('info', 'system', `VM ${vmName} state: ${state}`)
+  }
+  throw new Error(`VM ${vmName} did not shut down within 120 seconds`)
+}
+
+async function startVM(vmName: string): Promise<void> {
+  await runVirsh(['start', vmName])
+}
+
+// ── backup helpers ─────────────────────────────────────────────────────────────
+
+async function getVMInfo(vmName: string): Promise<VMInfo> {
+  const xml = await runVirsh(['dumpxml', vmName])
+
+  const diskMatches = xml.matchAll(/<source file=['"]([^'"]+)['"]/g)
+  const diskPaths = Array.from(diskMatches, (m) => m[1])
+
+  const uuidMatch = xml.match(/<uuid>([^<]+)<\/uuid>/)
+  const uuid = uuidMatch ? uuidMatch[1] : ''
+
+  return { name: vmName, uuid, diskPaths }
 }
 
 async function exportVMXML(vmName: string, destPath: string): Promise<void> {
@@ -65,6 +91,8 @@ async function exportVMXML(vmName: string, destPath: string): Promise<void> {
   })
 }
 
+// ── main export ────────────────────────────────────────────────────────────────
+
 export async function executeVMBackup(
   config: VMBackupConfig,
   engine: JobExecutionEngine
@@ -81,14 +109,25 @@ export async function executeVMBackup(
   } catch {
     throw new Error(`Invalid target config JSON for target ${config.targetId}`)
   }
+
   const destPath = path.join(targetConfig.path, 'vms', new Date().toISOString().split('T')[0])
   await fs.mkdir(destPath, { recursive: true })
 
   engine.log('info', 'system', `Backing up ${config.vms.length} VMs to ${destPath}`)
 
   for (const vmName of config.vms) {
+    let wasRunning = false
+
     try {
-      engine.log('info', 'system', `Processing VM: ${vmName}`)
+      // Check running state before backup
+      const state = await getVMState(vmName)
+      wasRunning = state === 'running'
+
+      if (wasRunning) {
+        engine.log('info', 'system', `Shutting down VM: ${vmName}`)
+        await shutdownVM(vmName, engine)
+        engine.log('info', 'system', `VM ${vmName} is now stopped`)
+      }
 
       const vmInfo = await getVMInfo(vmName)
 
@@ -160,8 +199,21 @@ export async function executeVMBackup(
       const message = err instanceof Error ? err.message : String(err)
       const stack = err instanceof Error ? err.stack : undefined
       engine.log('error', 'system', `Failed to backup VM ${vmName}: ${message}`, undefined, {
-        error: { code: 'VM_BACKUP_FAILED', stack, suggestion: 'Check if VM exists and virsh is available' },
+        error: { code: 'VM_BACKUP_FAILED', stack, suggestion: 'Check VM name, libvirt socket mount, and virsh availability' },
       })
+    } finally {
+      // Always restart VM if it was running before backup — even on error
+      if (wasRunning) {
+        try {
+          await startVM(vmName)
+          engine.log('info', 'system', `VM ${vmName} restarted`)
+        } catch (startErr: unknown) {
+          const msg = startErr instanceof Error ? startErr.message : String(startErr)
+          engine.log('error', 'system', `Failed to restart VM ${vmName}: ${msg}`, undefined, {
+            error: { code: 'VM_START_FAILED', suggestion: 'Start the VM manually via Unraid VM Manager' },
+          })
+        }
+      }
     }
   }
 

@@ -1,0 +1,118 @@
+<?xml version="1.0"?>
+<Container version="2">
+  <Name>HELBACKUP</Name>
+  <Repository>ghcr.io/kreuzbube88/helbackup:latest</Repository>
+  <Registry>https://ghcr.io/kreuzbube88/helbackup</Registry>
+  <Network>bridge</Network>
+  <MyIP/>
+  <Shell>sh</Shell>
+  <Privileged>false</Privileged>
+  <Support>https://github.com/Kreuzbube88/helbackup/issues</Support>
+  <Project>https://github.com/Kreuzbube88/helbackup</Project>
+  <ReadMe>https://github.com/Kreuzbube88/helbackup/blob/main/README.md</ReadMe>
+  <Overview>HELBACKUP is an intelligent backup orchestrator specifically designed for Unraid servers. It replaces 5+ separate backup tools with one unified, automated solution.[br][br]
+[b]Core Features:[/b][br]
+[b]✓ Complete Unraid Backup[/b] — Flash Drive (/boot), Docker Appdata, Virtual Machines, Docker Images, System Configuration[br]
+[b]✓ Database Dumps[/b] — Auto-detect and safely backup PostgreSQL, MySQL, MariaDB, MongoDB databases[br]
+[b]✓ SHA256 Verification[/b] — Checksum validation for all backup files, detect corruption before restore[br]
+[b]✓ External Volumes[/b] — Optional per-container backup of data volumes (media, documents, etc.)[br]
+[b]✓ Retention Policy[/b] — Auto-cleanup old backups (keep minimum + delete older than X days)[br]
+[b]✓ Pre/Post Hooks[/b] — Run custom scripts before/after backups[br]
+[b]✓ NAS Power Management[/b] — Wake-on-LAN and automatic shutdown of backup NAS to save energy[br]
+[b]✓ Multi-Target Support[/b] — Synology NAS, Cloud Storage (B2, S3, Wasabi), External USB/HDD, Remote Servers[br][br]
+[b]Recovery Mode:[/b][br]
+[b]✓ Database Restore Wizard[/b] — Step-by-step database restoration with auto-generated commands[br]
+[b]✓ Verification Before Restore[/b] — Optional checksum verification before recovery[br]
+[b]✓ One-Click Container Restore[/b] — Generates docker run commands from saved configs[br]
+[b]✓ Granular File Restore[/b] — Restore individual files or complete directories[br]
+[b]✓ Flash Drive Restore[/b] — Complete /boot restoration with session-based protection[br]
+[b]✓ Audit Logging[/b] — Every restore operation is logged for accountability[br][br]
+[b]Security:[/b][br]
+[b]✓ First-Run Setup[/b] — No default passwords, create admin account on first access[br]
+[b]✓ Recovery Key System[/b] — Secure password recovery without backdoors[br]
+[b]✓ Session-Based Restore Protection[/b] — Multi-layer security for restore operations[br]
+[b]✓ 3-2-1-1-0 Strategy[/b] — 3 copies, 2 media, 1 offsite, 1 immutable, 0 errors[br][br]
+[b]User Experience:[/b][br]
+[b]✓ Futuristic UI[/b] — 4 switchable themes (Cyber Blue, Neon Purple, Matrix Green, Fire Orange)[br]
+[b]✓ Live Logs[/b] — Real-time backup progress with structured logging[br]
+[b]✓ i18n[/b] — German and English[br]
+[b]✓ PWA[/b] — Mobile-optimized, works offline[br][br]
+[b]First-Time Setup:[/b][br]
+1. Install container[br]
+2. Access Web UI[br]
+3. Create admin account (username + password)[br]
+4. SAVE RECOVERY KEY (only shown once!)[br]
+5. Start creating backup jobs[br][br]
+[b]⚠️ IMPORTANT: Write Access Protection[/b][br]
+This container has write access to /boot and /mnt/user for automated restore capability. All write operations are protected by session-based security - writes only occur during explicit restore operations with multi-step confirmation.[br][br]
+[b]Documentation:[/b] https://github.com/Kreuzbube88/helbackup</Overview>
+  <Category>Backup:</Category>
+  <WebUI>http://[IP]:[PORT:8080]</WebUI>
+  <TemplateURL>https://raw.githubusercontent.com/Kreuzbube88/heltemplates/main/helbackup.xml</TemplateURL>
+  <Icon>https://github.com/Kreuzbube88/helbackup/blob/main/frontend/public/favicon.png?raw=true</Icon>
+  <ExtraParams/>
+  <PostArgs/>
+  <CPUset/>
+  <DateInstalled></DateInstalled>
+  <DonateText/>
+  <DonateLink/>
+  <Requires/>
+  
+  <Config Name="Web UI Port" Target="8080" Default="8080" Mode="tcp"
+    Description="Port for the HELBACKUP web interface"
+    Type="Port" Display="always" Required="true" Mask="false">8080</Config>
+  
+  <Config Name="Data" Target="/app/data" Default="/mnt/user/appdata/helbackup" Mode="rw"
+    Description="Database, configuration and logs"
+    Type="Path" Display="always" Required="true" Mask="false">/mnt/user/appdata/helbackup</Config>
+  
+  <Config Name="Docker Socket" Target="/var/run/docker.sock" Default="/var/run/docker.sock" Mode="rw"
+    Description="Docker socket for container management (stop/start during backups)"
+    Type="Path" Display="always" Required="true" Mask="false">/var/run/docker.sock</Config>
+  
+  <Config Name="Unraid Flash Drive" Target="/unraid/boot" Default="/boot" Mode="rw"
+    Description="⚠️ Unraid USB flash drive (READ-WRITE for automated Flash restore). PROTECTED: Write operations only allowed during explicit restore sessions with multi-step confirmation!"
+    Type="Path" Display="always" Required="true" Mask="false">/boot</Config>
+  
+  <Config Name="Host System (Restore)" Target="/mnt/host/user" Default="/mnt/user" Mode="rw"
+    Description="⚠️ Unraid user array (READ-WRITE for automated restore). PROTECTED: Write operations only allowed during explicit restore sessions with multi-step confirmation!"
+    Type="Path" Display="always" Required="true" Mask="false">/mnt/user</Config>
+  
+  <Config Name="Libvirt Configs" Target="/unraid/libvirt" Default="/etc/libvirt" Mode="ro"
+    Description="VM configurations (read-only) - For VM backup"
+    Type="Path" Display="advanced" Required="false" Mask="false">/etc/libvirt</Config>
+
+  <Config Name="Libvirt Socket" Target="/var/run/libvirt/libvirt-sock" Default="/var/run/libvirt/libvirt-sock" Mode="rw"
+    Description="Libvirt Unix socket - Required for VM stop/start during backups"
+    Type="Path" Display="advanced" Required="false" Mask="false">/var/run/libvirt/libvirt-sock</Config>
+
+  <Config Name="LIBVIRT_DEFAULT_URI" Target="LIBVIRT_DEFAULT_URI" Default="qemu:///system" Mode=""
+    Description="Libvirt connection URI - do not change unless you know what you are doing"
+    Type="Variable" Display="advanced" Required="false" Mask="false">qemu:///system</Config>
+
+  <Config Name="JWT_SECRET" Target="JWT_SECRET" Default="" Mode=""
+    Description="Required: Random secret for authentication. Generate with: openssl rand -hex 32"
+    Type="Variable" Display="always" Required="true" Mask="true"></Config>
+  
+  <Config Name="SECURE_COOKIES" Target="SECURE_COOKIES" Default="false" Mode=""
+    Description="Set to false for local HTTP access. Set to true when using HTTPS via reverse proxy."
+    Type="Variable" Display="always" Required="true" Mask="false">false</Config>
+  
+  <Config Name="TZ" Target="TZ" Default="Europe/Berlin" Mode=""
+    Description="Timezone for scheduled backups (e.g., Europe/Berlin, America/New_York)"
+    Type="Variable" Display="always" Required="false" Mask="false">Europe/Berlin</Config>
+  
+  <Config Name="LOG_LEVEL" Target="LOG_LEVEL" Default="info" Mode=""
+    Description="Log verbosity: debug, info, warn, error"
+    Type="Variable" Display="advanced" Required="false" Mask="false">info</Config>
+  
+  <Config Name="PUID" Target="PUID" Default="99" Mode=""
+    Description="User ID for file permissions (Unraid default: 99)"
+    Type="Variable" Display="advanced" Required="false" Mask="false">99</Config>
+  
+  <Config Name="PGID" Target="PGID" Default="100" Mode=""
+    Description="Group ID for file permissions (Unraid default: 100)"
+    Type="Variable" Display="advanced" Required="false" Mask="false">100</Config>
+  
+  <TailscaleStateDir/>
+</Container>

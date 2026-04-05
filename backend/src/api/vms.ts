@@ -1,31 +1,45 @@
 import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify'
-import fs from 'fs/promises'
-import path from 'path'
+import { spawn } from 'child_process'
 
 export interface VmInfo {
   name: string
+  state: string
 }
 
-const LIBVIRT_QEMU_DIR = '/unraid/libvirt/qemu'
-
-async function listVMs(): Promise<VmInfo[]> {
-  const entries = await fs.readdir(LIBVIRT_QEMU_DIR)
-  const xmlFiles = entries.filter(f => f.endsWith('.xml'))
-
+function parseVirshList(output: string): VmInfo[] {
   const vms: VmInfo[] = []
-  for (const file of xmlFiles) {
-    try {
-      const xml = await fs.readFile(path.join(LIBVIRT_QEMU_DIR, file), 'utf8')
-      const match = xml.match(/<name>([^<]+)<\/name>/)
-      if (match) {
-        vms.push({ name: match[1] })
-      }
-    } catch {
-      // skip unreadable files
+  for (const line of output.split('\n')) {
+    const trimmed = line.trim()
+    // Skip header, separator, and empty lines
+    if (!trimmed || trimmed.startsWith('Id') || trimmed.startsWith('-')) continue
+    // Format: "  1    Windows10    running"  or  "  -    Ubuntu-22    shut off"
+    const match = line.match(/^\s+[-\d]+\s+(\S+)\s+(.+?)\s*$/)
+    if (match) {
+      vms.push({ name: match[1], state: match[2].trim() })
     }
   }
-
   return vms.sort((a, b) => a.name.localeCompare(b.name))
+}
+
+async function listVMs(): Promise<VmInfo[]> {
+  return new Promise((resolve, reject) => {
+    const virsh = spawn('virsh', ['list', '--all'])
+    let stdout = ''
+    let stderr = ''
+
+    virsh.stdout.on('data', (data: Buffer) => { stdout += data.toString() })
+    virsh.stderr.on('data', (data: Buffer) => { stderr += data.toString() })
+
+    virsh.on('close', (code: number | null) => {
+      if (code !== 0) {
+        reject(new Error(`virsh list failed (code ${code}): ${stderr.trim()}`))
+        return
+      }
+      resolve(parseVirshList(stdout))
+    })
+
+    virsh.on('error', (err: Error) => reject(err))
+  })
 }
 
 export async function vmRoutes(app: FastifyInstance): Promise<void> {
