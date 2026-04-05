@@ -1,11 +1,11 @@
 import { db } from '../db/database.js'
 import fs from 'node:fs/promises'
 import path from 'node:path'
-import { exec } from 'node:child_process'
+import { execFile } from 'node:child_process'
 import { promisify } from 'node:util'
 import { logger } from '../utils/logger.js'
 
-const execAsync = promisify(exec)
+const execFileAsync = promisify(execFile)
 
 export interface BackupInfo {
   path: string
@@ -133,7 +133,7 @@ async function scanBackups(targetPath: string): Promise<BackupInfo[]> {
       try {
         const envelopeContent = await fs.readFile(envelopePath, 'utf-8')
         const envelope = JSON.parse(envelopeContent) as { backupId?: string; timestamp?: string }
-        const { stdout } = await execAsync(`du -sb "${backupPath}"`)
+        const { stdout } = await execFileAsync('du', ['-sb', backupPath])
         const size = parseInt(stdout.split('\t')[0]) || 0
         const manifest = db.prepare('SELECT id FROM manifest WHERE backup_id = ?')
           .get(envelope.backupId ?? '') as ManifestRow | undefined

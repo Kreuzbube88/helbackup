@@ -6,12 +6,14 @@ const EVENT_ICONS: Record<NotificationEvent, string> = {
   backup_success: '✅',
   backup_failed: '❌',
   backup_started: '🔄',
+  backup_warning: '⚠️',
   verification_success: '✓',
   verification_failed: '⚠️',
   retention_cleanup: '🗑️',
   restore_started: '📥',
   restore_completed: '✅',
   restore_failed: '❌',
+  disk_space_low: '💾',
   system_error: '🚨',
 }
 
@@ -19,12 +21,14 @@ const EVENT_COLORS: Record<NotificationEvent, string> = {
   backup_success: '#4caf50',
   backup_failed: '#f44336',
   backup_started: '#2196f3',
+  backup_warning: '#ff9800',
   verification_success: '#4caf50',
   verification_failed: '#ff9800',
   retention_cleanup: '#9e9e9e',
   restore_started: '#2196f3',
   restore_completed: '#4caf50',
   restore_failed: '#f44336',
+  disk_space_low: '#ff9800',
   system_error: '#d32f2f',
 }
 
@@ -32,12 +36,14 @@ const EVENT_TITLES: Record<NotificationEvent, string> = {
   backup_success: 'Backup Successful',
   backup_failed: 'Backup Failed',
   backup_started: 'Backup Started',
+  backup_warning: 'Backup Warning',
   verification_success: 'Verification Successful',
   verification_failed: 'Verification Failed',
   retention_cleanup: 'Old Backups Cleaned',
   restore_started: 'Restore Started',
   restore_completed: 'Restore Completed',
   restore_failed: 'Restore Failed',
+  disk_space_low: 'Disk Space Low',
   system_error: 'System Error',
 }
 

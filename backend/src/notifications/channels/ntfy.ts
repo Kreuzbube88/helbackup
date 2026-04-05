@@ -5,12 +5,14 @@ const EVENT_PRIORITIES: Record<NotificationEvent, string> = {
   backup_success: 'default',
   backup_failed: 'urgent',
   backup_started: 'low',
+  backup_warning: 'high',
   verification_success: 'default',
   verification_failed: 'high',
   retention_cleanup: 'low',
   restore_started: 'high',
   restore_completed: 'high',
   restore_failed: 'urgent',
+  disk_space_low: 'high',
   system_error: 'urgent',
 }
 
@@ -18,12 +20,14 @@ const EVENT_TAGS: Record<NotificationEvent, string> = {
   backup_success: 'white_check_mark,backup',
   backup_failed: 'x,backup,warning',
   backup_started: 'arrows_counterclockwise,backup',
+  backup_warning: 'warning,backup',
   verification_success: 'heavy_check_mark',
   verification_failed: 'warning',
   retention_cleanup: 'wastebasket',
   restore_started: 'inbox_tray',
   restore_completed: 'white_check_mark',
   restore_failed: 'x,warning',
+  disk_space_low: 'floppy_disk,warning',
   system_error: 'rotating_light,warning',
 }
 
@@ -31,12 +35,14 @@ const EVENT_TITLES: Record<NotificationEvent, string> = {
   backup_success: 'Backup Successful',
   backup_failed: 'Backup Failed',
   backup_started: 'Backup Started',
+  backup_warning: 'Backup Warning',
   verification_success: 'Verification OK',
   verification_failed: 'Verification Failed',
   retention_cleanup: 'Cleaned Old Backups',
   restore_started: 'Restore Started',
   restore_completed: 'Restore Complete',
   restore_failed: 'Restore Failed',
+  disk_space_low: 'Disk Space Low',
   system_error: 'System Error',
 }
 

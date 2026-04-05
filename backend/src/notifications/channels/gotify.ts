@@ -5,12 +5,14 @@ const EVENT_ICONS: Record<NotificationEvent, string> = {
   backup_success: '✅',
   backup_failed: '❌',
   backup_started: '🔄',
+  backup_warning: '⚠️',
   verification_success: '✓',
   verification_failed: '⚠️',
   retention_cleanup: '🗑️',
   restore_started: '📥',
   restore_completed: '✅',
   restore_failed: '❌',
+  disk_space_low: '💾',
   system_error: '🚨',
 }
 
@@ -18,12 +20,14 @@ const EVENT_PRIORITIES: Record<NotificationEvent, number> = {
   backup_success: 5,
   backup_failed: 10,
   backup_started: 3,
+  backup_warning: 7,
   verification_success: 5,
   verification_failed: 8,
   retention_cleanup: 3,
   restore_started: 7,
   restore_completed: 7,
   restore_failed: 10,
+  disk_space_low: 8,
   system_error: 10,
 }
 
@@ -31,12 +35,14 @@ const EVENT_TITLES: Record<NotificationEvent, string> = {
   backup_success: 'Backup Successful',
   backup_failed: 'Backup Failed',
   backup_started: 'Backup Started',
+  backup_warning: 'Backup Warning',
   verification_success: 'Verification Successful',
   verification_failed: 'Verification Failed',
   retention_cleanup: 'Old Backups Cleaned',
   restore_started: 'Restore Started',
   restore_completed: 'Restore Completed',
   restore_failed: 'Restore Failed',
+  disk_space_low: 'Disk Space Low',
   system_error: 'System Error',
 }
 

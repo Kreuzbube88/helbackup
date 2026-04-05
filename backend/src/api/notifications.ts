@@ -8,7 +8,7 @@ import { PushoverNotification } from '../notifications/channels/pushover.js'
 import { TelegramNotification } from '../notifications/channels/telegram.js'
 import { DiscordNotification } from '../notifications/channels/discord.js'
 import { SlackNotification } from '../notifications/channels/slack.js'
-import type { NotificationConfigRow, EmailConfig, GotifyConfig, NtfyConfig, PushoverConfig, TelegramConfig, DiscordConfig, SlackConfig } from '../notifications/types.js'
+import type { NotificationChannel, NotificationConfigRow, EmailConfig, GotifyConfig, NtfyConfig, PushoverConfig, TelegramConfig, DiscordConfig, SlackConfig } from '../notifications/types.js'
 
 interface SaveNotificationBody {
   channel: string
@@ -104,7 +104,7 @@ export async function notificationRoutes(app: FastifyInstance): Promise<void> {
       const { channel, config } = request.body
 
       try {
-        let ch
+        let ch: NotificationChannel
         switch (channel) {
           case 'email':    ch = new EmailNotification(config as unknown as EmailConfig); break
           case 'gotify':   ch = new GotifyNotification(config as unknown as GotifyConfig); break
