@@ -1,13 +1,14 @@
 import { FastifyInstance } from 'fastify'
-import { Registry, Counter, Gauge, Histogram, collectDefaultMetrics } from 'prom-client'
+import { Registry, Gauge, Histogram, collectDefaultMetrics } from 'prom-client'
 import { db } from '../db/database.js'
 
 const register = new Registry()
 collectDefaultMetrics({ register })
 
-export const backupCounter = new Counter({
+// Use Gauge (not Counter) for window-based metrics that are re-queried on each scrape
+export const backupGauge = new Gauge({
   name: 'helbackup_backups_total',
-  help: 'Total number of backup runs',
+  help: 'Number of backup runs in the last 24 hours',
   labelNames: ['status', 'job_name'] as const,
   registers: [register],
 })
@@ -27,25 +28,26 @@ export const backupDurationHistogram = new Histogram({
   registers: [register],
 })
 
-interface StorageStat { name: string; type: string; total_size: number | null }
+interface ManifestCountStat { job_name: string; count: number }
 interface BackupStat { job_name: string; status: string; count: number; avg_duration: number | null }
 
 function updateStorageMetrics(): void {
   try {
-    const targets = db
+    // Count manifests per job as a proxy for storage usage (no compressed_size column in schema)
+    const stats = db
       .prepare(`
-        SELECT t.name, t.type, SUM(m.compressed_size) as total_size
-        FROM targets t
-        LEFT JOIN manifest m ON m.target_id = t.id
-        GROUP BY t.id
+        SELECT j.name as job_name, COUNT(m.id) as count
+        FROM jobs j
+        LEFT JOIN manifest m ON m.job_id = j.id
+        GROUP BY j.id
       `)
-      .all() as StorageStat[]
+      .all() as ManifestCountStat[]
 
     storageGauge.reset()
-    for (const target of targets) {
-      storageGauge.set({ target_name: target.name, type: target.type }, target.total_size ?? 0)
+    for (const stat of stats) {
+      storageGauge.set({ target_name: stat.job_name, type: 'backup_count' }, stat.count)
     }
-  } catch { /* manifest table may not exist yet */ }
+  } catch { /* table may not exist yet */ }
 }
 
 function updateBackupMetrics(): void {
@@ -60,11 +62,10 @@ function updateBackupMetrics(): void {
       `)
       .all() as BackupStat[]
 
+    // Reset before setting to avoid accumulation across scrapes
+    backupGauge.reset()
     for (const stat of stats) {
-      backupCounter.inc({ status: stat.status, job_name: stat.job_name }, stat.count)
-      if (stat.avg_duration != null) {
-        backupDurationHistogram.observe({ job_name: stat.job_name }, stat.avg_duration)
-      }
+      backupGauge.set({ status: stat.status, job_name: stat.job_name }, stat.count)
     }
   } catch { /* job_history table may not exist yet */ }
 }

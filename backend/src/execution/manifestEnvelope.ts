@@ -20,7 +20,8 @@ export async function createManifestEnvelope(
   backupPath: string,
   manifest: Manifest,
   encrypted: boolean,
-  engine: JobExecutionEngine
+  engine: JobExecutionEngine,
+  backupType = 'unknown'
 ): Promise<void> {
   const envelope: ManifestEnvelope = {
     backupId: manifest.backupId,
@@ -28,7 +29,7 @@ export async function createManifestEnvelope(
     encrypted,
     encryptionMethod: encrypted ? 'aes-256-gcm+gpg' : undefined,
     summary: {
-      type: 'appdata',
+      type: backupType,
       containerCount: manifest.containerConfigs?.length ?? 0,
       totalSize: manifest.entries.reduce((sum, e) => sum + e.size, 0),
       hasDatabase: false,

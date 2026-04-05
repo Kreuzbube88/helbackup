@@ -67,31 +67,29 @@ export function calculateGFSRetention(
     }
   }
 
-  // 2. WEEKLY: last N weeks (Sundays), older than daily window
+  // 2. WEEKLY: last N weeks (newest backup per ISO week), older than daily window
   const weeklyCutoff = new Date(now)
   weeklyCutoff.setDate(weeklyCutoff.getDate() - config.weeklyKeep * 7)
 
   const weeklyMap = new Map<string, BackupInfo>()
   for (const backup of sorted) {
     if (backup.timestamp >= weeklyCutoff && backup.timestamp < dailyCutoff) {
-      if (backup.timestamp.getDay() === 0) {
-        const key = `${backup.timestamp.getFullYear()}-W${getWeekNumber(backup.timestamp)}`
-        if (!weeklyMap.has(key)) weeklyMap.set(key, backup)
-      }
+      // Use ISO week key — sorted newest-first so first hit per key wins
+      const key = `${backup.timestamp.getFullYear()}-W${getWeekNumber(backup.timestamp)}`
+      if (!weeklyMap.has(key)) weeklyMap.set(key, backup)
     }
   }
 
-  // 3. MONTHLY: last N months (1st–3rd of month), older than weekly window
+  // 3. MONTHLY: last N months (newest backup per calendar month), older than weekly window
   const monthlyCutoff = new Date(now)
   monthlyCutoff.setMonth(monthlyCutoff.getMonth() - config.monthlyKeep)
 
   const monthlyMap = new Map<string, BackupInfo>()
   for (const backup of sorted) {
     if (backup.timestamp >= monthlyCutoff && backup.timestamp < weeklyCutoff) {
-      if (backup.timestamp.getDate() <= 3) {
-        const key = `${backup.timestamp.getFullYear()}-${backup.timestamp.getMonth()}`
-        if (!monthlyMap.has(key)) monthlyMap.set(key, backup)
-      }
+      // Use 1-based month; sorted newest-first so first hit per key wins
+      const key = `${backup.timestamp.getFullYear()}-${backup.timestamp.getMonth() + 1}`
+      if (!monthlyMap.has(key)) monthlyMap.set(key, backup)
     }
   }
 

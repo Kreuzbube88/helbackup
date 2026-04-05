@@ -1,9 +1,10 @@
 import type { FastifyInstance } from 'fastify'
-import { exec } from 'child_process'
+import { execFile } from 'child_process'
 import { promisify } from 'util'
 import { db } from '../db/database.js'
+import cronParser from 'cron-parser'
 
-const execAsync = promisify(exec)
+const execFileAsync = promisify(execFile)
 
 interface HistoryRow {
   name: string
@@ -102,32 +103,38 @@ async function getSystemStatus() {
       ),
     } : null,
     nextScheduled: nextJob ? {
-      timestamp: getNextScheduleApprox(),
+      timestamp: getNextSchedule(nextJob.schedule),
       jobName: nextJob.name,
     } : null,
   }
 }
 
 async function getBackupHistory(): Promise<DayStats[]> {
+  // Single aggregation query instead of 30 individual queries
+  const rows = db.prepare(`
+    SELECT
+      date(started_at) as date,
+      SUM(CASE WHEN status = 'success' THEN 1 ELSE 0 END) as success,
+      SUM(CASE WHEN status = 'failed' THEN 1 ELSE 0 END) as failed,
+      COUNT(*) as total
+    FROM job_history
+    WHERE started_at >= datetime('now', '-30 days')
+    GROUP BY date(started_at)
+  `).all() as { date: string; success: number; failed: number; total: number }[]
+
+  const rowMap = new Map(rows.map(r => [r.date, r]))
   const history: DayStats[] = []
 
   for (let i = 29; i >= 0; i--) {
     const date = new Date()
     date.setDate(date.getDate() - i)
-    date.setHours(0, 0, 0, 0)
-    const nextDate = new Date(date)
-    nextDate.setDate(nextDate.getDate() + 1)
-
-    const jobs = db.prepare(`
-      SELECT status FROM job_history
-      WHERE started_at >= ? AND started_at < ?
-    `).all(date.toISOString(), nextDate.toISOString()) as { status: string }[]
-
+    const dateStr = date.toISOString().split('T')[0]
+    const row = rowMap.get(dateStr)
     history.push({
-      date: date.toISOString().split('T')[0],
-      success: jobs.filter(j => j.status === 'success').length,
-      failed: jobs.filter(j => j.status === 'failed').length,
-      total: jobs.length,
+      date: dateStr,
+      success: row?.success ?? 0,
+      failed: row?.failed ?? 0,
+      total: row?.total ?? 0,
     })
   }
 
@@ -177,14 +184,15 @@ async function getStorageInfo() {
       let cfg: Record<string, unknown>
       try { cfg = JSON.parse(t.config) } catch { continue }
       const p = cfg['path'] as string | undefined
-      if (!p) continue
+      if (!p || typeof p !== 'string') continue
 
       try {
-        const { stdout: duOut } = await execAsync(`du -sb "${p}" 2>/dev/null || echo "0\t."`)
+        // Use execFile (not exec) to avoid shell injection via path value
+        const { stdout: duOut } = await execFileAsync('du', ['-sb', p]).catch(() => ({ stdout: '0\t.' }))
         totalUsed += parseInt(duOut.split('\t')[0]) || 0
 
-        const { stdout: dfOut } = await execAsync(`df -B1 "${p}" | tail -1`)
-        totalAvailable += parseInt(dfOut.split(/\s+/)[3]) || 0
+        const { stdout: dfOut } = await execFileAsync('df', ['-B1', p])
+        totalAvailable += parseInt(dfOut.split('\n')[1]?.split(/\s+/)[3] ?? '0') || 0
       } catch { /* target not accessible */ }
     }
   } catch { /* skip storage calculation */ }
@@ -264,8 +272,13 @@ async function getWarnings() {
   return warnings
 }
 
-function getNextScheduleApprox(): string {
-  const now = new Date()
-  now.setHours(now.getHours() + 1)
-  return now.toISOString()
+function getNextSchedule(cronExpression: string): string {
+  try {
+    const interval = cronParser.parseExpression(cronExpression)
+    return interval.next().toDate().toISOString()
+  } catch {
+    const now = new Date()
+    now.setHours(now.getHours() + 1)
+    return now.toISOString()
+  }
 }

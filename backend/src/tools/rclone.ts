@@ -34,7 +34,7 @@ export async function executeRclone(options: RcloneOptions): Promise<RcloneResul
     logger.info(`Executing rclone: rclone ${args.join(' ')}`)
 
     const rclone = spawn('rclone', args)
-    const bytesTransferred = 0
+    let bytesTransferred = 0
 
     rclone.stdout.on('data', (data: Buffer) => {
       const output = data.toString()
@@ -44,13 +44,22 @@ export async function executeRclone(options: RcloneOptions): Promise<RcloneResul
       const progressMatch = output.match(
         /Transferred:\s+([\d.]+\s+\w+)\s+\/\s+[\d.]+\s+\w+,\s+(\d+)%,\s+([\d.]+\s+\w+\/s),\s+ETA\s+([\w\d]+)/
       )
-      if (progressMatch && options.onProgress) {
-        options.onProgress({
-          transferred: progressMatch[1],
-          percent: parseInt(progressMatch[2]),
-          speed: progressMatch[3],
-          eta: progressMatch[4],
-        })
+      if (progressMatch) {
+        if (options.onProgress) {
+          options.onProgress({
+            transferred: progressMatch[1],
+            percent: parseInt(progressMatch[2]),
+            speed: progressMatch[3],
+            eta: progressMatch[4],
+          })
+        }
+        // Parse bytes from the transferred string (e.g. "1.234 MiB")
+        const sizeMatch = progressMatch[1].match(/([\d.]+)\s+(\w+)/)
+        if (sizeMatch) {
+          const value = parseFloat(sizeMatch[1])
+          const units: Record<string, number> = { B: 1, KiB: 1024, MiB: 1024 ** 2, GiB: 1024 ** 3 }
+          bytesTransferred = Math.round(value * (units[sizeMatch[2]] ?? 1))
+        }
       }
     })
 
