@@ -84,8 +84,21 @@ export function ApiTokens() {
     )
   }
 
-  const copyToken = (token: string) => {
-    void navigator.clipboard.writeText(token)
+  const copyToken = async (token: string) => {
+    try {
+      await navigator.clipboard.writeText(token)
+    } catch {
+      // Fallback for non-HTTPS contexts (e.g. local HTTP on Unraid)
+      const el = document.createElement('textarea')
+      el.value = token
+      el.style.position = 'fixed'
+      el.style.opacity = '0'
+      document.body.appendChild(el)
+      el.focus()
+      el.select()
+      document.execCommand('copy')
+      document.body.removeChild(el)
+    }
     toast(t('api_tokens.copied'), 'success')
   }
 
@@ -113,7 +126,7 @@ export function ApiTokens() {
             {createdToken}
           </div>
           <div className="flex gap-2">
-            <Button variant="secondary" size="sm" onClick={() => copyToken(createdToken)}>
+            <Button variant="secondary" size="sm" onClick={() => { void copyToken(createdToken) }}>
               <Copy size={12} /> {t('api_tokens.copy')}
             </Button>
             <Button variant="ghost" size="sm" onClick={() => setCreatedToken(null)}>
