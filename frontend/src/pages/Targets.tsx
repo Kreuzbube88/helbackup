@@ -1,17 +1,22 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { HardDrive, Cloud, Server, Trash2 } from 'lucide-react'
+import { HardDrive, Cloud, Server, Trash2, Pencil } from 'lucide-react'
 import { api, type Target } from '../api'
 import { Card } from '../components/common/Card'
 import { Button } from '../components/common/Button'
 import { ConfirmModal } from '../components/common/ConfirmModal'
 import { useToast } from '../components/common/Toast'
+import { TableRowSkeleton } from '../components/common/Skeleton'
+import { Tooltip } from '../components/common/Tooltip'
 import { TargetCreateModal } from '../components/targets/TargetCreateModal'
+import { TargetEditModal } from '../components/targets/TargetEditModal'
+import { useKeyboardShortcut } from '../hooks/useKeyboardShortcut'
 
 const TYPE_ICONS: Record<string, React.ReactNode> = {
   synology: <Server size={16} />,
-  rclone: <Cloud size={16} />,
-  local: <HardDrive size={16} />,
+  rclone:   <Cloud size={16} />,
+  local:    <HardDrive size={16} />,
+  nas:      <Server size={16} />,
 }
 
 export function Targets() {
@@ -21,7 +26,10 @@ export function Targets() {
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState(false)
   const [showCreateModal, setShowCreateModal] = useState(false)
+  const [editTarget, setEditTarget] = useState<Target | null>(null)
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null)
+
+  useKeyboardShortcut({ key: 'n', ctrl: true }, () => setShowCreateModal(true))
 
   function loadTargets() {
     setLoading(true)
@@ -51,8 +59,13 @@ export function Targets() {
 
   if (loading) {
     return (
-      <div className="flex-1 flex items-center justify-center text-[var(--text-muted)] text-sm">
-        {t('common:loading')}
+      <div className="flex-1 p-6 overflow-auto bg-grid relative">
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-xl font-semibold text-[var(--text-primary)]">{t('title')}</h1>
+        </div>
+        <div className="flex flex-col gap-3">
+          {[...Array(3)].map((_, i) => <TableRowSkeleton key={i} />)}
+        </div>
       </div>
     )
   }
@@ -75,9 +88,11 @@ export function Targets() {
       <div className="relative">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-xl font-semibold text-[var(--text-primary)]">{t('title')}</h1>
-          <Button variant="primary" size="sm" onClick={() => setShowCreateModal(true)}>
-            {t('create')}
-          </Button>
+          <Tooltip content="Ctrl+N">
+            <Button variant="primary" size="sm" onClick={() => setShowCreateModal(true)}>
+              {t('create')}
+            </Button>
+          </Tooltip>
         </div>
 
         {targets.length === 0 ? (
@@ -88,7 +103,7 @@ export function Targets() {
         ) : (
           <div className="flex flex-col gap-3">
             {targets.map(target => (
-              <Card key={target.id} hover className="border-holographic card-lift corner-cuts">
+              <Card key={target.id} hover className="border-holographic card-lift corner-cuts animate-slide-up">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <span className="text-[var(--theme-accent)] shrink-0">
@@ -112,9 +127,16 @@ export function Targets() {
                     >
                       {target.enabled ? t('common:status.enabled') : t('common:status.disabled')}
                     </span>
-                    <Button variant="ghost" size="sm" onClick={() => setDeleteTargetId(target.id)}>
-                      <Trash2 size={12} />
-                    </Button>
+                    <Tooltip content={t('edit')}>
+                      <Button variant="ghost" size="sm" onClick={() => setEditTarget(target)}>
+                        <Pencil size={12} />
+                      </Button>
+                    </Tooltip>
+                    <Tooltip content={t('delete_confirm_title')}>
+                      <Button variant="ghost" size="sm" onClick={() => setDeleteTargetId(target.id)}>
+                        <Trash2 size={12} />
+                      </Button>
+                    </Tooltip>
                   </div>
                 </div>
               </Card>
@@ -126,6 +148,13 @@ export function Targets() {
       <TargetCreateModal
         open={showCreateModal}
         onClose={() => setShowCreateModal(false)}
+        onSuccess={loadTargets}
+      />
+
+      <TargetEditModal
+        target={editTarget}
+        open={editTarget !== null}
+        onClose={() => setEditTarget(null)}
         onSuccess={loadTargets}
       />
 

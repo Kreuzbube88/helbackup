@@ -1,13 +1,17 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
-import { Briefcase, Calendar, Zap, Play, Trash2 } from 'lucide-react'
+import { Briefcase, Calendar, Zap, Play, Trash2, Pencil } from 'lucide-react'
 import { api, type Job } from '../api'
 import { Card } from '../components/common/Card'
 import { Button } from '../components/common/Button'
 import { ConfirmModal } from '../components/common/ConfirmModal'
 import { useToast } from '../components/common/Toast'
+import { TableRowSkeleton } from '../components/common/Skeleton'
+import { Tooltip } from '../components/common/Tooltip'
 import { JobCreateModal } from '../components/jobs/JobCreateModal'
+import { JobEditModal } from '../components/jobs/JobEditModal'
+import { useKeyboardShortcut } from '../hooks/useKeyboardShortcut'
 
 export function Jobs() {
   const { t } = useTranslation('jobs')
@@ -19,7 +23,10 @@ export function Jobs() {
   const [executing, setExecuting] = useState<Set<string>>(new Set())
   const [executeConfirmId, setExecuteConfirmId] = useState<string | null>(null)
   const [showCreateModal, setShowCreateModal] = useState(false)
+  const [editJob, setEditJob] = useState<Job | null>(null)
   const [deleteJobId, setDeleteJobId] = useState<string | null>(null)
+
+  useKeyboardShortcut({ key: 'n', ctrl: true }, () => setShowCreateModal(true))
 
   function loadJobs() {
     setLoading(true)
@@ -61,8 +68,13 @@ export function Jobs() {
 
   if (loading) {
     return (
-      <div className="flex-1 flex items-center justify-center text-[var(--text-muted)] text-sm">
-        {t('common:loading')}
+      <div className="flex-1 p-6 overflow-auto bg-grid relative">
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-xl font-semibold text-[var(--text-primary)]">{t('title')}</h1>
+        </div>
+        <div className="flex flex-col gap-3">
+          {[...Array(4)].map((_, i) => <TableRowSkeleton key={i} />)}
+        </div>
       </div>
     )
   }
@@ -85,9 +97,11 @@ export function Jobs() {
       <div className="relative">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-xl font-semibold text-[var(--text-primary)]">{t('title')}</h1>
-          <Button variant="primary" size="sm" onClick={() => setShowCreateModal(true)}>
-            {t('create')}
-          </Button>
+          <Tooltip content="Ctrl+N">
+            <Button variant="primary" size="sm" onClick={() => setShowCreateModal(true)}>
+              {t('create')}
+            </Button>
+          </Tooltip>
         </div>
 
         {jobs.length === 0 ? (
@@ -98,7 +112,7 @@ export function Jobs() {
         ) : (
           <div className="flex flex-col gap-3">
             {jobs.map(job => (
-              <Card key={job.id} hover className="border-holographic card-lift corner-cuts">
+              <Card key={job.id} hover className="border-holographic card-lift corner-cuts animate-slide-up">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <Briefcase size={16} className="text-[var(--theme-primary)] shrink-0" />
@@ -133,13 +147,16 @@ export function Jobs() {
                     >
                       {job.enabled ? t('common:status.enabled') : t('common:status.disabled')}
                     </span>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setDeleteJobId(job.id)}
-                    >
-                      <Trash2 size={12} />
-                    </Button>
+                    <Tooltip content={t('edit')}>
+                      <Button variant="ghost" size="sm" onClick={() => setEditJob(job)}>
+                        <Pencil size={12} />
+                      </Button>
+                    </Tooltip>
+                    <Tooltip content={t('delete_confirm_title')}>
+                      <Button variant="ghost" size="sm" onClick={() => setDeleteJobId(job.id)}>
+                        <Trash2 size={12} />
+                      </Button>
+                    </Tooltip>
                     <Button
                       variant="primary"
                       size="sm"
@@ -169,6 +186,13 @@ export function Jobs() {
       <JobCreateModal
         open={showCreateModal}
         onClose={() => setShowCreateModal(false)}
+        onSuccess={loadJobs}
+      />
+
+      <JobEditModal
+        job={editJob}
+        open={editJob !== null}
+        onClose={() => setEditJob(null)}
         onSuccess={loadJobs}
       />
 

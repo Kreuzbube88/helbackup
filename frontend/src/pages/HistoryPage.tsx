@@ -6,6 +6,7 @@ import { api, type HistoryEntry } from '../api'
 import { Card } from '../components/common/Card'
 import { Button } from '../components/common/Button'
 import { useToast } from '../components/common/Toast'
+import { TableRowSkeleton } from '../components/common/Skeleton'
 
 function StatusBadge({ status }: { status: HistoryEntry['status'] }) {
   const { t } = useTranslation()
@@ -47,8 +48,11 @@ export function HistoryPage() {
 
   if (loading) {
     return (
-      <div className="flex-1 flex items-center justify-center text-[var(--text-muted)] text-sm">
-        {t('loading')}
+      <div className="flex-1 p-6 overflow-auto bg-grid relative">
+        <h1 className="text-xl font-semibold text-[var(--text-primary)] mb-6">{t('history.title')}</h1>
+        <div className="flex flex-col gap-2">
+          {[...Array(6)].map((_, i) => <TableRowSkeleton key={i} />)}
+        </div>
       </div>
     )
   }
