@@ -9,39 +9,42 @@
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
-    "start": "node dist/index.js"
+    "start": "node dist/index.js",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@fastify/cookie": "^11.0.0",
     "@fastify/cors": "^10.0.0",
     "@fastify/jwt": "^9.0.0",
+    "@fastify/rate-limit": "^10.1.1",
     "@fastify/static": "^8.0.0",
+    "@fastify/swagger": "^9.3.0",
+    "@fastify/swagger-ui": "^5.0.1",
     "bcryptjs": "^2.4.3",
     "better-sqlite3": "^11.0.0",
     "cron-parser": "^4.9.0",
     "fastify": "^5.0.0",
     "node-schedule": "^2.1.1",
-    "wake_on_lan": "^0.0.4",
+    "nodemailer": "^8.0.4",
     "pino": "^9.3.2",
     "pino-pretty": "^11.2.2",
+    "prom-client": "^15.1.3",
     "ssh2": "^1.15.0",
-    "nodemailer": "^8.0.4",
     "undici": "^6.19.2",
     "uuid": "^10.0.0",
-    "@fastify/rate-limit": "^10.1.1",
-    "@fastify/swagger": "^9.3.0",
-    "@fastify/swagger-ui": "^5.0.1",
-    "prom-client": "^15.1.3"
+    "wake_on_lan": "^0.0.4"
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",
-    "@types/nodemailer": "^7.0.0",
     "@types/better-sqlite3": "^7.6.11",
     "@types/node": "^22.0.0",
     "@types/node-schedule": "^2.1.7",
+    "@types/nodemailer": "^7.0.0",
     "@types/ssh2": "^1.15.1",
     "@types/uuid": "^10.0.0",
     "tsx": "^4.16.2",
-    "typescript": "^5.5.4"
+    "typescript": "^5.5.4",
+    "vitest": "^4.1.2"
   }
 }
