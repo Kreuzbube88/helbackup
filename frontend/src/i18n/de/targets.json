@@ -16,5 +16,8 @@
   "delete_confirm_message": "Diese Aktion kann nicht rückgängig gemacht werden. Backups auf diesem Ziel bleiben erhalten.",
   "name": "Name",
   "type": "Typ",
-  "enabled": "Aktiviert"
+  "enabled": "Aktiviert",
+  "edit": "Ziel bearbeiten",
+  "updated": "Ziel erfolgreich aktualisiert",
+  "update_error": "Ziel konnte nicht aktualisiert werden"
 }

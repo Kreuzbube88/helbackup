@@ -9,7 +9,8 @@
     "add": "Add",
     "run": "Run",
     "enable": "Enable",
-    "disable": "Disable"
+    "disable": "Disable",
+    "retry": "Retry"
   },
   "confirm_delete": "Really delete? This action cannot be undone.",
   "unsaved_changes": "Unsaved changes. Really close?",
@@ -23,6 +24,7 @@
     "history": "History",
     "recovery": "Recovery",
     "api_tokens": "API Tokens",
+    "notification_log": "Notifications",
     "settings": "Settings"
   },
   "api_tokens": {
@@ -279,7 +281,10 @@
     "saved": "Notifications saved",
     "save_failed": "Save failed",
     "test_sent": "Test notification sent",
-    "test_failed": "Test failed"
+    "test_failed": "Test failed",
+    "log_title": "Notification Log",
+    "log_empty": "No notifications sent yet. History will appear here after your first backup runs.",
+    "load_error": "Failed to load notification log"
   },
   "history": {
     "title": "History",

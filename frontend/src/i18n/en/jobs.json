@@ -47,5 +47,8 @@
   "name": "Name",
   "schedule": "Schedule (Cron)",
   "enabled": "Enabled",
-  "invalid_cron": "Invalid cron expression (5 fields expected)"
+  "invalid_cron": "Invalid cron expression (5 fields expected)",
+  "edit": "Edit Job",
+  "updated": "Job updated successfully",
+  "update_error": "Failed to update job"
 }

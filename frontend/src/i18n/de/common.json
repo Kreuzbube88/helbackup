@@ -9,7 +9,8 @@
     "add": "Hinzufügen",
     "run": "Ausführen",
     "enable": "Aktivieren",
-    "disable": "Deaktivieren"
+    "disable": "Deaktivieren",
+    "retry": "Wiederholen"
   },
   "confirm_delete": "Wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.",
   "unsaved_changes": "Ungespeicherte Änderungen vorhanden. Wirklich schließen?",
@@ -50,6 +51,7 @@
     "history": "Verlauf",
     "recovery": "Wiederherstellung",
     "api_tokens": "API-Token",
+    "notification_log": "Benachrichtigungen",
     "settings": "Einstellungen"
   },
   "tools": {
@@ -279,7 +281,10 @@
     "saved": "Benachrichtigungen gespeichert",
     "save_failed": "Speichern fehlgeschlagen",
     "test_sent": "Test-Benachrichtigung gesendet",
-    "test_failed": "Test fehlgeschlagen"
+    "test_failed": "Test fehlgeschlagen",
+    "log_title": "Benachrichtigungs-Log",
+    "log_empty": "Noch keine Benachrichtigungen gesendet. Verlauf erscheint hier nach dem ersten Backup.",
+    "load_error": "Fehler beim Laden des Benachrichtigungs-Logs"
   },
   "history": {
     "title": "Verlauf",

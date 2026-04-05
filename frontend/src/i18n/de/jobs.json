@@ -47,5 +47,8 @@
   "name": "Name",
   "schedule": "Zeitplan (Cron)",
   "enabled": "Aktiviert",
-  "invalid_cron": "Ungültiger Cron-Ausdruck (5 Felder erwartet)"
+  "invalid_cron": "Ungültiger Cron-Ausdruck (5 Felder erwartet)",
+  "edit": "Job bearbeiten",
+  "updated": "Job erfolgreich aktualisiert",
+  "update_error": "Job konnte nicht aktualisiert werden"
 }

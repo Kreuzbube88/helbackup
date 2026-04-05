@@ -16,5 +16,8 @@
   "delete_confirm_message": "This action cannot be undone. Backups on this target will remain.",
   "name": "Name",
   "type": "Type",
-  "enabled": "Enabled"
+  "enabled": "Enabled",
+  "edit": "Edit Target",
+  "updated": "Target updated successfully",
+  "update_error": "Failed to update target"
 }
