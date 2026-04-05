@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Modal } from '../common/Modal'
+import { ConfirmModal } from '../common/ConfirmModal'
 import { Input } from '../common/Input'
 import { Select } from '../common/Select'
 import { Button } from '../common/Button'
@@ -27,6 +28,7 @@ export function TargetEditModal({ target, open, onClose, onSuccess }: Props) {
   const { t } = useTranslation('targets')
   const { toast } = useToast()
   const [loading, setLoading] = useState(false)
+  const [confirmClose, setConfirmClose] = useState(false)
   const [name, setName] = useState('')
   const [type, setType] = useState<TargetType>('local')
   const [enabled, setEnabled] = useState(true)
@@ -67,6 +69,28 @@ export function TargetEditModal({ target, open, onClose, onSuccess }: Props) {
     }
   }, [target])
 
+  const isDirty = target !== null && (
+    name !== target.name ||
+    type !== (target.type as TargetType) ||
+    enabled !== target.enabled ||
+    (type === 'local' && localPath !== ((target.config.path as string) ?? '')) ||
+    (type === 'nas' && (
+      nasHost !== ((target.config.host as string) ?? '') ||
+      nasUser !== ((target.config.username as string) ?? '') ||
+      nasPass !== '' ||
+      nasPath !== ((target.config.path as string) ?? '')
+    )) ||
+    (type === 'rclone' && (
+      remoteName !== ((target.config.remoteName as string) ?? '') ||
+      remotePath !== ((target.config.remotePath as string) ?? '')
+    ))
+  )
+
+  const handleClose = () => {
+    if (isDirty) setConfirmClose(true)
+    else onClose()
+  }
+
   function buildConfig(): Record<string, unknown> {
     switch (type) {
       case 'local':  return { path: localPath }
@@ -100,7 +124,7 @@ export function TargetEditModal({ target, open, onClose, onSuccess }: Props) {
   if (!target) return null
 
   return (
-    <Modal open={open} onClose={onClose} title={t('edit')}>
+    <Modal open={open} onClose={handleClose} title={t('edit')}>
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <Input
           label={t('name')}
@@ -151,7 +175,7 @@ export function TargetEditModal({ target, open, onClose, onSuccess }: Props) {
         </label>
 
         <div className="flex gap-3 justify-end mt-2">
-          <Button type="button" variant="ghost" onClick={onClose}>
+          <Button type="button" variant="ghost" onClick={handleClose}>
             {t('common:buttons.cancel')}
           </Button>
           <Button type="submit" variant="primary" loading={loading} disabled={!name.trim()}>
@@ -160,5 +184,15 @@ export function TargetEditModal({ target, open, onClose, onSuccess }: Props) {
         </div>
       </form>
     </Modal>
+
+    <ConfirmModal
+      open={confirmClose}
+      onConfirm={() => { setConfirmClose(false); onClose() }}
+      onCancel={() => setConfirmClose(false)}
+      title={t('common:unsaved_changes_title')}
+      message={t('common:unsaved_changes')}
+      confirmText={t('common:buttons.discard')}
+      variant="warning"
+    />
   )
 }

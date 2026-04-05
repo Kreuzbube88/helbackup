@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Modal } from '../common/Modal'
 import { Button } from '../common/Button'
+import { ConfirmModal } from '../common/ConfirmModal'
 import { useToast } from '../common/Toast'
 import { api, type Job, type Target } from '../../api'
 import { StepBasicInfo, type BasicInfo } from './wizard/StepBasicInfo'
@@ -152,6 +153,14 @@ export function JobWizard({ job, open, onClose, onSuccess }: Props) {
   const [backupSteps, setBackupSteps] = useState<BackupStepsConfig>(DEFAULT_STEPS)
   const [advanced, setAdvanced] = useState<AdvancedSettingsValue>(DEFAULT_ADVANCED)
   const [tools, setTools] = useState<ToolSelection>(DEFAULT_TOOLS)
+  const [confirmClose, setConfirmClose] = useState(false)
+
+  const isDirty = basicInfo.name.trim() !== '' || Object.values(backupSteps).some(v => v !== null)
+
+  const handleClose = () => {
+    if (isDirty) setConfirmClose(true)
+    else onClose()
+  }
 
   useEffect(() => {
     if (!open) return
@@ -254,7 +263,7 @@ export function JobWizard({ job, open, onClose, onSuccess }: Props) {
   const title = job ? t('edit') : t('create_new')
 
   return (
-    <Modal open={open} onClose={onClose} title={title} className="max-w-2xl">
+    <Modal open={open} onClose={handleClose} title={title} className="max-w-2xl">
       {/* Step indicator */}
       <div className="flex items-center gap-1 mb-6">
         {STEP_LABELS.map((label, i) => (
@@ -298,7 +307,7 @@ export function JobWizard({ job, open, onClose, onSuccess }: Props) {
         <Button
           type="button"
           variant="ghost"
-          onClick={() => step > 1 ? setStep((step - 1) as WizardStep) : onClose()}
+          onClick={() => step > 1 ? setStep((step - 1) as WizardStep) : handleClose()}
         >
           {step > 1 ? t('common:buttons.back') : t('common:buttons.cancel')}
         </Button>
@@ -334,5 +343,15 @@ export function JobWizard({ job, open, onClose, onSuccess }: Props) {
         </div>
       </div>
     </Modal>
+
+    <ConfirmModal
+      open={confirmClose}
+      onConfirm={() => { setConfirmClose(false); onClose() }}
+      onCancel={() => setConfirmClose(false)}
+      title={t('common:unsaved_changes_title')}
+      message={t('common:unsaved_changes')}
+      confirmText={t('common:buttons.discard')}
+      variant="warning"
+    />
   )
 }

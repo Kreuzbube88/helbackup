@@ -16,10 +16,12 @@
     "disable": "Disable",
     "retry": "Retry",
     "back": "Back",
-    "next": "Next"
+    "next": "Next",
+    "discard": "Discard"
   },
   "confirm_delete": "Really delete? This action cannot be undone.",
   "unsaved_changes": "Unsaved changes. Really close?",
+  "unsaved_changes_title": "Discard changes?",
   "loading": "Loading...",
   "error": "Error",
   "success": "Success",

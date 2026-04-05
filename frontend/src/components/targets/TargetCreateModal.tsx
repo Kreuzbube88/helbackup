@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Modal } from '../common/Modal'
+import { ConfirmModal } from '../common/ConfirmModal'
 import { Input } from '../common/Input'
 import { Select } from '../common/Select'
 import { Button } from '../common/Button'
@@ -26,6 +27,7 @@ export function TargetCreateModal({ open, onClose, onSuccess }: Props) {
   const { t } = useTranslation('targets')
   const { toast } = useToast()
   const [loading, setLoading] = useState(false)
+  const [confirmClose, setConfirmClose] = useState(false)
   const [name, setName] = useState('')
   const [type, setType] = useState<TargetType>('local')
   const [enabled, setEnabled] = useState(true)
@@ -53,6 +55,16 @@ export function TargetCreateModal({ open, onClose, onSuccess }: Props) {
       case 'nas': return { host: nasHost, port: nasPort, username: nasUser, password: nasPass, path: nasPath, power: nasPower }
       case 'rclone': return { remoteName, remotePath, provider: 'generic' }
     }
+  }
+
+  const isDirty = name !== '' ||
+    (type === 'local' && localPath !== '/mnt/backups') ||
+    (type === 'nas' && (nasHost !== '' || nasUser !== '')) ||
+    (type === 'rclone' && remoteName !== '')
+
+  const handleClose = () => {
+    if (isDirty) setConfirmClose(true)
+    else onClose()
   }
 
   function resetForm() {
@@ -89,7 +101,7 @@ export function TargetCreateModal({ open, onClose, onSuccess }: Props) {
   }
 
   return (
-    <Modal open={open} onClose={onClose} title={t('create_new')}>
+    <Modal open={open} onClose={handleClose} title={t('create_new')}>
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <Input
           label={t('name')}
@@ -140,7 +152,7 @@ export function TargetCreateModal({ open, onClose, onSuccess }: Props) {
         </label>
 
         <div className="flex gap-3 justify-end mt-2">
-          <Button type="button" variant="ghost" onClick={onClose}>
+          <Button type="button" variant="ghost" onClick={handleClose}>
             {t('common:buttons.cancel')}
           </Button>
           <Button type="submit" variant="primary" loading={loading} disabled={!name.trim()}>
@@ -149,5 +161,15 @@ export function TargetCreateModal({ open, onClose, onSuccess }: Props) {
         </div>
       </form>
     </Modal>
+
+    <ConfirmModal
+      open={confirmClose}
+      onConfirm={() => { setConfirmClose(false); resetForm(); onClose() }}
+      onCancel={() => setConfirmClose(false)}
+      title={t('common:unsaved_changes_title')}
+      message={t('common:unsaved_changes')}
+      confirmText={t('common:buttons.discard')}
+      variant="warning"
+    />
   )
 }
