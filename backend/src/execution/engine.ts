@@ -147,9 +147,10 @@ export class JobExecutionEngine extends EventEmitter {
       }
 
       const duration = this.elapsedSeconds()
+      const finalStatus = this.summary.errors > 0 ? 'failed' : 'success'
       db.prepare(
         'UPDATE job_history SET status = ?, ended_at = ?, duration_s = ? WHERE id = ?'
-      ).run('success', new Date().toISOString(), duration, this.runId)
+      ).run(finalStatus, new Date().toISOString(), duration, this.runId)
 
       this.saveSummary(duration * 1000)
       backupDurationHistogram.observe({ job_name: this.jobName }, duration)
@@ -166,7 +167,7 @@ export class JobExecutionEngine extends EventEmitter {
         })
       }
 
-      const successEvent = this.summary.warnings > 0 ? 'backup_warning' : 'backup_success'
+      const successEvent = this.summary.errors > 0 ? 'backup_failed' : this.summary.warnings > 0 ? 'backup_warning' : 'backup_success'
       void notificationManager.notify({
         event: successEvent,
         jobName: this.jobName,
