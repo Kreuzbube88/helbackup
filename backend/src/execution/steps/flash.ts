@@ -57,6 +57,7 @@ export async function executeFlashBackup(
   })
 
   engine.addTransferred(result.filesTransferred, result.bytesTransferred)
+  engine.recordBackupPath('flash', destPath, config.targetId)
   engine.log('info', 'system', `Flash backup done: ${result.filesTransferred} files, ${result.bytesTransferred} bytes transferred`)
 
   if (config.useEncryption) {

@@ -7,6 +7,7 @@ import { logger } from '../utils/logger.js'
 import { executeHook } from './hooks.js'
 import { notificationManager } from '../notifications/notificationManager.js'
 import { backupDurationHistogram } from '../metrics/prometheus.js'
+import { createJobManifest } from './manifest.js'
 
 const execFileAsync = promisify(execFile)
 
@@ -89,6 +90,7 @@ export class JobExecutionEngine extends EventEmitter {
   private readonly startedAt: string
   private readonly useEncryption: boolean
   private sequence = 0
+  private backupPaths: Array<{ type: string; path: string; targetId?: string }> = []
   private summary: Summary = {
     filesCopied: 0,
     filesSkipped: 0,
@@ -154,6 +156,15 @@ export class JobExecutionEngine extends EventEmitter {
 
       this.saveSummary(duration * 1000)
       backupDurationHistogram.observe({ job_name: this.jobName }, duration)
+
+      if (this.backupPaths.length > 0) {
+        try {
+          await createJobManifest(this.jobId, this.runId, this.backupPaths, this)
+        } catch (err) {
+          this.log('warn', 'system', `Manifest creation failed: ${err instanceof Error ? err.message : String(err)}`)
+        }
+      }
+
       this.log('info', 'system',
         `Backup completed: ${this.summary.filesCopied} files copied, ${this.summary.errors} errors`
       )
@@ -313,6 +324,10 @@ export class JobExecutionEngine extends EventEmitter {
   addTransferred(files: number, bytes: number): void {
     this.summary.filesCopied += files
     this.summary.bytesTransferred += bytes
+  }
+
+  recordBackupPath(type: string, backupPath: string, targetId?: string): void {
+    this.backupPaths.push({ type, path: backupPath, targetId })
   }
 
   getRunId(): string {

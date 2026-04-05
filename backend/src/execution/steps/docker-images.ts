@@ -90,5 +90,6 @@ export async function executeDockerImageExport(
     }
   }
 
+  engine.recordBackupPath('docker_images', destPath, config.targetId)
   engine.log('info', 'system', 'Docker image export completed')
 }

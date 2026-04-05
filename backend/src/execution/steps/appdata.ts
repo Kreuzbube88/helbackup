@@ -270,5 +270,6 @@ export async function executeAppdataBackup(
     }
   }
 
+  engine.recordBackupPath('appdata', destPath, config.targetId)
   engine.log('info', 'system', 'Appdata backup completed')
 }

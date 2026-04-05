@@ -238,5 +238,6 @@ export async function executeVMBackup(
     }
   }
 
+  engine.recordBackupPath('vms', destPath, config.targetId)
   engine.log('info', 'system', 'VM backup completed')
 }

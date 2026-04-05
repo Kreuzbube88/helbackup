@@ -192,7 +192,8 @@ async function getStorageInfo() {
         totalUsed += parseInt(duOut.split('\t')[0]) || 0
 
         const { stdout: dfOut } = await execFileAsync('df', ['-B1', p])
-        totalAvailable += parseInt(dfOut.split('\n')[1]?.split(/\s+/)[3] ?? '0') || 0
+        const dfParts = (dfOut.split('\n')[1] ?? '').trim().split(/\s+/).filter(Boolean)
+        totalAvailable += parseInt(dfParts[3] ?? '0') || 0
       } catch { /* target not accessible */ }
     }
   } catch { /* skip storage calculation */ }

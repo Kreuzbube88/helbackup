@@ -131,5 +131,6 @@ export async function executeSystemConfigBackup(
     }
   }
 
+  engine.recordBackupPath('system_config', destPath, config.targetId)
   engine.log('info', 'system', 'System config backup completed')
 }

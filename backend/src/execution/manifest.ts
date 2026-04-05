@@ -107,6 +107,52 @@ export async function createManifest(
   return manifest
 }
 
+export async function createJobManifest(
+  jobId: string,
+  runId: string,
+  stepPaths: Array<{ type: string; path: string; targetId?: string }>,
+  engine: JobExecutionEngine
+): Promise<void> {
+  engine.log('info', 'system', 'Creating job manifest...')
+
+  const allEntries: ManifestEntry[] = []
+  for (const { path: stepPath } of stepPaths) {
+    try {
+      await scanDir(stepPath, stepPath, allEntries)
+    } catch { /* path might not exist or not be local */ }
+  }
+
+  let containerConfigs: unknown[] | undefined
+  const appdataStep = stepPaths.find(s => s.type === 'appdata')
+  if (appdataStep) {
+    try {
+      const raw = await fs.readFile(path.join(appdataStep.path, 'containers.json'), 'utf-8')
+      containerConfigs = JSON.parse(raw) as unknown[]
+    } catch { /* no container configs */ }
+  }
+
+  const backupId = randomUUID()
+  const timestamp = new Date().toISOString()
+  const manifest = {
+    backupId,
+    jobId,
+    runId,
+    timestamp,
+    helbackupVersion: 'v1.0',
+    backupPath: stepPaths[0].path,
+    stepPaths,
+    entries: allEntries,
+    containerConfigs,
+    verified: false,
+  }
+
+  db.prepare(
+    'INSERT INTO manifest (backup_id, job_id, manifest, created_at) VALUES (?, ?, ?, ?)'
+  ).run(backupId, jobId, JSON.stringify(manifest), timestamp)
+
+  engine.log('info', 'system', `Job manifest created: ${allEntries.length} files across ${stepPaths.length} step(s)`)
+}
+
 async function scanDir(dir: string, baseDir: string, entries: ManifestEntry[]): Promise<void> {
   const items = await fs.readdir(dir, { withFileTypes: true })
   for (const item of items) {
