@@ -21,7 +21,7 @@ Intelligent backup orchestrator for Unraid. Self-hosted, single Docker container
 ## Architecture
 
 - Single container: Fastify serves `/api/*` + React SPA
-- Privileged mode: REQUIRED for Unraid system access (`/boot`, `/mnt/user`, Docker socket)
+- Privileged mode: not required
 - Job orchestration: dependency graph → sequential execution → retry logic
 - NAS management: WOL → health check → backup → graceful shutdown
 - Backup types: Flash Drive, Appdata, VMs, Docker Images, System Config
@@ -105,7 +105,7 @@ Keep untranslated: Rsync, Rclone, SSH, Docker, Unraid, technical terms
 - **better-sqlite3 booleans**: write `? 1 : 0`, read `=== 1`
 - **SSH key permissions**: must be 600 — validate before use
 - **Docker socket**: `undici.Pool` with `socketPath: '/var/run/docker.sock'`
-- **Privileged container**: REQUIRED for `/boot` access
+- **Privileged container**: not required
 - **Unraid array**: check `mdState` before backup — never if array stopped
 - **Cron validation**: use `cron-parser` library
 - **Rsync bandwidth**: use `--bwlimit=50M` to avoid saturation
