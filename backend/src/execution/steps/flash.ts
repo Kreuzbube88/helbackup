@@ -38,6 +38,7 @@ export async function executeFlashBackup(
     throw new Error(`Invalid target config JSON for target ${config.targetId}`)
   }
   const destPath = path.join(targetConfig.path, 'flash', new Date().toISOString().split('T')[0])
+  await fs.mkdir(destPath, { recursive: true })
 
   engine.log('info', 'system', `Destination: ${destPath}`)
 
