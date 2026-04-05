@@ -1,0 +1,45 @@
+import { useTranslation } from 'react-i18next'
+import { Input } from '../../common/Input'
+import { CronBuilder } from './CronBuilder'
+
+export interface BasicInfo {
+  name: string
+  schedule: string | null
+  enabled: boolean
+}
+
+interface Props {
+  value: BasicInfo
+  onChange: (value: BasicInfo) => void
+}
+
+export function StepBasicInfo({ value, onChange }: Props) {
+  const { t } = useTranslation('jobs')
+
+  return (
+    <div className="space-y-4">
+      <Input
+        label={t('name')}
+        value={value.name}
+        onChange={e => onChange({ ...value, name: e.target.value })}
+        required
+        autoFocus
+      />
+
+      <CronBuilder
+        value={value.schedule}
+        onChange={schedule => onChange({ ...value, schedule })}
+      />
+
+      <label className="flex items-center gap-2 text-sm text-[var(--text-secondary)] cursor-pointer">
+        <input
+          type="checkbox"
+          checked={value.enabled}
+          onChange={e => onChange({ ...value, enabled: e.target.checked })}
+          className="accent-[var(--theme-primary)]"
+        />
+        {t('enabled')}
+      </label>
+    </div>
+  )
+}

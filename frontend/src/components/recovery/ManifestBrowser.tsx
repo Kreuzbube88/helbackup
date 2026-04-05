@@ -3,6 +3,7 @@ import { Lock } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '../common/Button';
 import UnlockBackupDialog from '../encryption/UnlockBackupDialog';
+import DatabaseRestoreWizard from './DatabaseRestoreWizard';
 
 interface ManifestEntry {
   path?: string;
@@ -12,6 +13,7 @@ interface ManifestEntry {
 interface ContainerConfig {
   id: string;
   name: string;
+  image?: string;
 }
 
 interface ParsedManifest {
@@ -43,6 +45,7 @@ export default function ManifestBrowser({ manifests, onSelect, onFullServerResto
   const { t } = useTranslation();
   const [pendingEncrypted, setPendingEncrypted] = useState<Manifest | null>(null);
   const [unlockedSessions, setUnlockedSessions] = useState<Map<string, string>>(new Map());
+  const [dbRestoreManifest, setDbRestoreManifest] = useState<Manifest | null>(null);
 
   const getBackupId = (m: Manifest) => m.backup_id ?? m.backupId ?? '';
 
@@ -195,6 +198,14 @@ export default function ManifestBrowser({ manifests, onSelect, onFullServerResto
                         {t('recovery.full_server_restore_btn')}
                       </Button>
                     )}
+                    {(!encrypted || unlocked) && containerCount > 0 && (
+                      <Button
+                        variant="secondary"
+                        onClick={(e) => { e.stopPropagation(); setDbRestoreManifest(manifest); }}
+                      >
+                        {t('recovery.restore_database')}
+                      </Button>
+                    )}
                   </div>
                 </div>
               </div>
@@ -210,6 +221,21 @@ export default function ManifestBrowser({ manifests, onSelect, onFullServerResto
           onCancel={() => setPendingEncrypted(null)}
         />
       )}
+
+      {dbRestoreManifest && (() => {
+        const parsed: ParsedManifest = typeof dbRestoreManifest.manifest === 'string'
+          ? JSON.parse(dbRestoreManifest.manifest) as ParsedManifest
+          : dbRestoreManifest as ParsedManifest;
+        return (
+          <div className="mt-6">
+            <DatabaseRestoreWizard
+              backupId={getBackupId(dbRestoreManifest)}
+              containers={(parsed.containerConfigs ?? []) as Array<{ id: string; name: string; image: string }>}
+              onClose={() => setDbRestoreManifest(null)}
+            />
+          </div>
+        );
+      })()}
     </div>
   );
 }

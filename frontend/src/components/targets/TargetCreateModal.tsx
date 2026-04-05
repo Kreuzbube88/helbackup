@@ -6,6 +6,7 @@ import { Select } from '../common/Select'
 import { Button } from '../common/Button'
 import { useToast } from '../common/Toast'
 import { api } from '../../api'
+import { NASTargetForm, type NASPowerConfig } from './NASTargetForm'
 
 interface Props {
   open: boolean
@@ -38,6 +39,9 @@ export function TargetCreateModal({ open, onClose, onSuccess }: Props) {
   const [nasUser, setNasUser] = useState('')
   const [nasPass, setNasPass] = useState('')
   const [nasPath, setNasPath] = useState('/backups')
+  const [nasPower, setNasPower] = useState<NASPowerConfig>({
+    enabled: false, mac: '', ip: '', ssh: { username: '' }, autoShutdown: false,
+  })
 
   // rclone
   const [remoteName, setRemoteName] = useState('')
@@ -46,7 +50,7 @@ export function TargetCreateModal({ open, onClose, onSuccess }: Props) {
   function buildConfig(): Record<string, unknown> {
     switch (type) {
       case 'local': return { path: localPath }
-      case 'nas': return { host: nasHost, port: nasPort, username: nasUser, password: nasPass, path: nasPath }
+      case 'nas': return { host: nasHost, port: nasPort, username: nasUser, password: nasPass, path: nasPath, power: nasPower }
       case 'rclone': return { remoteName, remotePath, provider: 'generic' }
     }
   }
@@ -61,6 +65,7 @@ export function TargetCreateModal({ open, onClose, onSuccess }: Props) {
     setNasUser('')
     setNasPass('')
     setNasPath('/backups')
+    setNasPower({ enabled: false, mac: '', ip: '', ssh: { username: '' }, autoShutdown: false })
     setRemoteName('')
     setRemotePath('backups')
   }
@@ -111,6 +116,9 @@ export function TargetCreateModal({ open, onClose, onSuccess }: Props) {
             <Input label={t('common:nas.username')} value={nasUser} onChange={e => setNasUser(e.target.value)} required />
             <Input label={t('common:nas.password')} type="password" value={nasPass} onChange={e => setNasPass(e.target.value)} />
             <Input label="Path" value={nasPath} onChange={e => setNasPath(e.target.value)} required />
+            <div className="border border-[var(--border-default)] p-3">
+              <NASTargetForm value={nasPower} onChange={setNasPower} />
+            </div>
           </>
         )}
 

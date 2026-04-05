@@ -9,8 +9,7 @@ import { ConfirmModal } from '../components/common/ConfirmModal'
 import { useToast } from '../components/common/Toast'
 import { TableRowSkeleton } from '../components/common/Skeleton'
 import { Tooltip } from '../components/common/Tooltip'
-import { JobCreateModal } from '../components/jobs/JobCreateModal'
-import { JobEditModal } from '../components/jobs/JobEditModal'
+import { JobWizard } from '../components/jobs/JobWizard'
 import { useKeyboardShortcut } from '../hooks/useKeyboardShortcut'
 
 export function Jobs() {
@@ -183,13 +182,13 @@ export function Jobs() {
         variant="warning"
       />
 
-      <JobCreateModal
+      <JobWizard
         open={showCreateModal}
         onClose={() => setShowCreateModal(false)}
         onSuccess={loadJobs}
       />
 
-      <JobEditModal
+      <JobWizard
         job={editJob}
         open={editJob !== null}
         onClose={() => setEditJob(null)}

@@ -37,7 +37,7 @@ interface SavingsResult {
 }
 
 interface Props {
-  targetId: number
+  targetId: string
   onClose: () => void
 }
 

@@ -18,5 +18,6 @@
   "enabled": "Enabled",
   "edit": "Edit Target",
   "updated": "Target updated successfully",
-  "update_error": "Failed to update target"
+  "update_error": "Failed to update target",
+  "retention": "Retention Settings"
 }

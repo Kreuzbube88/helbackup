@@ -1,15 +1,17 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { HardDrive, Cloud, Server, Trash2, Pencil } from 'lucide-react'
+import { HardDrive, Cloud, Server, Trash2, Pencil, Archive } from 'lucide-react'
 import { api, type Target } from '../api'
 import { Card } from '../components/common/Card'
 import { Button } from '../components/common/Button'
 import { ConfirmModal } from '../components/common/ConfirmModal'
+import { Modal } from '../components/common/Modal'
 import { useToast } from '../components/common/Toast'
 import { TableRowSkeleton } from '../components/common/Skeleton'
 import { Tooltip } from '../components/common/Tooltip'
 import { TargetCreateModal } from '../components/targets/TargetCreateModal'
 import { TargetEditModal } from '../components/targets/TargetEditModal'
+import GFSRetentionSettings from '../components/targets/GFSRetentionSettings'
 import { useKeyboardShortcut } from '../hooks/useKeyboardShortcut'
 
 const TYPE_ICONS: Record<string, React.ReactNode> = {
@@ -27,6 +29,7 @@ export function Targets() {
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [editTarget, setEditTarget] = useState<Target | null>(null)
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null)
+  const [retentionTargetId, setRetentionTargetId] = useState<string | null>(null)
 
   useKeyboardShortcut({ key: 'n', ctrl: true }, () => setShowCreateModal(true))
 
@@ -126,6 +129,11 @@ export function Targets() {
                     >
                       {target.enabled ? t('common:status.enabled') : t('common:status.disabled')}
                     </span>
+                    <Tooltip content={t('retention')}>
+                      <Button variant="ghost" size="sm" onClick={() => setRetentionTargetId(target.id)}>
+                        <Archive size={12} />
+                      </Button>
+                    </Tooltip>
                     <Tooltip content={t('edit')}>
                       <Button variant="ghost" size="sm" onClick={() => setEditTarget(target)}>
                         <Pencil size={12} />
@@ -165,6 +173,20 @@ export function Targets() {
         message={t('delete_confirm_message')}
         variant="danger"
       />
+
+      <Modal
+        open={retentionTargetId !== null}
+        onClose={() => setRetentionTargetId(null)}
+        title={t('retention')}
+        className="max-w-2xl"
+      >
+        {retentionTargetId !== null && (
+          <GFSRetentionSettings
+            targetId={retentionTargetId}
+            onClose={() => setRetentionTargetId(null)}
+          />
+        )}
+      </Modal>
     </div>
   )
 }

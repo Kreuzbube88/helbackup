@@ -18,5 +18,6 @@
   "enabled": "Aktiviert",
   "edit": "Ziel bearbeiten",
   "updated": "Ziel erfolgreich aktualisiert",
-  "update_error": "Ziel konnte nicht aktualisiert werden"
+  "update_error": "Ziel konnte nicht aktualisiert werden",
+  "retention": "Aufbewahrungseinstellungen"
 }

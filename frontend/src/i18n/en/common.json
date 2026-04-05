@@ -10,7 +10,9 @@
     "run": "Run",
     "enable": "Enable",
     "disable": "Disable",
-    "retry": "Retry"
+    "retry": "Retry",
+    "back": "Back",
+    "next": "Next"
   },
   "confirm_delete": "Really delete? This action cannot be undone.",
   "unsaved_changes": "Unsaved changes. Really close?",
