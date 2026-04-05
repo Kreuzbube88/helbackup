@@ -16,9 +16,14 @@ interface ChecksumEntry {
   hash: string;
 }
 
+interface ManifestEntry {
+  path: string;
+  size?: number;
+}
+
 interface ParsedManifest {
   containerConfigs?: ContainerConfig[];
-  entries?: unknown[];
+  entries?: ManifestEntry[];
   checksums?: ChecksumEntry[];
 }
 
@@ -39,6 +44,7 @@ export default function RestoreWizard({ manifest, onClose, onComplete }: Props) 
   const { toast } = useToast();
   const [step, setStep] = useState(0);
   const [selectedContainers, setSelectedContainers] = useState<string[]>([]);
+  const [selectedFiles, setSelectedFiles] = useState<string[]>([]);
   const [restoreDestination, setRestoreDestination] = useState('/mnt/user');
 
   let parsed: ParsedManifest = {};
@@ -53,7 +59,21 @@ export default function RestoreWizard({ manifest, onClose, onComplete }: Props) 
   }
 
   const containers = parsed.containerConfigs ?? [];
-  const files = parsed.entries ?? [];
+  const allFiles = parsed.entries ?? [];
+
+  const handleFileToggle = (filePath: string) => {
+    setSelectedFiles(prev =>
+      prev.includes(filePath) ? prev.filter(f => f !== filePath) : [...prev, filePath]
+    );
+  };
+
+  const handleSelectAllFiles = () => {
+    setSelectedFiles(allFiles.map(f => f.path));
+  };
+
+  const handleDeselectAllFiles = () => {
+    setSelectedFiles([]);
+  };
 
   const handleContainerToggle = (id: string) => {
     setSelectedContainers(prev =>
@@ -73,13 +93,20 @@ export default function RestoreWizard({ manifest, onClose, onComplete }: Props) 
 
   const handleRestoreFiles = async () => {
     try {
-      await recoveryApi.restoreFiles(manifest.backup_id ?? '', [], restoreDestination);
+      await recoveryApi.restoreFiles(manifest.backup_id ?? '', selectedFiles, restoreDestination);
       toast(t('recovery.files_restored'), 'success');
       onComplete();
     } catch (error: unknown) {
       toast(t('recovery.restore_error', { message: error instanceof Error ? error.message : String(error) }), 'error');
     }
   };
+
+  function formatBytes(bytes: number): string {
+    if (bytes < 1024) return `${bytes} B`
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+    if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+    return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)} GB`
+  }
 
   return (
     <div className="p-8 max-w-4xl mx-auto">
@@ -161,21 +188,59 @@ export default function RestoreWizard({ manifest, onClose, onComplete }: Props) 
             />
           </div>
 
-          <div className="border-2 border-[var(--border-default)] p-6 mb-6 max-h-96 overflow-y-auto">
-            <p className="text-sm opacity-70 mb-4">
-              {t('recovery.total_files')}: {files.length}
-            </p>
-            <div className="text-sm">
-              {t('recovery.all_files_will_be_restored')}
+          {allFiles.length === 0 ? (
+            <div className="border-2 border-[var(--border-default)] p-8 text-center mb-6">
+              <p>{t('recovery.no_files_in_backup')}</p>
             </div>
-          </div>
+          ) : (
+            <>
+              <div className="flex items-center gap-4 mb-2">
+                <p className="text-sm opacity-70">{t('recovery.total_files')}: {allFiles.length}</p>
+                <button
+                  onClick={handleSelectAllFiles}
+                  className="text-sm text-blue-400 hover:underline"
+                >
+                  {t('recovery.select_all')}
+                </button>
+                <button
+                  onClick={handleDeselectAllFiles}
+                  className="text-sm text-blue-400 hover:underline"
+                >
+                  {t('recovery.deselect_all')}
+                </button>
+              </div>
+              <div className="border-2 border-[var(--border-default)] p-4 mb-6 max-h-96 overflow-y-auto font-mono text-xs">
+                {allFiles.map((entry) => (
+                  <div
+                    key={entry.path}
+                    className="flex items-center gap-3 py-1 hover:bg-[var(--bg-elevated)] px-2"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedFiles.includes(entry.path)}
+                      onChange={() => handleFileToggle(entry.path)}
+                      className="w-4 h-4 flex-shrink-0"
+                    />
+                    <span className="truncate flex-1">{entry.path}</span>
+                    {entry.size !== undefined && (
+                      <span className="opacity-50 flex-shrink-0">{formatBytes(entry.size)}</span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
 
           <div className="flex gap-4">
             <Button variant="secondary" onClick={() => setStep(1)}>
               {t('recovery.back')}
             </Button>
-            <Button variant="primary" onClick={handleRestoreFiles}>
-              {t('recovery.restore_files')}
+            <Button
+              variant="primary"
+              onClick={handleRestoreFiles}
+              disabled={selectedFiles.length === 0}
+            >
+              {t('recovery.restore_files')} ({selectedFiles.length})
             </Button>
           </div>
         </div>

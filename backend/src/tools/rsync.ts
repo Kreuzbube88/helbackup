@@ -8,6 +8,7 @@ export interface RsyncOptions {
   sshHost?: string
   sshKey?: string
   excludePatterns?: string[]
+  filesFrom?: string // path to a file containing newline-separated relative paths to include
   bwLimit?: number // KB/s
   onProgress?: (data: { percent: number; transferred: string; speed: string }) => void
   onLog?: (message: string) => void
@@ -31,6 +32,10 @@ export async function executeRsync(options: RsyncOptions): Promise<RsyncResult> 
       options.excludePatterns.forEach(pattern => {
         args.push(`--exclude=${pattern}`)
       })
+    }
+
+    if (options.filesFrom) {
+      args.push(`--files-from=${options.filesFrom}`)
     }
 
     if (options.sshHost && options.sshUser) {

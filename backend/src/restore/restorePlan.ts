@@ -19,6 +19,7 @@ export interface RestoreItem {
 export interface RestorePlan {
   backupId: string
   timestamp: string
+  backupPath: string
   items: RestoreItem[]
   totalSize: number
   estimatedDuration: number // seconds
@@ -71,6 +72,7 @@ interface DatabaseDump {
 interface StoredManifest {
   backupId: string
   timestamp: string
+  backupPath?: string
   entries?: ManifestEntry[]
   containerConfigs?: ContainerConfig[]
   databaseDumps?: DatabaseDump[]
@@ -212,6 +214,7 @@ export async function generateRestorePlan(
   return {
     backupId: manifest.backupId,
     timestamp: manifest.timestamp,
+    backupPath: manifest.backupPath ?? '',
     items,
     totalSize,
     estimatedDuration,

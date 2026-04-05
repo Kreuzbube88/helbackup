@@ -1,8 +1,12 @@
 import { FastifyInstance } from 'fastify';
 import { db } from '../db/database.js';
 import { safeJsonParseOrThrow } from '../utils/safeJson.js';
+import { executeRsync } from '../tools/rsync.js';
+import { logger } from '../utils/logger.js';
 import fs from 'fs/promises';
 import path from 'path';
+import os from 'os';
+import { randomUUID } from 'crypto';
 
 const ALLOWED_SCAN_BASES = ['/app/data/', '/app/config/', '/unraid/', '/mnt/']
 
@@ -248,13 +252,21 @@ export default async function recoveryRoutes(app: FastifyInstance) {
     }
   );
 
-  // Restore files from backup
+  // Restore files from backup using rsync --files-from
   app.post<{ Body: { backupId: string; files: string[]; destination: string } }>(
     '/api/recovery/restore/files',
     { preHandler: [app.authenticate] },
     async (request, reply) => {
       try {
         const { backupId, files, destination } = request.body;
+
+        if (!files || files.length === 0) {
+          return reply.status(400).send({ error: 'No files specified' });
+        }
+
+        if (!isSafePath(destination)) {
+          return reply.status(400).send({ error: 'Destination path is not safe' });
+        }
 
         const manifestRecord = db.prepare(
           'SELECT * FROM manifest WHERE backup_id = ?'
@@ -264,14 +276,48 @@ export default async function recoveryRoutes(app: FastifyInstance) {
           return reply.status(404).send({ error: 'Manifest not found' });
         }
 
-        // manifest available for future restore logic
+        interface StoredManifestBasic {
+          backupPath?: string
+        }
+
+        const manifest = safeJsonParseOrThrow<StoredManifestBasic>(
+          manifestRecord.manifest as string,
+          'file restore manifest'
+        );
+
+        if (!manifest.backupPath) {
+          return reply.status(400).send({ error: 'Manifest does not contain backupPath — cannot locate backup files' });
+        }
+
+        const backupPath = manifest.backupPath;
+
+        await fs.mkdir(destination, { recursive: true });
+
+        // Write file list to temp file for rsync --files-from
+        const tmpFile = path.join(os.tmpdir(), `helbackup-restore-${randomUUID()}.txt`);
+        try {
+          await fs.writeFile(tmpFile, files.join('\n'), 'utf-8');
+
+          logger.info(`[restore/files] rsync --files-from from ${backupPath} → ${destination} (${files.length} files)`);
+
+          await executeRsync({
+            source: backupPath + '/',
+            destination,
+            bwLimit: 51200,
+            filesFrom: tmpFile,
+            onLog: msg => { if (msg.trim()) logger.debug(`[rsync] ${msg.trim()}`) },
+          });
+        } finally {
+          await fs.unlink(tmpFile).catch(() => undefined);
+        }
 
         return reply.send({
-          message: 'File restore initiated',
+          message: 'File restore completed',
           files: files.length,
-          destination
+          destination,
         });
       } catch (error: unknown) {
+        logger.error(`[restore/files] error: ${error instanceof Error ? error.message : String(error)}`);
         return reply.status(500).send({ error: error instanceof Error ? error.message : String(error) });
       }
     }
