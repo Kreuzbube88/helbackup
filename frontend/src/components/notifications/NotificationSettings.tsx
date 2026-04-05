@@ -1,3 +1,4 @@
+// Force rebuild 2026-04-05
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Button } from '../common/Button'
