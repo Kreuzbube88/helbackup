@@ -1,5 +1,7 @@
 # Erste Schritte
 
+> **Quick-Start-Wizard verfügbar:** Statt dieser manuellen Schritte kannst du den eingebauten Ersten-Backup-Wizard verwenden. Klicke auf **"Quick Start Guide"** im Dashboard, Jobs, Targets oder Recovery, um ihn zu starten. Siehe [Geführte Einrichtung](guided-setup.md) für Details.
+
 In 15 Minuten hast du:
 - Ersten Backup Target konfiguriert
 - Ersten Backup Job erstellt

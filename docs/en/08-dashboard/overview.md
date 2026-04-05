@@ -45,6 +45,10 @@ B2 Cloud:       23.1 GB / unlimited
 ⚠️ Local Backups: Only 15% storage remaining
 ```
 
+## Quick Start Guide
+
+A **"Quick Start Guide"** button is available in the top bar of the Dashboard. Clicking it opens the [First Backup Wizard](../01-getting-started/guided-setup.md) — a 5-step guided setup for creating your first backup target and job without manual configuration.
+
 ## Live Logs
 
 Below dashboard: Live-streaming of current backup logs via SSE (Server-Sent Events).

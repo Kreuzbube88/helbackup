@@ -59,7 +59,6 @@
 | 17 | [Reference](de/17-reference/) | [Reference](en/17-reference/) | Config, env vars, DB schema |
 | — | [FAQ](de/18-faq.md) | [FAQ](en/18-faq.md) | Frequently asked questions |
 | — | [Glossary](de/19-glossary.md) | [Glossary](en/19-glossary.md) | Terms and definitions |
-| — | [Changelog](de/20-changelog.md) | [Changelog](en/20-changelog.md) | Version history |
 
 ## Support
 

@@ -1,5 +1,7 @@
 # First Steps
 
+> **Quick Start Wizard available:** Instead of following these manual steps, you can use the built-in First Backup Wizard. Click the **"Quick Start Guide"** button on the Dashboard, Jobs, Targets, or Recovery page to launch it. See [Guided Setup](guided-setup.md) for details.
+
 In 15 minutes you'll have:
 - First Backup Target configured
 - First Backup Job created
