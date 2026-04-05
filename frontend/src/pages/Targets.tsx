@@ -19,14 +19,16 @@ export function Targets() {
   const { toast } = useToast()
   const [targets, setTargets] = useState<Target[]>([])
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState(false)
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null)
 
   function loadTargets() {
     setLoading(true)
+    setLoadError(false)
     api.targets.getAll()
       .then(setTargets)
-      .catch(() => toast(t('load_error'), 'error'))
+      .catch(() => { toast(t('load_error'), 'error'); setLoadError(true) })
       .finally(() => setLoading(false))
   }
 
@@ -51,6 +53,15 @@ export function Targets() {
     return (
       <div className="flex-1 flex items-center justify-center text-[var(--text-muted)] text-sm">
         {t('common:loading')}
+      </div>
+    )
+  }
+
+  if (loadError) {
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center gap-4 text-center p-8">
+        <p className="text-sm text-red-400">{t('load_error')}</p>
+        <Button variant="secondary" size="sm" onClick={loadTargets}>{t('common:buttons.retry', 'Retry')}</Button>
       </div>
     )
   }

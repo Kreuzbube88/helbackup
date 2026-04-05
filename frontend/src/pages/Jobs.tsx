@@ -15,6 +15,7 @@ export function Jobs() {
   const navigate = useNavigate()
   const [jobs, setJobs] = useState<Job[]>([])
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState(false)
   const [executing, setExecuting] = useState<Set<string>>(new Set())
   const [executeConfirmId, setExecuteConfirmId] = useState<string | null>(null)
   const [showCreateModal, setShowCreateModal] = useState(false)
@@ -22,9 +23,10 @@ export function Jobs() {
 
   function loadJobs() {
     setLoading(true)
+    setLoadError(false)
     api.jobs.getAll()
       .then(setJobs)
-      .catch(() => toast(t('load_error'), 'error'))
+      .catch(() => { toast(t('load_error'), 'error'); setLoadError(true) })
       .finally(() => setLoading(false))
   }
 
@@ -61,6 +63,15 @@ export function Jobs() {
     return (
       <div className="flex-1 flex items-center justify-center text-[var(--text-muted)] text-sm">
         {t('common:loading')}
+      </div>
+    )
+  }
+
+  if (loadError) {
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center gap-4 text-center p-8">
+        <p className="text-sm text-red-400">{t('load_error')}</p>
+        <Button variant="secondary" size="sm" onClick={loadJobs}>{t('common:buttons.retry', 'Retry')}</Button>
       </div>
     )
   }
