@@ -54,9 +54,9 @@ export default function RecoveryPage() {
     try {
       await recoveryApi.enable();
       setIsRecoveryMode(true);
-      toast(t('recovery.recovery_mode_enabled', 'Recovery mode enabled'), 'success');
+      toast(t('recovery.recovery_mode_enabled'), 'success');
     } catch (error: unknown) {
-      toast(`${t('recovery.failed_enable', 'Failed to enable recovery mode')}: ${error instanceof Error ? error.message : String(error)}`, 'error');
+      toast(`${t('recovery.failed_enable')}: ${error instanceof Error ? error.message : String(error)}`, 'error');
     }
   };
 
@@ -64,10 +64,10 @@ export default function RecoveryPage() {
     try {
       await recoveryApi.disable();
       setIsRecoveryMode(false);
-      toast(t('recovery.recovery_mode_disabled', 'Recovery mode disabled'), 'success');
+      toast(t('recovery.recovery_mode_disabled'), 'success');
       navigate('/');
     } catch (error: unknown) {
-      toast(`${t('recovery.failed_disable', 'Failed to disable recovery mode')}: ${error instanceof Error ? error.message : String(error)}`, 'error');
+      toast(`${t('recovery.failed_disable')}: ${error instanceof Error ? error.message : String(error)}`, 'error');
     }
   };
 

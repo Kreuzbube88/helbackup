@@ -67,7 +67,7 @@ export default function RestoreWizard({ manifest, onClose, onComplete }: Props) 
       toast(t('recovery.containers_restored'), 'success');
       setStep(2);
     } catch (error: unknown) {
-      toast(`Error: ${error instanceof Error ? error.message : String(error)}`, 'error');
+      toast(t('recovery.restore_error', { message: error instanceof Error ? error.message : String(error) }), 'error');
     }
   };
 
@@ -77,7 +77,7 @@ export default function RestoreWizard({ manifest, onClose, onComplete }: Props) 
       toast(t('recovery.files_restored'), 'success');
       onComplete();
     } catch (error: unknown) {
-      toast(`Error: ${error instanceof Error ? error.message : String(error)}`, 'error');
+      toast(t('recovery.restore_error', { message: error instanceof Error ? error.message : String(error) }), 'error');
     }
   };
 

@@ -194,7 +194,12 @@
     "check_logs": "Prüfe Logs für Fortschritt",
     "manual_steps_may_apply": "Manuelle Schritte könnten erforderlich sein",
     "reboot_required_flash": "Reboot erforderlich um Flash-Änderungen anzuwenden",
-    "view_logs": "Logs anzeigen"
+    "view_logs": "Logs anzeigen",
+    "recovery_mode_enabled": "Recovery Modus aktiviert",
+    "failed_enable": "Recovery Modus konnte nicht aktiviert werden",
+    "recovery_mode_disabled": "Recovery Modus beendet",
+    "failed_disable": "Recovery Modus konnte nicht beendet werden",
+    "restore_error": "Fehler: {{message}}"
   },
   "setup": {
     "welcome": "Willkommen bei HELBACKUP",
@@ -271,7 +276,10 @@
     "events": "Ereignisse",
     "save": "Speichern",
     "test": "Test senden",
-    "saved": "Benachrichtigungen gespeichert"
+    "saved": "Benachrichtigungen gespeichert",
+    "save_failed": "Speichern fehlgeschlagen",
+    "test_sent": "Test-Benachrichtigung gesendet",
+    "test_failed": "Test fehlgeschlagen"
   },
   "history": {
     "title": "Verlauf",

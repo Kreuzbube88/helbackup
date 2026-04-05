@@ -95,7 +95,7 @@ export function NotificationSettings() {
       await loadConfigs()
       toast(t('notifications.saved'), 'success')
     } catch (err) {
-      toast(err instanceof Error ? err.message : 'Save failed', 'error')
+      toast(err instanceof Error ? err.message : t('notifications.save_failed'), 'error')
     } finally {
       setSaving(false)
     }
@@ -106,9 +106,9 @@ export function NotificationSettings() {
     setTesting(true)
     try {
       await api.notifications.test(selected, channelConfig)
-      toast('Test notification sent!', 'success')
+      toast(t('notifications.test_sent'), 'success')
     } catch (err) {
-      toast(err instanceof Error ? err.message : 'Test failed', 'error')
+      toast(err instanceof Error ? err.message : t('notifications.test_failed'), 'error')
     } finally {
       setTesting(false)
     }

@@ -194,7 +194,12 @@
     "check_logs": "Check logs for progress",
     "manual_steps_may_apply": "Manual steps may be required",
     "reboot_required_flash": "Reboot required to apply flash drive changes",
-    "view_logs": "View Logs"
+    "view_logs": "View Logs",
+    "recovery_mode_enabled": "Recovery mode enabled",
+    "failed_enable": "Failed to enable recovery mode",
+    "recovery_mode_disabled": "Recovery mode disabled",
+    "failed_disable": "Failed to disable recovery mode",
+    "restore_error": "Error: {{message}}"
   },
   "setup": {
     "welcome": "Welcome to HELBACKUP",
@@ -271,7 +276,10 @@
     "events": "Events",
     "save": "Save",
     "test": "Send test",
-    "saved": "Notifications saved"
+    "saved": "Notifications saved",
+    "save_failed": "Save failed",
+    "test_sent": "Test notification sent",
+    "test_failed": "Test failed"
   },
   "history": {
     "title": "History",
