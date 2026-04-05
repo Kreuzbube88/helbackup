@@ -107,6 +107,7 @@
     "network": "Netzwerk",
     "verification": "Verifikation",
     "search_placeholder": "Logs durchsuchen...",
+    "waiting": "Warte auf Logs...",
     "duration": "Dauer",
     "files_copied": "Dateien kopiert",
     "warnings": "Warnungen",

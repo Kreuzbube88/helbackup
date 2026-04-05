@@ -101,6 +101,7 @@ export function TargetCreateModal({ open, onClose, onSuccess }: Props) {
   }
 
   return (
+    <>
     <Modal open={open} onClose={handleClose} title={t('create_new')}>
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <Input
@@ -171,5 +172,6 @@ export function TargetCreateModal({ open, onClose, onSuccess }: Props) {
       confirmText={t('common:buttons.discard')}
       variant="warning"
     />
+    </>
   )
 }

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { recovery as recoveryApi } from '../api';
+import { recovery as recoveryApi, type BackupManifest } from '../api';
 import { Button } from '../components/common/Button';
 import ManifestBrowser from '../components/recovery/ManifestBrowser';
 import RestoreWizard from '../components/recovery/RestoreWizard';
@@ -8,13 +8,7 @@ import FullServerRestoreWizard from '../components/recovery/FullServerRestoreWiz
 import { useTranslation } from 'react-i18next';
 import { useToast } from '../components/common/Toast';
 
-interface Manifest {
-  backup_id?: string;
-  backupId?: string;
-  created_at?: string;
-  manifest?: string;
-  [key: string]: unknown;
-}
+type Manifest = BackupManifest
 
 export default function RecoveryPage() {
   const { t } = useTranslation();
@@ -35,18 +29,18 @@ export default function RecoveryPage() {
   const loadStatus = async () => {
     try {
       const status = await recoveryApi.getStatus();
-      setIsRecoveryMode((status as { enabled: boolean }).enabled);
-    } catch (error) {
-      console.error('Failed to load recovery status:', error);
+      setIsRecoveryMode(status.enabled);
+    } catch {
+      // non-critical: silently fail, remain in non-recovery mode
     }
   };
 
   const loadManifests = async () => {
     try {
       const data = await recoveryApi.getManifests();
-      setManifests(data as Manifest[]);
-    } catch (error) {
-      console.error('Failed to load manifests:', error);
+      setManifests(data);
+    } catch {
+      // non-critical: show empty list
     }
   };
 

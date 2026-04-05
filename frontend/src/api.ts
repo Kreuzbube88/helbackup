@@ -100,6 +100,41 @@ export interface VmInfo {
   state: string
 }
 
+export interface ApiToken {
+  id: number
+  name: string
+  scopes: string
+  expires_at: string | null
+  last_used_at: string | null
+  created_at: string
+  revoked: number
+}
+
+export interface CreateTokenResult {
+  id: number
+  name: string
+  token: string
+  scopes: string[]
+  expiresAt: string | null
+}
+
+export interface NotificationLogEntry {
+  id: number
+  channel: string
+  event: string
+  success: boolean
+  error?: string
+  created_at: string
+}
+
+export interface BackupManifest {
+  backup_id?: string
+  backupId?: string
+  created_at?: string
+  manifest?: string
+  [key: string]: unknown
+}
+
 export const api = {
   setup: {
     checkStatus: () =>
@@ -211,19 +246,48 @@ export const api = {
     delete: (channel: string) => request<{ success: boolean }>('DELETE', `/notifications/${channel}`),
     test: (channel: string, config: Record<string, unknown>) =>
       request<{ success: boolean }>('POST', '/notifications/test', { channel, config }),
-    getLog: () => request<unknown[]>('GET', '/notifications/log'),
+    getLog: () => request<NotificationLogEntry[]>('GET', '/notifications/log'),
   },
 
   tokens: {
-    list: () => request<{ success: boolean; data: unknown }>('GET', '/tokens'),
+    list: () => request<{ success: boolean; data: ApiToken[] }>('GET', '/tokens'),
     create: (data: { name: string; scopes: string[]; expiresInDays?: number }) =>
-      request<{ success: boolean; data: unknown }>('POST', '/tokens', data),
+      request<{ success: boolean; data: CreateTokenResult }>('POST', '/tokens', data),
     revoke: (id: number) => request<{ success: boolean; data: unknown }>('DELETE', `/tokens/${id}`),
   },
 }
 
+export interface DashboardData {
+  systemStatus: {
+    status: 'healthy' | 'warning' | 'critical'
+    message: string
+    lastBackup: { timestamp: string; jobName: string; status: string; duration: number } | null
+    nextScheduled: { timestamp: string; jobName: string } | null
+  }
+  backupHistory: { date: string; success: number; failed: number; total: number }[]
+  successRate: { percentage: number; total: number; successful: number; failed: number }
+  storage: {
+    totalUsed: number
+    totalAvailable: number
+    percentage: number
+    oldestBackup: string | null
+    backupCount: number
+    growthTrend: { daily: number; weekly: number }
+  }
+  recentJobs: {
+    id: string
+    jobName: string
+    status: string
+    startTime: string
+    endTime: string | null
+    duration: number
+    size: number
+  }[]
+  warnings: { type: 'error' | 'warning' | 'info'; message: string; action?: string }[]
+}
+
 export const dashboard = {
-  get: () => request<unknown>('GET', '/dashboard'),
+  get: () => request<DashboardData>('GET', '/dashboard'),
 }
 
 export interface RestoreOptions {
@@ -271,7 +335,7 @@ export const recovery = {
   getStatus: () => request<{ enabled: boolean }>('GET', '/recovery/status'),
   enable: () => request<{ ok: boolean }>('POST', '/recovery/enable', {}),
   disable: () => request<{ ok: boolean }>('POST', '/recovery/disable', {}),
-  getManifests: () => request<unknown[]>('GET', '/recovery/manifests'),
+  getManifests: () => request<BackupManifest[]>('GET', '/recovery/manifests'),
   getManifest: (backupId: string) => request<unknown>('GET', `/recovery/manifests/${backupId}`),
   scan: (scanPath: string) => request<{ manifests: unknown[]; count: number }>('POST', '/recovery/scan', { path: scanPath }),
   restoreContainers: (backupId: string, containers: string[]) =>

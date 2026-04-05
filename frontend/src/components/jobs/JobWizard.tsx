@@ -263,6 +263,7 @@ export function JobWizard({ job, open, onClose, onSuccess }: Props) {
   const title = job ? t('edit') : t('create_new')
 
   return (
+    <>
     <Modal open={open} onClose={handleClose} title={title} className="max-w-2xl">
       {/* Step indicator */}
       <div className="flex items-center gap-1 mb-6">
@@ -353,5 +354,6 @@ export function JobWizard({ job, open, onClose, onSuccess }: Props) {
       confirmText={t('common:buttons.discard')}
       variant="warning"
     />
+    </>
   )
 }

@@ -4,25 +4,7 @@ import { Key, Copy, Trash2, Plus } from 'lucide-react'
 import { Button } from '../components/common/Button'
 import { ConfirmModal } from '../components/common/ConfirmModal'
 import { useToast } from '../components/common/Toast'
-import { api } from '../api'
-
-interface ApiToken {
-  id: number
-  name: string
-  scopes: string
-  expires_at: string | null
-  last_used_at: string | null
-  created_at: string
-  revoked: number
-}
-
-interface CreateTokenResult {
-  id: number
-  name: string
-  token: string
-  scopes: string[]
-  expiresAt: string | null
-}
+import { api, type ApiToken } from '../api'
 
 const SCOPES = ['read', 'write', 'admin'] as const
 
@@ -47,9 +29,9 @@ export function ApiTokens() {
   const loadTokens = async () => {
     try {
       const data = await api.tokens.list()
-      setTokens(data.data as ApiToken[])
+      setTokens(data.data)
     } catch (error: unknown) {
-      toast((error as Error).message, 'error')
+      toast(error instanceof Error ? error.message : t('common:error'), 'error')
     } finally {
       setLoading(false)
     }
@@ -72,14 +54,13 @@ export function ApiTokens() {
         scopes: newScopes,
         expiresInDays: newExpiry || undefined,
       })
-      const created = result.data as CreateTokenResult
-      setCreatedToken(created.token)
+      setCreatedToken(result.data.token)
       setNewName('')
       setNewScopes(['read'])
       void loadTokens()
       toast(t('api_tokens.created'), 'success')
     } catch (error: unknown) {
-      toast((error as Error).message, 'error')
+      toast(error instanceof Error ? error.message : t('common:error'), 'error')
     } finally {
       setCreating(false)
     }
@@ -91,7 +72,7 @@ export function ApiTokens() {
       void loadTokens()
       toast(t('api_tokens.revoked'), 'success')
     } catch (error: unknown) {
-      toast((error as Error).message, 'error')
+      toast(error instanceof Error ? error.message : t('common:error'), 'error')
     } finally {
       setRevokeConfirmId(null)
     }

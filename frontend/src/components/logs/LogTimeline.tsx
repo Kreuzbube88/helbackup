@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 
 export interface LogEntry {
   id: string
@@ -17,6 +18,7 @@ interface Props {
 }
 
 export function LogTimeline({ logs }: Props) {
+  const { t } = useTranslation('common')
   const endRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -26,7 +28,7 @@ export function LogTimeline({ logs }: Props) {
   return (
     <div className="bg-black text-white font-mono text-xs p-4 border border-[var(--border-default)] max-h-[600px] overflow-y-auto">
       {logs.length === 0 && (
-        <span className="text-[var(--text-muted)]">Waiting for logs...</span>
+        <span className="text-[var(--text-muted)]">{t('logs.waiting')}</span>
       )}
       {logs.map(log => (
         <LogLine key={log.id} log={log} />

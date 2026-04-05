@@ -9,74 +9,7 @@ import { Card } from '../components/common/Card'
 import { Button } from '../components/common/Button'
 import { ConfirmModal } from '../components/common/ConfirmModal'
 import { useToast } from '../components/common/Toast'
-import { api, dashboard as dashboardApi } from '../api'
-
-interface LastBackup {
-  timestamp: string
-  jobName: string
-  status: string
-  duration: number
-}
-
-interface NextScheduled {
-  timestamp: string
-  jobName: string
-}
-
-interface SystemStatus {
-  status: 'healthy' | 'warning' | 'critical'
-  message: string
-  lastBackup: LastBackup | null
-  nextScheduled: NextScheduled | null
-}
-
-interface DayStats {
-  date: string
-  success: number
-  failed: number
-  total: number
-}
-
-interface SuccessRate {
-  percentage: number
-  total: number
-  successful: number
-  failed: number
-}
-
-interface StorageInfo {
-  totalUsed: number
-  totalAvailable: number
-  percentage: number
-  oldestBackup: string | null
-  backupCount: number
-  growthTrend: { daily: number; weekly: number }
-}
-
-interface RecentJob {
-  id: string
-  jobName: string
-  status: string
-  startTime: string
-  endTime: string | null
-  duration: number
-  size: number
-}
-
-interface Warning {
-  type: 'error' | 'warning' | 'info'
-  message: string
-  action?: string
-}
-
-interface DashboardData {
-  systemStatus: SystemStatus
-  backupHistory: DayStats[]
-  successRate: SuccessRate
-  storage: StorageInfo
-  recentJobs: RecentJob[]
-  warnings: Warning[]
-}
+import { api, dashboard as dashboardApi, type DashboardData } from '../api'
 
 function formatBytes(bytes: number): string {
   if (bytes === 0) return '0 B'
@@ -110,7 +43,7 @@ export function Dashboard() {
   const loadDashboard = async () => {
     try {
       const result = await dashboardApi.get()
-      setData(result as DashboardData)
+      setData(result)
     } catch {
       if (!data) toast(t('dashboard.load_error'), 'error')
     } finally {

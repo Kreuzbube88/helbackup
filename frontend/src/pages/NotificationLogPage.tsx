@@ -1,19 +1,10 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Bell, CheckCircle, XCircle } from 'lucide-react'
-import { api } from '../api'
+import { api, type NotificationLogEntry } from '../api'
 import { Card } from '../components/common/Card'
 import { useToast } from '../components/common/Toast'
 import { TableRowSkeleton } from '../components/common/Skeleton'
-
-interface NotificationLogEntry {
-  id: number
-  channel: string
-  event: string
-  success: boolean
-  error?: string
-  created_at: string
-}
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleString(undefined, {
@@ -30,7 +21,7 @@ export function NotificationLogPage() {
 
   useEffect(() => {
     api.notifications.getLog()
-      .then(data => setLogs(data as NotificationLogEntry[]))
+      .then(data => setLogs(data))
       .catch(() => toast(t('notifications.load_error', 'Failed to load notification log'), 'error'))
       .finally(() => setLoading(false))
   // eslint-disable-next-line react-hooks/exhaustive-deps

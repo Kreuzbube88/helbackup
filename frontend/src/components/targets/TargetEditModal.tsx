@@ -124,6 +124,7 @@ export function TargetEditModal({ target, open, onClose, onSuccess }: Props) {
   if (!target) return null
 
   return (
+    <>
     <Modal open={open} onClose={handleClose} title={t('edit')}>
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <Input
@@ -194,5 +195,6 @@ export function TargetEditModal({ target, open, onClose, onSuccess }: Props) {
       confirmText={t('common:buttons.discard')}
       variant="warning"
     />
+    </>
   )
 }
