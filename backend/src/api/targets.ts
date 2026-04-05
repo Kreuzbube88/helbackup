@@ -74,7 +74,7 @@ export async function targetsRoutes(app: FastifyInstance): Promise<void> {
       const { name, type, config, enabled = true } = request.body
       if (!name || !type || !config) return reply.status(400).send({ error: 'Missing required fields' })
 
-if (!VALID_TYPES.includes(type)) {
+      if (!VALID_TYPES.includes(type)) {
         return reply.status(400).send({ error: `Invalid type. Must be one of: ${VALID_TYPES.join(', ')}` })
       }
 
@@ -101,7 +101,7 @@ if (!VALID_TYPES.includes(type)) {
 
       if (name !== undefined) { updates.push('name = ?'); values.push(name) }
       if (type !== undefined) {
-    if (!VALID_TYPES.includes(type)) {
+        if (!VALID_TYPES.includes(type)) {
           return reply.status(400).send({ error: `Invalid type. Must be one of: ${VALID_TYPES.join(', ')}` })
         }
         updates.push('type = ?'); values.push(type)
