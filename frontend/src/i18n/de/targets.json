@@ -19,5 +19,6 @@
   "edit": "Ziel bearbeiten",
   "updated": "Ziel erfolgreich aktualisiert",
   "update_error": "Ziel konnte nicht aktualisiert werden",
-  "retention": "Aufbewahrungseinstellungen"
+  "retention": "Aufbewahrungseinstellungen",
+  "help_type": "Lokal: am schnellsten, kein Netzwerk nötig. NAS: sichert über SSH, unterstützt Wake-on-LAN. Cloud: verwendet Rclone zur Synchronisation mit S3, Backblaze, Google Drive und vielen anderen."
 }

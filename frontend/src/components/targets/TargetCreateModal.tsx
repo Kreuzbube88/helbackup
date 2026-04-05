@@ -8,6 +8,7 @@ import { Button } from '../common/Button'
 import { useToast } from '../common/Toast'
 import { api } from '../../api'
 import { NASTargetForm, type NASPowerConfig } from './NASTargetForm'
+import { HelpText } from '../common/HelpText'
 
 interface Props {
   open: boolean
@@ -111,12 +112,15 @@ export function TargetCreateModal({ open, onClose, onSuccess }: Props) {
           required
           autoFocus
         />
-        <Select
-          label={t('type')}
-          options={TARGET_TYPES}
-          value={type}
-          onChange={e => setType(e.target.value as TargetType)}
-        />
+        <div>
+          <Select
+            label={t('type')}
+            options={TARGET_TYPES}
+            value={type}
+            onChange={e => setType(e.target.value as TargetType)}
+          />
+          <HelpText text={t('help_type')} />
+        </div>
 
         {type === 'local' && (
           <Input label="Path" value={localPath} onChange={e => setLocalPath(e.target.value)} required />

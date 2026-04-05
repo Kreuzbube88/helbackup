@@ -24,9 +24,13 @@ import { ApiTokens } from './pages/ApiTokens'
 import { HistoryPage } from './pages/HistoryPage'
 import { NotificationLogPage } from './pages/NotificationLogPage'
 import { ErrorBoundary } from './components/common/ErrorBoundary'
+import { OnboardingTour, isOnboardingDone } from './components/onboarding/OnboardingTour'
+import { FirstBackupWizard } from './components/onboarding/FirstBackupWizard'
 
 function ProtectedLayout() {
   const { isAuthenticated, setAuth, logout } = useStore()
+  const [showOnboarding, setShowOnboarding] = useState(() => !isOnboardingDone())
+  const [showFirstWizard, setShowFirstWizard] = useState(false)
 
   useEffect(() => {
     if (!isAuthenticated) return
@@ -51,6 +55,16 @@ function ProtectedLayout() {
           </ErrorBoundary>
         </main>
       </div>
+      <OnboardingTour
+        open={showOnboarding}
+        onClose={() => setShowOnboarding(false)}
+        onStartGuide={() => setShowFirstWizard(true)}
+      />
+      <FirstBackupWizard
+        open={showFirstWizard}
+        onClose={() => setShowFirstWizard(false)}
+        onSuccess={() => { /* data refreshed by pages on next mount */ }}
+      />
     </div>
   )
 }

@@ -19,5 +19,6 @@
   "edit": "Edit Target",
   "updated": "Target updated successfully",
   "update_error": "Failed to update target",
-  "retention": "Retention Settings"
+  "retention": "Retention Settings",
+  "help_type": "Local: fastest, no network needed. NAS: backs up over SSH, supports Wake-on-LAN. Cloud: uses Rclone to sync to S3, Backblaze, Google Drive, and many others."
 }

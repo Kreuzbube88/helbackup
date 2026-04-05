@@ -3,12 +3,13 @@ import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import {
   CheckCircle, AlertTriangle, XCircle, Activity,
-  HardDrive, Briefcase, RefreshCw, Settings,
+  HardDrive, Briefcase, RefreshCw, Settings, Zap,
 } from 'lucide-react'
 import { Card } from '../components/common/Card'
 import { Button } from '../components/common/Button'
 import { ConfirmModal } from '../components/common/ConfirmModal'
 import { useToast } from '../components/common/Toast'
+import { FirstBackupWizard } from '../components/onboarding/FirstBackupWizard'
 import { api, dashboard as dashboardApi, type DashboardData } from '../api'
 
 function formatBytes(bytes: number): string {
@@ -33,6 +34,7 @@ export function Dashboard() {
   const [loading, setLoading] = useState(true)
   const [showRunConfirm, setShowRunConfirm] = useState(false)
   const [runningBackup, setRunningBackup] = useState(false)
+  const [showGuide, setShowGuide] = useState(false)
 
   useEffect(() => {
     void loadDashboard()
@@ -387,6 +389,12 @@ export function Dashboard() {
             {t('nav.settings')}
           </Button>
         </div>
+        <div className="mt-3 pt-3 border-t border-[var(--border-default)]">
+          <Button variant="ghost" size="sm" onClick={() => setShowGuide(true)}>
+            <Zap size={14} />
+            {t('guide.open_guide')}
+          </Button>
+        </div>
       </Card>
 
       <ConfirmModal
@@ -396,6 +404,11 @@ export function Dashboard() {
         title={t('dashboard.confirm_run_title')}
         message={t('dashboard.confirm_run_now')}
         variant="warning"
+      />
+      <FirstBackupWizard
+        open={showGuide}
+        onClose={() => setShowGuide(false)}
+        onSuccess={() => void loadDashboard()}
       />
     </div>
   )

@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next'
 import { HardDrive, FolderOpen, Monitor, Container, Settings, Cloud, ChevronDown, ChevronUp } from 'lucide-react'
+import { HelpText } from '../../common/HelpText'
 import type { Target } from '../../../api'
 import { FlashConfig, type FlashStepConfig } from './config/FlashConfig'
 import { AppdataConfig, type AppdataStepConfig } from './config/AppdataConfig'
@@ -63,7 +64,10 @@ export function StepBackupTypes({ value, onChange, targets }: Props) {
 
   return (
     <div className="space-y-3">
-      <p className="text-sm text-[var(--text-muted)]">{t('wizard_backup_types_hint')}</p>
+      <div className="flex items-start gap-1">
+        <p className="text-sm text-[var(--text-muted)]">{t('wizard_backup_types_hint')}</p>
+        <HelpText text={t('help_backup_types')} />
+      </div>
 
       {STEP_TYPES.map(({ type, icon, labelKey, descKey }) => {
         const enabled = value[type] !== null

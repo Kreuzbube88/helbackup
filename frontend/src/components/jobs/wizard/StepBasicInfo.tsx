@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next'
 import { Input } from '../../common/Input'
+import { HelpText } from '../../common/HelpText'
 import { CronBuilder } from './CronBuilder'
 
 export interface BasicInfo {
@@ -18,18 +19,24 @@ export function StepBasicInfo({ value, onChange }: Props) {
 
   return (
     <div className="space-y-4">
-      <Input
-        label={t('name')}
-        value={value.name}
-        onChange={e => onChange({ ...value, name: e.target.value })}
-        required
-        autoFocus
-      />
+      <div>
+        <Input
+          label={t('name')}
+          value={value.name}
+          onChange={e => onChange({ ...value, name: e.target.value })}
+          required
+          autoFocus
+        />
+        <HelpText text={t('help_name')} />
+      </div>
 
-      <CronBuilder
-        value={value.schedule}
-        onChange={schedule => onChange({ ...value, schedule })}
-      />
+      <div>
+        <CronBuilder
+          value={value.schedule}
+          onChange={schedule => onChange({ ...value, schedule })}
+        />
+        <HelpText text={t('help_schedule')} />
+      </div>
 
       <label className="flex items-center gap-2 text-sm text-[var(--text-secondary)] cursor-pointer">
         <input
