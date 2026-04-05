@@ -105,7 +105,7 @@ export async function logsRoutes(app: FastifyInstance): Promise<void> {
   // GET /api/logs/:runId — full log retrieval (JSON)
   app.get<{ Params: { runId: string } }>(
     '/api/logs/:runId',
-    { preHandler: [requireScope('read')] },
+    { preHandler: [app.authenticate] },
     async (request: FastifyRequest<{ Params: { runId: string } }>, reply: FastifyReply) => {
       const logs = db
         .prepare('SELECT * FROM logs WHERE run_id = ? ORDER BY id ASC')
