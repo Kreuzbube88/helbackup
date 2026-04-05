@@ -9,6 +9,7 @@ import {
   Settings,
   Key,
   Bell,
+  Info,
 } from 'lucide-react'
 
 interface NavItem {
@@ -26,6 +27,7 @@ const NAV_ITEMS: NavItem[] = [
   { to: '/api-tokens',       icon: <Key  size={16} />,     labelKey: 'nav.api_tokens' },
   { to: '/notification-log', icon: <Bell size={16} />,    labelKey: 'nav.notification_log' },
   { to: '/settings',         icon: <Settings size={16} />, labelKey: 'nav.settings' },
+  { to: '/about',            icon: <Info size={16} />,     labelKey: 'nav.about' },
 ]
 
 export function Sidebar() {

@@ -1,0 +1,32 @@
+{
+  "title": "Info",
+  "nav": "Info",
+  "tagline": "Intelligenter Backup-Orchestrator für Unraid",
+  "description": "Self-hosted, einzelner Docker-Container. Läuft privilegiert — erforderlich für /boot-Zugriff und Docker-Socket. Verwaltet Ziele, Jobs, Retention, Verschlüsselung und Disaster Recovery über eine einzige Oberfläche.",
+  "section_stack": "Stack",
+  "section_deploy": "Deployment",
+  "section_links": "Links",
+  "stack": {
+    "runtime": "Runtime",
+    "runtime_value": "Node.js 24 · TypeScript strict",
+    "frontend": "Frontend",
+    "frontend_value": "React 18 · Vite 5 · Tailwind CSS",
+    "backend": "Backend",
+    "backend_value": "Fastify 4 · better-sqlite3",
+    "auth": "Auth",
+    "auth_value": "JWT · bcrypt (Cost 12)",
+    "backup": "Backup",
+    "backup_value": "Rsync · Rclone · SSH",
+    "container": "Container",
+    "container_value": "Docker-Socket (undici)"
+  },
+  "deploy": {
+    "registry": "Registry",
+    "build": "Build"
+  },
+  "links": {
+    "github": "GitHub",
+    "registry": "Registry",
+    "changelog": "Changelog"
+  }
+}

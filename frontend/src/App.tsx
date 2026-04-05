@@ -23,6 +23,7 @@ import RecoveryPage from './pages/RecoveryPage'
 import { ApiTokens } from './pages/ApiTokens'
 import { HistoryPage } from './pages/HistoryPage'
 import { NotificationLogPage } from './pages/NotificationLogPage'
+import { AboutPage } from './pages/AboutPage'
 import { ErrorBoundary } from './components/common/ErrorBoundary'
 import { OnboardingTour, isOnboardingDone } from './components/onboarding/OnboardingTour'
 import { FirstBackupWizard } from './components/onboarding/FirstBackupWizard'
@@ -123,6 +124,7 @@ export function App() {
               <Route path="/recovery" element={<RecoveryPage />} />
               <Route path="/api-tokens" element={<ApiTokens />} />
               <Route path="/notification-log" element={<NotificationLogPage />} />
+              <Route path="/about" element={<AboutPage />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Route>
           </>

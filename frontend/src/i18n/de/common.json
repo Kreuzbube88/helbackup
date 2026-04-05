@@ -60,7 +60,8 @@
     "recovery": "Wiederherstellung",
     "api_tokens": "API-Token",
     "notification_log": "Benachrichtigungen",
-    "settings": "Einstellungen"
+    "settings": "Einstellungen",
+    "about": "Info"
   },
   "tools": {
     "flash_backup": "Flash Drive Backup",

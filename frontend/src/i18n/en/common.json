@@ -33,7 +33,8 @@
     "recovery": "Recovery",
     "api_tokens": "API Tokens",
     "notification_log": "Notifications",
-    "settings": "Settings"
+    "settings": "Settings",
+    "about": "About"
   },
   "api_tokens": {
     "title": "API Tokens",
