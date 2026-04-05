@@ -27,14 +27,14 @@ export async function tokenAuth(
   const authHeader = request.headers.authorization
 
   if (!authHeader?.startsWith('Bearer ')) {
-    void errorResponse(reply, ErrorCodes.UNAUTHORIZED, 'Missing or invalid Authorization header', 401)
+    await errorResponse(reply, ErrorCodes.UNAUTHORIZED, 'Missing or invalid Authorization header', 401)
     return
   }
 
   const token = authHeader.substring(7)
 
   if (!token.startsWith('helbackup_')) {
-    void errorResponse(reply, ErrorCodes.INVALID_TOKEN, 'Invalid token format', 401)
+    await errorResponse(reply, ErrorCodes.INVALID_TOKEN, 'Invalid token format', 401)
     return
   }
 
@@ -45,21 +45,27 @@ export async function tokenAuth(
     .get(tokenHash) as TokenRow | undefined
 
   if (!tokenRecord) {
-    void errorResponse(reply, ErrorCodes.INVALID_TOKEN, 'Invalid or revoked token', 401)
+    await errorResponse(reply, ErrorCodes.INVALID_TOKEN, 'Invalid or revoked token', 401)
     return
   }
 
   if (tokenRecord.expires_at) {
     if (new Date(tokenRecord.expires_at) < new Date()) {
-      void errorResponse(reply, ErrorCodes.TOKEN_EXPIRED, 'Token has expired', 401)
+      await errorResponse(reply, ErrorCodes.TOKEN_EXPIRED, 'Token has expired', 401)
       return
     }
   }
 
-  const scopes: string[] = JSON.parse(tokenRecord.scopes) as string[]
+  let scopes: string[]
+  try {
+    scopes = JSON.parse(tokenRecord.scopes) as string[]
+  } catch {
+    await errorResponse(reply, ErrorCodes.INVALID_TOKEN, 'Malformed token scopes', 401)
+    return
+  }
 
   if (requiredScope && !hasScope(scopes, requiredScope)) {
-    void errorResponse(reply, ErrorCodes.FORBIDDEN, `Missing required scope: ${requiredScope}`, 403)
+    await errorResponse(reply, ErrorCodes.FORBIDDEN, `Missing required scope: ${requiredScope}`, 403)
     return
   }
 

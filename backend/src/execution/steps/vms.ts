@@ -75,7 +75,12 @@ export async function executeVMBackup(
   const target = db.prepare('SELECT * FROM targets WHERE id = ?').get(config.targetId) as { config: string } | undefined
   if (!target) throw new Error(`Target not found: ${config.targetId}`)
 
-  const targetConfig = JSON.parse(target.config) as { path: string }
+  let targetConfig: { path: string }
+  try {
+    targetConfig = JSON.parse(target.config) as { path: string }
+  } catch {
+    throw new Error(`Invalid target config JSON for target ${config.targetId}`)
+  }
   const destPath = path.join(targetConfig.path, 'vms', new Date().toISOString().split('T')[0])
   await fs.mkdir(destPath, { recursive: true })
 

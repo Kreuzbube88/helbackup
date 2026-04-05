@@ -31,7 +31,12 @@ export async function executeFlashBackup(
   const target = db.prepare('SELECT * FROM targets WHERE id = ?').get(config.targetId) as TargetRow | undefined
   if (!target) throw new Error(`Target not found: ${config.targetId}`)
 
-  const targetConfig = JSON.parse(target.config) as TargetConfig
+  let targetConfig: TargetConfig
+  try {
+    targetConfig = JSON.parse(target.config) as TargetConfig
+  } catch {
+    throw new Error(`Invalid target config JSON for target ${config.targetId}`)
+  }
   const destPath = path.join(targetConfig.path, 'flash', new Date().toISOString().split('T')[0])
 
   engine.log('info', 'system', `Destination: ${destPath}`)

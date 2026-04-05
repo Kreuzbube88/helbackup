@@ -24,7 +24,13 @@ export async function deliverWebhook(webhookId: number, event: WebhookEvent): Pr
 
   if (!webhook) return
 
-  const events: string[] = JSON.parse(webhook.events) as string[]
+  let events: string[]
+  try {
+    events = JSON.parse(webhook.events) as string[]
+  } catch {
+    logger.warn(`Webhook ${webhookId} has malformed events JSON — skipping`)
+    return
+  }
   if (!events.includes(event.event) && !events.includes('*')) return
 
   const payload = JSON.stringify(event)

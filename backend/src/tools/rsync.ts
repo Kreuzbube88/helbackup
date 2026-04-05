@@ -34,8 +34,10 @@ export async function executeRsync(options: RsyncOptions): Promise<RsyncResult> 
     }
 
     if (options.sshHost && options.sshUser) {
+      // Quote the key path to handle spaces; single-quote escaping is safe here
+      // because key paths are filesystem paths validated before reaching this point
       const sshCmd = options.sshKey
-        ? `ssh -i ${options.sshKey} -o StrictHostKeyChecking=no`
+        ? `ssh -i '${options.sshKey.replace(/'/g, "'\\''")}' -o StrictHostKeyChecking=no`
         : `ssh -o StrictHostKeyChecking=no`
       args.push(`--rsh=${sshCmd}`)
       args.push(options.source, `${options.sshUser}@${options.sshHost}:${options.destination}`)

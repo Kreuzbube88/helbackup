@@ -95,7 +95,7 @@ function updateRuntimeMetrics(): void {
 }
 
 export async function metricsRoutes(app: FastifyInstance): Promise<void> {
-  app.get('/metrics', async (_request, reply) => {
+  app.get('/metrics', { preHandler: [app.authenticate] }, async (_request, reply) => {
     updateStorageMetrics()
     updateBackupMetrics()
     updateRuntimeMetrics()

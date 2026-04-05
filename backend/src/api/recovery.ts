@@ -288,40 +288,49 @@ interface ContainerConfig {
   labels?: Record<string, string>;
 }
 
+function shellEscape(value: string): string {
+  // Wrap in single quotes, escaping any single quotes within the value
+  return `'${value.replace(/'/g, "'\\''")}'`
+}
+
 function buildDockerRunCommand(config: ContainerConfig): string {
-  let cmd = `docker run -d --name ${config.name}`;
+  let cmd = `docker run -d --name ${shellEscape(config.name)}`;
 
   if (config.env) {
     config.env.forEach((env) => {
-      cmd += ` -e "${env}"`;
+      cmd += ` -e ${shellEscape(env)}`;
     });
   }
 
   if (config.volumes) {
     config.volumes.forEach((vol) => {
-      cmd += ` -v ${vol}`;
+      cmd += ` -v ${shellEscape(vol)}`;
     });
   }
 
   if (config.ports) {
     Object.entries(config.ports).forEach(([container, hostBindings]) => {
       if (hostBindings && hostBindings[0]) {
-        cmd += ` -p ${hostBindings[0].HostPort}:${container.split('/')[0]}`;
+        const hostPort = hostBindings[0].HostPort.replace(/[^0-9]/g, '')
+        const containerPort = container.split('/')[0].replace(/[^0-9]/g, '')
+        if (hostPort && containerPort) {
+          cmd += ` -p ${hostPort}:${containerPort}`;
+        }
       }
     });
   }
 
   if (config.network) {
-    cmd += ` --network ${config.network}`;
+    cmd += ` --network ${shellEscape(config.network)}`;
   }
 
   if (config.labels) {
     Object.entries(config.labels).forEach(([key, value]) => {
-      cmd += ` --label "${key}=${value}"`;
+      cmd += ` --label ${shellEscape(`${key}=${value}`)}`;
     });
   }
 
-  cmd += ` ${config.image}`;
+  cmd += ` ${shellEscape(config.image)}`;
 
   return cmd;
 }
