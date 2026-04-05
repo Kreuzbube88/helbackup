@@ -58,13 +58,21 @@ This container has write access to /boot and /mnt/user for automated restore cap
   <DonateLink/>
   <Requires/>
   
-  <Config Name="Web UI Port" Target="8080" Default="8080" Mode="tcp"
+  <Config Name="Web UI Port" Target="3000" Default="3000" Mode="tcp"
     Description="Port for the HELBACKUP web interface"
-    Type="Port" Display="always" Required="true" Mask="false">8080</Config>
-  
-  <Config Name="Data" Target="/app/data" Default="/mnt/user/appdata/helbackup" Mode="rw"
-    Description="Database, configuration and logs"
-    Type="Path" Display="always" Required="true" Mask="false">/mnt/user/appdata/helbackup</Config>
+    Type="Port" Display="always" Required="true" Mask="false">3000</Config>
+
+  <Config Name="Config" Target="/app/config" Default="/mnt/user/appdata/helbackup/config" Mode="rw"
+    Description="SSH keys and application config"
+    Type="Path" Display="always" Required="true" Mask="false">/mnt/user/appdata/helbackup/config</Config>
+
+  <Config Name="Data" Target="/app/data" Default="/mnt/user/appdata/helbackup/data" Mode="rw"
+    Description="SQLite database"
+    Type="Path" Display="always" Required="true" Mask="false">/mnt/user/appdata/helbackup/data</Config>
+
+  <Config Name="Logs" Target="/app/logs" Default="/mnt/user/appdata/helbackup/logs" Mode="rw"
+    Description="Application logs"
+    Type="Path" Display="always" Required="true" Mask="false">/mnt/user/appdata/helbackup/logs</Config>
   
   <Config Name="Docker Socket" Target="/var/run/docker.sock" Default="/var/run/docker.sock" Mode="rw"
     Description="Docker socket for container management (stop/start during backups)"

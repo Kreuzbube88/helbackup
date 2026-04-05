@@ -5,7 +5,7 @@ services:
     restart: unless-stopped
     privileged: true                    # Required for /boot access
     ports:
-      - "3210:3000"
+      - "3000:3000"
     environment:
       - JWT_SECRET=${JWT_SECRET:?Set JWT_SECRET in .env}
       - TZ=${TZ:-Europe/Berlin}
