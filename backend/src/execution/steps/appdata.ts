@@ -176,7 +176,9 @@ export async function executeAppdataBackup(
         destination: destPath,
         bwLimit: 51200,
         excludePatterns: ['*/logs/*', '*/cache/*', '*/*.log', ...containerExclusions],
-        onProgress: ({ percent, speed }) => engine.log('info', 'system', `Progress: ${percent}% — ${speed}`),
+        onProgress: (() => { let last = -1; return ({ percent, speed }: { percent: number; speed: string }) => {
+          if (Math.floor(percent / 10) > Math.floor(last / 10)) { last = percent; engine.log('info', 'system', `Progress: ${percent}% — ${speed}`) }
+        } })(),
       })
       engine.log('info', 'system', `Rsync done: ${result.bytesTransferred} bytes`)
     }
@@ -197,7 +199,9 @@ export async function executeAppdataBackup(
               source: volumePath,
               destination: volumeDestPath,
               bwLimit: 51200,
-              onProgress: ({ percent }) => engine.log('info', 'system', `External volume progress: ${percent}%`),
+              onProgress: (() => { let last = -1; return ({ percent }: { percent: number }) => {
+                if (Math.floor(percent / 10) > Math.floor(last / 10)) { last = percent; engine.log('info', 'system', `External volume progress: ${percent}%`) }
+              } })(),
             })
             engine.log('info', 'system', `External volume backed up: ${volumePath}`)
           } catch (err: unknown) {

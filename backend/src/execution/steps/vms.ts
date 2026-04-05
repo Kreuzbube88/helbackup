@@ -165,16 +165,14 @@ export async function executeVMBackup(
             await executeRsync({
               source: diskPath,
               destination: diskDestPath,
-              onProgress: (data) => {
-                engine.log('info', 'system', `Progress: ${data.percent}% - ${data.speed}`, undefined, {
-                  progress: {
-                    current: parseInt(data.transferred.replace(/,/g, '')),
-                    total: 0,
-                    unit: 'bytes',
-                    speed: parseFloat(data.speed) * 1024 * 1024,
-                  },
-                })
-              },
+              onProgress: (() => { let last = -1; return (data: { percent: number; speed: string; transferred: string }) => {
+                if (Math.floor(data.percent / 10) > Math.floor(last / 10)) {
+                  last = data.percent
+                  engine.log('info', 'system', `Progress: ${data.percent}% - ${data.speed}`, undefined, {
+                    progress: { current: parseInt(data.transferred.replace(/,/g, '')), total: 0, unit: 'bytes', speed: parseFloat(data.speed) * 1024 * 1024 },
+                  })
+                }
+              } })(),
             })
 
             engine.log('info', 'file', `Disk backed up: ${diskName}`, undefined, {

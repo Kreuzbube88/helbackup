@@ -47,9 +47,9 @@ export async function executeFlashBackup(
     destination: destPath,
     bwLimit: 51200, // 50 MB/s
     excludePatterns: ['previous/', 'System Volume Information/', '*.tmp'],
-    onProgress: ({ percent, speed }) => {
-      engine.log('info', 'system', `Progress: ${percent}% — ${speed}`)
-    },
+    onProgress: (() => { let last = -1; return ({ percent, speed }: { percent: number; speed: string }) => {
+      if (Math.floor(percent / 10) > Math.floor(last / 10)) { last = percent; engine.log('info', 'system', `Progress: ${percent}% — ${speed}`) }
+    } })(),
     onLog: msg => {
       const line = msg.trim()
       if (line) engine.log('debug', 'file', line)

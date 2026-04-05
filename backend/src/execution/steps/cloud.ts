@@ -43,17 +43,14 @@ export async function executeCloudBackup(
       destination: config.destination,
       remote: effectiveRemote,
       configPath: config.configPath,
-      onProgress: (data) => {
-        engine.log('info', 'network', `Upload: ${data.percent}% - ${data.speed}`, undefined, {
-          progress: {
-            current: parseInt(data.transferred.replace(/\s+/g, '')),
-            total: 0,
-            unit: 'bytes',
-            speed: parseFloat(data.speed) * 1024 * 1024,
-            eta_seconds: parseInt(data.eta.replace(/[^\d]/g, '')),
-          },
-        })
-      },
+      onProgress: (() => { let last = -1; return (data: { percent: number; speed: string; transferred: string; eta: string }) => {
+        if (Math.floor(data.percent / 10) > Math.floor(last / 10)) {
+          last = data.percent
+          engine.log('info', 'network', `Upload: ${data.percent}% - ${data.speed}`, undefined, {
+            progress: { current: parseInt(data.transferred.replace(/\s+/g, '')), total: 0, unit: 'bytes', speed: parseFloat(data.speed) * 1024 * 1024, eta_seconds: parseInt(data.eta.replace(/[^\d]/g, '')) },
+          })
+        }
+      } })(),
       onLog: (msg) => {
         engine.log('debug', 'network', msg.trim())
       },
