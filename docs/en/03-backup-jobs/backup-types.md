@@ -29,6 +29,7 @@ Backs up Docker container configurations from `/mnt/user/appdata`.
 ```
 Stop containers before backup: ✅ (recommended!)
 Restart containers after: ✅
+Database Dumps: ✅ (optional — dumps databases before stopping containers)
 ```
 
 **Excluded (automatically):**
@@ -37,6 +38,10 @@ Restart containers after: ✅
 - `*/*.log`
 
 **Docker Config Export:** All container templates exported as JSON.
+
+**Database Dumps (optional):** When enabled, HELBACKUP detects database containers (MariaDB, PostgreSQL, MongoDB) and dumps them before stopping. Supported types: MariaDB/MySQL, PostgreSQL, MongoDB, Redis. Enable via "Database Dumps" checkbox in the Appdata step config.
+
+Details: [Database Backup](backup-databases.md)
 
 ## Virtual Machines (VMs)
 
@@ -69,28 +74,6 @@ Exports Unraid system configuration as JSON:
 - Shares
 - Plugins
 - Disk assignments
-
-## Databases
-
-Backs up databases from running containers.
-
-Supported types:
-- **MariaDB / MySQL:** `mysqldump`
-- **PostgreSQL:** `pg_dump`
-- **Redis:** `SAVE` command
-- **MongoDB:** `mongodump`
-- **SQLite:** File copy
-
-Configuration:
-```
-Database Type: MariaDB
-Container: mariadb
-Database: nextcloud
-Username: root
-Password: [stored encrypted]
-```
-
-Details: [Database Backup](backup-databases.md)
 
 ---
 Back: [Creating Jobs](creating-jobs.md)

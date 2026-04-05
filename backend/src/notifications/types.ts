@@ -2,12 +2,14 @@ export type NotificationEvent =
   | 'backup_success'
   | 'backup_failed'
   | 'backup_started'
+  | 'backup_warning'
   | 'verification_success'
   | 'verification_failed'
   | 'retention_cleanup'
   | 'restore_started'
   | 'restore_completed'
   | 'restore_failed'
+  | 'disk_space_low'
   | 'system_error'
 
 export interface NotificationData {

@@ -36,6 +36,8 @@ import { statusRoutesV1 } from './api/v1/status.js'
 import { backupsRoutesV1 } from './api/v1/backups.js'
 import { jobsRoutesV1 } from './api/v1/jobs.js'
 import { widgetRoutesV1 } from './api/v1/widget.js'
+import { historyRoutesV1 } from './api/v1/history.js'
+import { targetsRoutesV1 } from './api/v1/targets.js'
 import { metricsRoutes } from './metrics/prometheus.js'
 import { healthRoutes } from './api/health.js'
 
@@ -146,6 +148,8 @@ await app.register(statusRoutesV1)
 await app.register(backupsRoutesV1)
 await app.register(jobsRoutesV1)
 await app.register(widgetRoutesV1)
+await app.register(historyRoutesV1)
+await app.register(targetsRoutesV1)
 await app.register(metricsRoutes)
 await app.register(healthRoutes)
 

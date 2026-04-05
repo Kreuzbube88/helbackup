@@ -23,9 +23,11 @@ const EVENTS = [
   { id: 'backup_success',      label: 'Backup Success' },
   { id: 'backup_failed',       label: 'Backup Failed' },
   { id: 'backup_started',      label: 'Backup Started' },
+  { id: 'backup_warning',      label: 'Backup Warning' },
   { id: 'verification_failed', label: 'Verification Failed' },
   { id: 'retention_cleanup',   label: 'Retention Cleanup' },
   { id: 'restore_failed',      label: 'Restore Failed' },
+  { id: 'disk_space_low',      label: 'Disk Space Low' },
   { id: 'system_error',        label: 'System Error' },
 ] as const
 

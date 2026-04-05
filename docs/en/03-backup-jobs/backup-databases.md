@@ -1,40 +1,29 @@
 # Database Backups
 
+Database dumps are a feature of the **Appdata** backup step. Enable the "Database Dumps" checkbox in the Appdata step configuration. HELBACKUP automatically detects database containers by image name and runs the appropriate dump before stopping containers.
+
 ## Supported Databases
 
 | Database | Method | Container Image |
 |----------|--------|-----------------|
 | MariaDB | mysqldump | mariadb, linuxserver/mariadb |
 | MySQL | mysqldump | mysql |
-| PostgreSQL | pg_dump | postgres, linuxserver/postgres |
-| Redis | SAVE + file copy | redis |
+| PostgreSQL | pg_dumpall | postgres, linuxserver/postgres |
+| Redis | (filesystem backup) | redis |
 | MongoDB | mongodump | mongo |
-| SQLite | File copy | (any) |
 
-## Configure MariaDB Backup
+## Enable Database Dumps
 
+In the Job Wizard → Backup Types → Appdata:
 ```
-Backup Type: Database
-Database Type: MariaDB
-Container Name: mariadb
-Database: nextcloud
-Username: root
-Password: [your root password]
-Dump Options: --single-transaction --routines --events
+☑ Database Dumps
 ```
 
-**Important:** `--single-transaction` enables consistent backup without stopping the container!
+HELBACKUP will detect database containers from your selected container list and dump them before stopping.
 
-## PostgreSQL Backup
+## PostgreSQL / MariaDB
 
-```
-Backup Type: Database
-Database Type: PostgreSQL
-Container Name: postgres
-Database: immich
-Username: postgres
-Password: [your password]
-```
+HELBACKUP connects to the container and runs `pg_dumpall` (PostgreSQL) or `mysqldump --all-databases` (MariaDB/MySQL) using credentials from the container's environment variables.
 
 ## What Gets Stored?
 

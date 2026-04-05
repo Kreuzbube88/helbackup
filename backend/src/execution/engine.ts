@@ -1,10 +1,14 @@
 import { EventEmitter } from 'events'
 import { randomUUID } from 'crypto'
+import { execFile } from 'child_process'
+import { promisify } from 'util'
 import { db } from '../db/database.js'
 import { logger } from '../utils/logger.js'
 import { executeHook } from './hooks.js'
 import { notificationManager } from '../notifications/notificationManager.js'
 import { backupDurationHistogram } from '../metrics/prometheus.js'
+
+const execFileAsync = promisify(execFile)
 
 export interface JobHooks {
   prePath?: string
@@ -162,14 +166,34 @@ export class JobExecutionEngine extends EventEmitter {
         })
       }
 
+      const successEvent = this.summary.warnings > 0 ? 'backup_warning' : 'backup_success'
       void notificationManager.notify({
-        event: 'backup_success',
+        event: successEvent,
         jobName: this.jobName,
         backupId: this.runId,
         timestamp: new Date().toISOString(),
         duration,
         size: this.summary.bytesTransferred,
       })
+
+      // Check disk space and notify if < 10% free
+      try {
+        const { stdout } = await execFileAsync('df', ['-B1', '/mnt/user'])
+        const line = stdout.split('\n')[1] ?? ''
+        const parts = line.split(/\s+/)
+        const total = parseInt(parts[1] ?? '0', 10)
+        const available = parseInt(parts[3] ?? '0', 10)
+        if (total > 0 && available / total < 0.10) {
+          void notificationManager.notify({
+            event: 'disk_space_low',
+            jobName: this.jobName,
+            timestamp: new Date().toISOString(),
+            details: { available_bytes: available, total_bytes: total },
+          })
+        }
+      } catch {
+        // /mnt/user may not be mounted in dev — non-critical
+      }
 
       this.emit('job:complete')
       logger.info({ runId: this.runId }, 'Job execution completed')

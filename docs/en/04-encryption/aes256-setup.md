@@ -1,4 +1,4 @@
-# AES-256 Encryption
+# Encryption
 
 ## Why Encrypt?
 
@@ -6,26 +6,26 @@
 - **Privacy:** GDPR compliance
 - **Security:** Provider breach → data still safe
 
-## AES-256 in HELBACKUP
+## Encryption in HELBACKUP
 
-- Algorithm: AES-256-GCM (authenticated encryption)
-- Key derivation: PBKDF2 with 100,000 iterations
-- Encryption: Stream-based (large files supported)
+- Tool: GPG (GNU Privacy Guard) symmetric encryption
+- Cipher: AES-256
+- Password: derived from your recovery key
 
 ## Enable Encryption
 
-1. Create/edit Target
-2. **Encrypted:** enable
-3. Recovery Key is generated:
+1. Create/edit a Job
+2. **Advanced → Encrypt Backup:** enable
+3. On first enable, the Encryption Setup Wizard runs and generates a Recovery Key:
 
 ```
-Recovery Key: 8f2a-9c3b-1e7d-4f6a-2b8c-5d9e-3a7f-6c1b
+Recovery Key: HLBK-XXXX-XXXX-XXXX-XXXX
 ```
 
 > **CRITICAL: Save this key NOW! It will NEVER be shown again!**
 
 4. Save in password manager (1Password, Bitwarden, etc.)
-5. Click "Save"
+5. Complete the wizard
 
 ## Secure Key Storage
 
@@ -45,9 +45,7 @@ More details: [Recovery Key Management](recovery-key.md)
 
 ## Performance
 
-AES-256 is hardware-accelerated (AES-NI):
 - Overhead: ~10-20%
-- Typical CPUs: >1 GB/s encryption rate
 - No noticeable difference for normal backups
 
 ---
