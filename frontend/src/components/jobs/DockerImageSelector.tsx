@@ -1,4 +1,7 @@
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { api } from '../../api'
+import type { Container } from '../../api'
 
 interface Props {
   value: string[]
@@ -7,21 +10,76 @@ interface Props {
 
 export default function DockerImageSelector({ value, onChange }: Props) {
   const { t } = useTranslation('jobs')
+  const [containers, setContainers] = useState<Container[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  const load = () => {
+    setLoading(true)
+    setError(null)
+    api.docker.listContainers()
+      .then(setContainers)
+      .catch(() => setError(t('fetch_error_containers')))
+      .finally(() => setLoading(false))
+  }
+
+  useEffect(() => { load() }, [])
+
+  const toggle = (name: string) => {
+    if (value.includes(name)) {
+      onChange(value.filter(n => n !== name))
+    } else {
+      onChange([...value, name])
+    }
+  }
 
   return (
-    <div className="space-y-4">
-      <h3 className="font-bold">{t('select_docker_images')}</h3>
-      <p className="text-sm opacity-70">{t('docker_image_note')}</p>
-      <input
-        type="text"
-        placeholder={t('image_names_placeholder')}
-        value={value.join(', ')}
-        className="w-full px-4 py-2 border-2 border-[var(--border-default)]"
-        onChange={(e) => {
-          const names = e.target.value.split(',').map((s) => s.trim()).filter(Boolean)
-          onChange(names)
-        }}
-      />
+    <div className="space-y-2">
+      <h3 className="font-bold text-sm">{t('select_containers')}</h3>
+
+      {loading && (
+        <p className="text-sm text-[var(--text-muted)]">{t('loading_containers')}</p>
+      )}
+
+      {error && (
+        <div className="flex items-center gap-2">
+          <p className="text-sm text-[var(--status-error)]">{error}</p>
+          <button
+            type="button"
+            onClick={load}
+            className="text-xs text-[var(--theme-primary)] underline"
+          >
+            {t('common:buttons.retry')}
+          </button>
+        </div>
+      )}
+
+      {!loading && !error && containers.length === 0 && (
+        <p className="text-sm text-[var(--text-muted)]">{t('no_containers_found')}</p>
+      )}
+
+      {!loading && !error && containers.length > 0 && (
+        <div className="space-y-1 max-h-48 overflow-y-auto border border-[var(--border-default)] p-2">
+          {containers.map(c => {
+            const name = c.Names[0]?.replace('/', '') ?? c.Id.slice(0, 12)
+            const isRunning = c.State === 'running'
+            return (
+              <label key={c.Id} className="flex items-center gap-2 text-sm cursor-pointer hover:bg-[var(--bg-elevated)] px-1 py-0.5">
+                <input
+                  type="checkbox"
+                  checked={value.includes(name)}
+                  onChange={() => toggle(name)}
+                  className="accent-[var(--theme-primary)]"
+                />
+                <span className="flex-1 text-[var(--text-primary)]">{name}</span>
+                <span className={`text-xs px-1.5 py-0.5 rounded ${isRunning ? 'text-[var(--status-success)]' : 'text-[var(--text-muted)]'}`}>
+                  {isRunning ? t('container_state_running') : t('container_state_stopped')}
+                </span>
+              </label>
+            )
+          })}
+        </div>
+      )}
     </div>
   )
 }

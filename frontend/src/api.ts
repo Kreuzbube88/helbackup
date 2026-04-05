@@ -90,6 +90,16 @@ export interface Container {
   Status: string
 }
 
+export interface DockerImage {
+  Id: string
+  RepoTags: string[] | null
+}
+
+export interface VmInfo {
+  name: string
+  state: string
+}
+
 export const api = {
   setup: {
     checkStatus: () =>
@@ -166,9 +176,14 @@ export const api = {
 
   docker: {
     listContainers: () => request<Container[]>('GET', '/docker/containers'),
+    listImages: () => request<DockerImage[]>('GET', '/docker/images'),
     inspectContainer: (id: string) => request<unknown>('GET', `/docker/containers/${id}`),
     stopContainer: (id: string) => request<{ ok: boolean }>('POST', `/docker/containers/${id}/stop`),
     startContainer: (id: string) => request<{ ok: boolean }>('POST', `/docker/containers/${id}/start`),
+  },
+
+  vms: {
+    list: () => request<VmInfo[]>('GET', '/vms'),
   },
 
   encryption: {

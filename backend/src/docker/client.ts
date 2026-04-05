@@ -69,3 +69,17 @@ export async function startContainer(id: string): Promise<void> {
     throw new Error(`Failed to start container: ${statusCode}`)
   }
 }
+
+export interface DockerImage {
+  Id: string
+  RepoTags: string[] | null
+}
+
+export async function listImages(): Promise<DockerImage[]> {
+  const { statusCode, body } = await dockerPool.request({
+    path: '/images/json',
+    method: 'GET',
+  })
+  if (statusCode !== 200) throw new Error(`Docker API error: ${statusCode}`)
+  return (await body.json()) as DockerImage[]
+}

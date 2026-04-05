@@ -15,6 +15,7 @@ import { setupRoutes } from './api/setup.js'
 import { jobsRoutes } from './api/jobs.js'
 import { targetsRoutes } from './api/targets.js'
 import { dockerRoutes } from './api/docker.js'
+import { vmRoutes } from './api/vms.js'
 import { logsRoutes } from './api/logs.js'
 import { toolsRoutes } from './api/tools.js'
 import { nasRoutes } from './api/nas.js'
@@ -126,6 +127,7 @@ await app.register(authRoutes)
 await app.register(jobsRoutes)
 await app.register(targetsRoutes)
 await app.register(dockerRoutes)
+await app.register(vmRoutes)
 await app.register(logsRoutes)
 await app.register(toolsRoutes)
 await app.register(nasRoutes)
