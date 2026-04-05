@@ -51,8 +51,7 @@ export async function historyRoutesV1(app: FastifyInstance): Promise<void> {
             jh.status,
             jh.started_at,
             jh.ended_at,
-            jh.duration_s,
-            jh.error_message
+            jh.duration_s
           FROM job_history jh
           LEFT JOIN jobs j ON j.id = jh.job_id
           ${where}
