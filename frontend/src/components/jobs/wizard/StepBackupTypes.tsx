@@ -28,7 +28,7 @@ interface Props {
 
 const DEFAULT_CONFIGS = {
   flash: { targetId: '', useEncryption: false },
-  appdata: { targetId: '', containers: [], stopContainers: true, useDatabaseDumps: false, useEncryption: false },
+  appdata: { targetId: '', containers: [], stopContainers: true, stopOrder: [], useDatabaseDumps: false, useEncryption: false },
   vms: { targetId: '', vms: [], includeDisks: false, useEncryption: false },
   docker_images: { targetId: '', images: [], useEncryption: false },
   system_config: { targetId: '', includeItems: ['boot_config', 'network', 'users', 'plugins'], useEncryption: false },

@@ -79,6 +79,7 @@ function buildSteps(backupSteps: BackupStepsConfig, advanced: AdvancedSettingsVa
         targetId: backupSteps.appdata.targetId,
         containers: backupSteps.appdata.containers,
         stopContainers: backupSteps.appdata.stopContainers,
+        stopOrder: backupSteps.appdata.stopOrder.length > 0 ? backupSteps.appdata.stopOrder : backupSteps.appdata.containers,
         method: tools.appdata,
         useDatabaseDumps: advanced.useDatabaseDumps || backupSteps.appdata.useDatabaseDumps,
         useEncryption: advanced.useEncryption || backupSteps.appdata.useEncryption,
@@ -182,6 +183,7 @@ export function JobWizard({ job, open, onClose, onSuccess }: Props) {
             targetId: (s.config.targetId as string) ?? '',
             containers: (s.config.containers as string[]) ?? [],
             stopContainers: (s.config.stopContainers as boolean) ?? true,
+            stopOrder: (s.config.stopOrder as string[]) ?? (s.config.containers as string[]) ?? [],
             useDatabaseDumps: (s.config.useDatabaseDumps as boolean) ?? false,
             useEncryption: (s.config.useEncryption as boolean) ?? false,
           }
@@ -264,7 +266,7 @@ export function JobWizard({ job, open, onClose, onSuccess }: Props) {
 
   return (
     <>
-    <Modal open={open} onClose={handleClose} title={title} className="max-w-2xl">
+    <Modal open={open} onClose={handleClose} title={title} className="max-w-4xl">
       {/* Step indicator */}
       <div className="flex items-center gap-1 mb-6">
         {STEP_LABELS.map((label, i) => (
@@ -296,7 +298,7 @@ export function JobWizard({ job, open, onClose, onSuccess }: Props) {
       </div>
 
       {/* Step content */}
-      <div className="min-h-[300px] overflow-y-auto max-h-[60vh]">
+      <div className="min-h-[420px] overflow-y-auto max-h-[72vh]">
         {step === 1 && <StepBasicInfo value={basicInfo} onChange={setBasicInfo} />}
         {step === 2 && <StepBackupTypes value={backupSteps} onChange={setBackupSteps} targets={targets} />}
         {step === 3 && <StepAdvanced value={advanced} onChange={setAdvanced} tools={tools} onToolsChange={setTools} />}

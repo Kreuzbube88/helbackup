@@ -74,6 +74,8 @@
   "wizard_select_target": "— Ziel wählen —",
   "wizard_source_path": "Quellpfad",
   "wizard_stop_containers": "Container vor Backup stoppen",
+  "stop_order_hint": "Container werden von oben nach unten gestoppt und in umgekehrter Reihenfolge neu gestartet",
+  "stop_order_note": "Neustart erfolgt automatisch in umgekehrter Reihenfolge nach Abschluss des Backups",
   "wizard_backup_method": "Backup-Methode",
   "wizard_backup_types_hint": "Wähle aus, was gesichert werden soll. Jeder Typ kann separat konfiguriert werden.",
   "wizard_type_flash": "Flash Drive",

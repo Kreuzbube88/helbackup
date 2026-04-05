@@ -74,6 +74,8 @@
   "wizard_select_target": "— Select target —",
   "wizard_source_path": "Source path",
   "wizard_stop_containers": "Stop containers before backup",
+  "stop_order_hint": "Containers are stopped top to bottom and restarted in reverse order",
+  "stop_order_note": "Restart happens automatically in reverse order after backup completes",
   "wizard_backup_method": "Backup method",
   "wizard_backup_types_hint": "Select what to back up. Each type can be configured independently.",
   "wizard_type_flash": "Flash Drive",
