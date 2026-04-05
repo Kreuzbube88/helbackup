@@ -1,3 +1,10 @@
+export class ApiError extends Error {
+  constructor(message: string, public readonly status: number) {
+    super(message)
+    this.name = 'ApiError'
+  }
+}
+
 const BASE = '/api'
 
 function getToken(): string | null {
@@ -21,7 +28,7 @@ async function request<T>(
 
   if (!res.ok) {
     const err = await res.json().catch(() => ({ error: res.statusText })) as { error?: string }
-    throw new Error(err.error ?? res.statusText)
+    throw new ApiError(err.error ?? res.statusText, res.status)
   }
 
   return res.json() as Promise<T>

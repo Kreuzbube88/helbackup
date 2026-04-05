@@ -2,7 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { Navigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useStore } from '../store/useStore'
-import { api } from '../api'
+import { api, ApiError } from '../api'
 import { Input } from '../components/common/Input'
 import { Button } from '../components/common/Button'
 import { useToast } from '../components/common/Toast'
@@ -35,10 +35,10 @@ export function Login() {
       const data = await api.auth.login(username, password)
       setAuth(data.token, data.user)
     } catch (err) {
-      const msg = err instanceof Error ? err.message : t('login.error_generic')
-      if (msg === 'Invalid credentials') {
+      if (err instanceof ApiError && err.status === 401) {
         setError(t('login.error_invalid'))
       } else {
+        const msg = err instanceof Error ? err.message : t('login.error_generic')
         setError(t('login.error_generic'))
         toast(msg, 'error')
       }

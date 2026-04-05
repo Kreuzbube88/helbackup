@@ -31,7 +31,7 @@ function ProtectedLayout() {
   useEffect(() => {
     if (!isAuthenticated) return
     api.auth.me().then(data => {
-      setAuth(localStorage.getItem('helbackup_token')!, data.user)
+      setAuth(localStorage.getItem('helbackup_token') ?? '', data.user)
     }).catch(() => {
       logout()
     })
@@ -56,7 +56,7 @@ function ProtectedLayout() {
 }
 
 export function App() {
-  const { i18n } = useTranslation()
+  const { t, i18n } = useTranslation()
   const [setupChecking, setSetupChecking] = useState(true)
   const [firstRun, setFirstRun] = useState(false)
 
@@ -80,7 +80,7 @@ export function App() {
     return (
       <div className="h-full flex items-center justify-center bg-[var(--bg-primary)]">
         <div className="font-mono text-xs text-[var(--text-muted)] tracking-widest animate-pulse">
-          INITIALIZING...
+          {t('initializing')}
         </div>
       </div>
     )
