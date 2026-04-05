@@ -17,10 +17,6 @@ ls -la /mnt/user/appdata/nextcloud/
 chmod -R a+r /mnt/user/appdata/nextcloud/
 ```
 
-b) HELBACKUP Container nicht Privileged:
-- Unraid → Docker → HELBACKUP → Edit
-- "Privileged: ON" setzen
-- Container neu starten
 
 ## 2. "SSH Connection failed"
 

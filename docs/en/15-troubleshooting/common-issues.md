@@ -9,11 +9,7 @@ Error: EACCES: permission denied, open '/mnt/user/appdata/nextcloud/...'
 
 **Solutions:**
 
-a) Container not running in privileged mode:
-- Unraid → Docker → HELBACKUP → Edit → Privileged: ON
-- Restart container
-
-b) File ownership issue:
+a) File ownership issue:
 ```bash
 ls -la /mnt/user/appdata/nextcloud/
 # Check file ownership and permissions

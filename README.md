@@ -56,7 +56,7 @@ services:
     image: ghcr.io/kreuzbube88/helbackup:latest
     container_name: helbackup
     restart: unless-stopped
-    privileged: true
+    privileged: false
     ports:
       - "3000:3000"
     volumes:
@@ -68,7 +68,6 @@ services:
       - /mnt/user:/unraid/user:ro
 ```
 
-> **Note:** Privileged mode is required to access the Unraid Flash Drive (`/boot`) and user array.
 
 ---
 
