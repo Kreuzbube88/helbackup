@@ -29,7 +29,7 @@ FROM node:24-alpine AS final
 WORKDIR /app
 
 # Install runtime backup tools
-RUN apk add --no-cache rsync rclone openssh-client libvirt-client
+RUN apk add --no-cache rsync rclone openssh-client libvirt-client gnupg
 
 LABEL org.opencontainers.image.title="HELBACKUP"
 LABEL org.opencontainers.image.description="Intelligent backup orchestrator for Unraid"
