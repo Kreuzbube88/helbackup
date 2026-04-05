@@ -177,7 +177,7 @@ export async function executeAppdataBackup(
         source: config.source,
         destination: destPath,
         bwLimit: 51200,
-        excludePatterns: ['*/logs/*', '*/cache/*', '*/*.log', ...containerExclusions],
+        excludePatterns: ['*/logs/*', '*/cache/*', '*/*.log', '*.sock', '*.socket', ...containerExclusions],
         onProgress: (() => { let last = -1; return ({ percent, speed }: { percent: number; speed: string }) => {
           if (Math.floor(percent / 10) > Math.floor(last / 10)) { last = percent; engine.log('info', 'system', `Progress: ${percent}% — ${speed}`) }
         } })(),
