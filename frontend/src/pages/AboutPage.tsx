@@ -70,10 +70,10 @@ export function AboutPage() {
 
         {/* About */}
         <Card className="w-full corner-cuts">
-          <h2 className="text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-3">
+          <h2 className="text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-3 text-center">
             {t('title')}
           </h2>
-          <p className="text-sm text-[var(--text-secondary)] leading-relaxed">
+          <p className="text-sm text-[var(--text-secondary)] leading-relaxed text-center">
             {t('description')}
           </p>
         </Card>

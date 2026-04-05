@@ -2,7 +2,7 @@
   "title": "Info",
   "nav": "Info",
   "tagline": "Intelligenter Backup-Orchestrator für Unraid",
-  "description": "Self-hosted, einzelner Docker-Container. Läuft privilegiert — erforderlich für /boot-Zugriff und Docker-Socket. Verwaltet Ziele, Jobs, Retention, Verschlüsselung und Disaster Recovery über eine einzige Oberfläche.",
+  "description": "Self-hosted, einzelner Docker-Container. Verwaltet Ziele, Jobs, Retention, Verschlüsselung und Disaster Recovery über eine einheitliche Oberfläche.",
   "section_stack": "Stack",
   "section_deploy": "Deployment",
   "section_links": "Links",

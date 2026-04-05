@@ -5,6 +5,7 @@ import { Button } from '../components/common/Button';
 import ManifestBrowser from '../components/recovery/ManifestBrowser';
 import RestoreWizard from '../components/recovery/RestoreWizard';
 import FullServerRestoreWizard from '../components/recovery/FullServerRestoreWizard';
+import { FirstBackupWizard } from '../components/onboarding/FirstBackupWizard';
 import { useTranslation } from 'react-i18next';
 import { useToast } from '../components/common/Toast';
 
@@ -20,6 +21,7 @@ export default function RecoveryPage() {
   const [showWizard, setShowWizard] = useState(false);
   const [showFullServerWizard, setShowFullServerWizard] = useState(false);
   const [fullServerManifest, setFullServerManifest] = useState<Manifest | null>(null);
+  const [showGuide, setShowGuide] = useState(false);
 
   useEffect(() => {
     loadStatus();
@@ -103,7 +105,19 @@ export default function RecoveryPage() {
           >
             {t('recovery.enable_recovery_mode')}
           </Button>
+
+          <div className="mt-4">
+            <Button variant="ghost" size="sm" onClick={() => setShowGuide(true)}>
+              {t('guide.open_guide')}
+            </Button>
+          </div>
         </div>
+
+        <FirstBackupWizard
+          open={showGuide}
+          onClose={() => setShowGuide(false)}
+          onSuccess={() => { /* no refresh needed here */ }}
+        />
       </div>
     );
   }

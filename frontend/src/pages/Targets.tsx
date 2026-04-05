@@ -12,6 +12,7 @@ import { Tooltip } from '../components/common/Tooltip'
 import { TargetCreateModal } from '../components/targets/TargetCreateModal'
 import { TargetEditModal } from '../components/targets/TargetEditModal'
 import GFSRetentionSettings from '../components/targets/GFSRetentionSettings'
+import { FirstBackupWizard } from '../components/onboarding/FirstBackupWizard'
 import { useKeyboardShortcut } from '../hooks/useKeyboardShortcut'
 
 const TYPE_ICONS: Record<string, React.ReactNode> = {
@@ -30,6 +31,7 @@ export function Targets() {
   const [editTarget, setEditTarget] = useState<Target | null>(null)
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null)
   const [retentionTargetId, setRetentionTargetId] = useState<string | null>(null)
+  const [showGuide, setShowGuide] = useState(false)
 
   useKeyboardShortcut({ key: 'n', ctrl: true }, () => setShowCreateModal(true))
 
@@ -90,11 +92,16 @@ export function Targets() {
       <div className="relative">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-xl font-semibold text-[var(--text-primary)]">{t('title')}</h1>
-          <Tooltip content="Ctrl+N">
-            <Button variant="primary" size="sm" onClick={() => setShowCreateModal(true)}>
-              {t('create')}
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="sm" onClick={() => setShowGuide(true)}>
+              {t('common:guide.open_guide')}
             </Button>
-          </Tooltip>
+            <Tooltip content="Ctrl+N">
+              <Button variant="primary" size="sm" onClick={() => setShowCreateModal(true)}>
+                {t('create')}
+              </Button>
+            </Tooltip>
+          </div>
         </div>
 
         {targets.length === 0 ? (
@@ -187,6 +194,12 @@ export function Targets() {
           />
         )}
       </Modal>
+
+      <FirstBackupWizard
+        open={showGuide}
+        onClose={() => setShowGuide(false)}
+        onSuccess={loadTargets}
+      />
     </div>
   )
 }

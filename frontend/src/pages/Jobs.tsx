@@ -10,6 +10,7 @@ import { useToast } from '../components/common/Toast'
 import { TableRowSkeleton } from '../components/common/Skeleton'
 import { Tooltip } from '../components/common/Tooltip'
 import { JobWizard } from '../components/jobs/JobWizard'
+import { FirstBackupWizard } from '../components/onboarding/FirstBackupWizard'
 import { useKeyboardShortcut } from '../hooks/useKeyboardShortcut'
 
 export function Jobs() {
@@ -24,6 +25,7 @@ export function Jobs() {
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [editJob, setEditJob] = useState<Job | null>(null)
   const [deleteJobId, setDeleteJobId] = useState<string | null>(null)
+  const [showGuide, setShowGuide] = useState(false)
 
   useKeyboardShortcut({ key: 'n', ctrl: true }, () => setShowCreateModal(true))
 
@@ -96,11 +98,16 @@ export function Jobs() {
       <div className="relative">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-xl font-semibold text-[var(--text-primary)]">{t('title')}</h1>
-          <Tooltip content="Ctrl+N">
-            <Button variant="primary" size="sm" onClick={() => setShowCreateModal(true)}>
-              {t('create')}
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="sm" onClick={() => setShowGuide(true)}>
+              {t('common:guide.open_guide')}
             </Button>
-          </Tooltip>
+            <Tooltip content="Ctrl+N">
+              <Button variant="primary" size="sm" onClick={() => setShowCreateModal(true)}>
+                {t('create')}
+              </Button>
+            </Tooltip>
+          </div>
         </div>
 
         {jobs.length === 0 ? (
@@ -202,6 +209,12 @@ export function Jobs() {
         title={t('delete_confirm_title')}
         message={t('delete_confirm_message')}
         variant="danger"
+      />
+
+      <FirstBackupWizard
+        open={showGuide}
+        onClose={() => setShowGuide(false)}
+        onSuccess={loadJobs}
       />
     </div>
   )
