@@ -1,4 +1,4 @@
-import { type InputHTMLAttributes, useState } from 'react'
+import { type InputHTMLAttributes, useId, useState } from 'react'
 import { Eye, EyeOff } from 'lucide-react'
 
 interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
@@ -6,7 +6,9 @@ interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   error?: string
 }
 
-export function Input({ label, error, className = '', type, ...props }: InputProps) {
+export function Input({ label, error, className = '', type, id: idProp, ...props }: InputProps) {
+  const generatedId = useId()
+  const id = idProp ?? (label ? generatedId : undefined)
   const [showPassword, setShowPassword] = useState(false)
   const isPassword = type === 'password'
   const inputType = isPassword ? (showPassword ? 'text' : 'password') : type
@@ -14,13 +16,14 @@ export function Input({ label, error, className = '', type, ...props }: InputPro
   return (
     <div className="flex flex-col gap-1">
       {label && (
-        <label className="text-sm font-medium text-[var(--text-secondary)]">
+        <label htmlFor={id} className="text-sm font-medium text-[var(--text-secondary)]">
           {label}
         </label>
       )}
       <div className="relative">
         <input
           {...props}
+          id={id}
           type={inputType}
           className={[
             'w-full px-3 py-2 bg-[var(--bg-secondary)] text-[var(--text-primary)]',

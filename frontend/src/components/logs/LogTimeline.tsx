@@ -46,7 +46,7 @@ function LogLine({ log }: { log: LogEntry }) {
 
   const levelIcon = { error: '✗', warn: '⚠', info: '●', debug: '·' }[log.level] ?? '·'
 
-  const time = new Date(log.ts).toLocaleTimeString('de-DE', {
+  const time = new Date(log.ts).toLocaleTimeString(undefined, {
     hour: '2-digit', minute: '2-digit', second: '2-digit',
   })
 

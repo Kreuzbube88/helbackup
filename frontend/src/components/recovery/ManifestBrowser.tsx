@@ -53,9 +53,12 @@ export default function ManifestBrowser({ manifests, onSelect, onFullServerResto
   };
 
   const handleSelect = (manifest: Manifest) => {
-    const parsed: ParsedManifest = typeof manifest.manifest === 'string'
-      ? JSON.parse(manifest.manifest) as ParsedManifest
-      : manifest as ParsedManifest;
+    let parsed: ParsedManifest
+    if (typeof manifest.manifest === 'string') {
+      try { parsed = JSON.parse(manifest.manifest) as ParsedManifest } catch { parsed = {} }
+    } else {
+      parsed = manifest as ParsedManifest
+    }
     const backupId = getBackupId(manifest);
 
     if (isEncrypted(parsed, manifest) && !unlockedSessions.has(backupId)) {
@@ -73,7 +76,7 @@ export default function ManifestBrowser({ manifests, onSelect, onFullServerResto
   };
 
   const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleString('de-DE');
+    return new Date(dateStr).toLocaleString(undefined);
   };
 
   const formatSize = (bytes: number) => {

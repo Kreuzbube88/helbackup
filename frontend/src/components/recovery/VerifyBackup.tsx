@@ -41,7 +41,7 @@ export default function VerifyBackup({ backupId, checksums, onComplete }: Props)
 
   if (verifying) {
     return (
-      <div className="border-2 border-blue-500 bg-blue-50 p-6 text-center">
+      <div className="border-2 border-blue-500 bg-[var(--bg-secondary)] p-6 text-center">
         <div className="text-xl font-bold mb-4">{t('recovery.verifying_backup')}...</div>
         <div className="text-sm opacity-70">{t('recovery.verifying_checksums')}</div>
       </div>
@@ -52,7 +52,7 @@ export default function VerifyBackup({ backupId, checksums, onComplete }: Props)
     const allPassed = results.failed === 0 && results.missing === 0;
 
     return (
-      <div className={`border-2 p-6 ${allPassed ? 'border-green-500 bg-green-50' : 'border-red-500 bg-red-50'}`}>
+      <div className={`border-2 p-6 ${allPassed ? 'border-green-500' : 'border-red-500'} bg-[var(--bg-secondary)]`}>
         <h3 className="text-xl font-bold mb-4">
           {allPassed ? '✓ ' : '✗ '}
           {t('recovery.verification_complete')}
@@ -74,7 +74,7 @@ export default function VerifyBackup({ backupId, checksums, onComplete }: Props)
         </div>
 
         {!allPassed && (
-          <div className="bg-red-100 border-2 border-red-500 p-4 mb-4">
+          <div className="bg-[var(--bg-elevated)] border-2 border-red-500 p-4 mb-4">
             <p className="font-bold">⚠️ {t('recovery.verification_failed')}</p>
             <p className="text-sm mt-2">{t('recovery.verification_failed_hint')}</p>
           </div>

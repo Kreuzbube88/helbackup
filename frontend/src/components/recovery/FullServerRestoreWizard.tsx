@@ -77,6 +77,7 @@ export default function FullServerRestoreWizard({ manifest, onClose }: Props) {
     if (!plan) return
     setConfirmOpen(false)
     setError(null)
+    setExecuting(true)
     try {
       await recoveryApi.executeFullRestore(backupId, plan)
       setStep('done')
@@ -117,7 +118,7 @@ export default function FullServerRestoreWizard({ manifest, onClose }: Props) {
         </div>
 
         {error && (
-          <div className="border-2 border-red-500 bg-red-50 p-4 text-red-700 text-sm">{error}</div>
+          <div className="border-2 border-red-500 bg-[var(--bg-secondary)] p-4 text-red-400 text-sm">{error}</div>
         )}
 
         <div className="flex gap-4">
@@ -216,7 +217,7 @@ export default function FullServerRestoreWizard({ manifest, onClose }: Props) {
         </div>
 
         {error && (
-          <div className="border-2 border-red-500 bg-red-50 p-4 text-red-700 text-sm">{error}</div>
+          <div className="border-2 border-red-500 bg-[var(--bg-secondary)] p-4 text-red-400 text-sm">{error}</div>
         )}
 
         <div className="flex gap-4">

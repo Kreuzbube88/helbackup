@@ -52,7 +52,7 @@ export default function DatabaseRestoreWizard({ backupId, containers, onClose }:
       setSelectedContainer(container);
       setRestoreInfo(info);
     } catch (err: unknown) {
-      setError((err as Error).message);
+      setError(err instanceof Error ? err.message : String(err));
     } finally {
       setLoading(false);
     }
@@ -65,7 +65,7 @@ export default function DatabaseRestoreWizard({ backupId, containers, onClose }:
           {t('recovery.restore_database')}: {selectedContainer.name}
         </h3>
 
-        <div className="bg-blue-50 border-2 border-blue-500 p-4 mb-6">
+        <div className="bg-[var(--bg-elevated)] border-2 border-[var(--theme-primary)] p-4 mb-6">
           <h4 className="font-bold mb-2">⚠️ {t('recovery.important')}</h4>
           <ol className="list-decimal list-inside space-y-2 text-sm">
             {restoreInfo.instructions.map((instruction, i) => (
@@ -104,7 +104,7 @@ export default function DatabaseRestoreWizard({ backupId, containers, onClose }:
       <h3 className="text-xl font-bold mb-4">{t('recovery.database_restore')}</h3>
 
       {error && (
-        <div className="border-2 border-red-500 bg-red-50 p-4 mb-4 text-red-700 text-sm">
+        <div className="border-2 border-red-500 bg-[var(--bg-secondary)] p-4 mb-4 text-red-400 text-sm">
           {error}
         </div>
       )}
@@ -118,7 +118,7 @@ export default function DatabaseRestoreWizard({ backupId, containers, onClose }:
           {databaseContainers.map((container) => (
             <div
               key={container.id}
-              className="border-2 border-[var(--border-default)] p-4 hover:bg-gray-50 cursor-pointer"
+              className="border-2 border-[var(--border-default)] p-4 hover:bg-[var(--bg-elevated)] cursor-pointer"
               onClick={() => !loading && handleGetRestoreInfo(container)}
             >
               <div className="font-bold">{container.name}</div>

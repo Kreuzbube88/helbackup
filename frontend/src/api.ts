@@ -196,17 +196,6 @@ export const api = {
   },
 }
 
-export const notifications = {
-  getAll: () => request<unknown[]>('GET', '/notifications'),
-  get: (channel: string) => request<unknown>('GET', `/notifications/${channel}`),
-  save: (data: { channel: string; enabled: boolean; config: Record<string, unknown>; events: string[] }) =>
-    request<{ success: boolean }>('POST', '/notifications', data),
-  delete: (channel: string) => request<{ success: boolean }>('DELETE', `/notifications/${channel}`),
-  test: (channel: string, config: Record<string, unknown>) =>
-    request<{ success: boolean }>('POST', '/notifications/test', { channel, config }),
-  getLog: () => request<unknown[]>('GET', '/notifications/log'),
-}
-
 export const dashboard = {
   get: () => request<unknown>('GET', '/dashboard'),
 }
@@ -250,18 +239,6 @@ export interface RestorePlan {
     }[]
     warnings: string[]
   }
-}
-
-interface ApiTokenResponse {
-  success: boolean
-  data: unknown
-}
-
-export const api_tokens = {
-  list: () => request<ApiTokenResponse>('GET', '/tokens'),
-  create: (data: { name: string; scopes: string[]; expiresInDays?: number }) =>
-    request<ApiTokenResponse>('POST', '/tokens', data),
-  revoke: (id: number) => request<ApiTokenResponse>('DELETE', `/tokens/${id}`),
 }
 
 export const recovery = {

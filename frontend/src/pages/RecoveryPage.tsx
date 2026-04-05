@@ -56,8 +56,7 @@ export default function RecoveryPage() {
       setIsRecoveryMode(true);
       toast(t('recovery.recovery_mode_enabled', 'Recovery mode enabled'), 'success');
     } catch (error: unknown) {
-      const err = error as Error;
-      toast(`${t('recovery.failed_enable', 'Failed to enable recovery mode')}: ${err.message}`, 'error');
+      toast(`${t('recovery.failed_enable', 'Failed to enable recovery mode')}: ${error instanceof Error ? error.message : String(error)}`, 'error');
     }
   };
 
@@ -68,8 +67,7 @@ export default function RecoveryPage() {
       toast(t('recovery.recovery_mode_disabled', 'Recovery mode disabled'), 'success');
       navigate('/');
     } catch (error: unknown) {
-      const err = error as Error;
-      toast(`${t('recovery.failed_disable', 'Failed to disable recovery mode')}: ${err.message}`, 'error');
+      toast(`${t('recovery.failed_disable', 'Failed to disable recovery mode')}: ${error instanceof Error ? error.message : String(error)}`, 'error');
     }
   };
 
@@ -86,18 +84,18 @@ export default function RecoveryPage() {
   if (!isRecoveryMode) {
     return (
       <div className="p-8 max-w-2xl mx-auto">
-        <div className="border-4 border-red-500 bg-red-50 p-8 text-center">
-          <h1 className="text-3xl font-bold mb-4 text-red-600">
+        <div className="border-4 border-red-500 bg-[var(--bg-secondary)] p-8 text-center">
+          <h1 className="text-3xl font-bold mb-4 text-red-400">
             {t('recovery.disaster_recovery_mode')}
           </h1>
 
-          <p className="mb-6 text-lg text-gray-800">
+          <p className="mb-6 text-lg text-[var(--text-primary)]">
             {t('recovery.warning_message')}
           </p>
 
-          <div className="bg-white border-2 border-red-500 p-6 mb-6 text-left">
-            <h2 className="font-bold mb-2 text-gray-900">{t('recovery.when_to_use')}</h2>
-            <ul className="list-disc list-inside space-y-2 text-gray-800">
+          <div className="bg-[var(--bg-elevated)] border-2 border-red-500 p-6 mb-6 text-left">
+            <h2 className="font-bold mb-2 text-[var(--text-primary)]">{t('recovery.when_to_use')}</h2>
+            <ul className="list-disc list-inside space-y-2 text-[var(--text-secondary)]">
               <li>{t('recovery.use_case_1')}</li>
               <li>{t('recovery.use_case_2')}</li>
               <li>{t('recovery.use_case_3')}</li>

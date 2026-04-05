@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '../common/Button';
+import { useToast } from '../common/Toast';
 import { recovery as recoveryApi } from '../../api';
 import VerifyBackup from './VerifyBackup';
 
@@ -35,13 +36,21 @@ interface Props {
 
 export default function RestoreWizard({ manifest, onClose, onComplete }: Props) {
   const { t } = useTranslation();
+  const { toast } = useToast();
   const [step, setStep] = useState(0);
   const [selectedContainers, setSelectedContainers] = useState<string[]>([]);
   const [restoreDestination, setRestoreDestination] = useState('/mnt/user');
 
-  const parsed: ParsedManifest = typeof manifest.manifest === 'string'
-    ? JSON.parse(manifest.manifest)
-    : manifest;
+  let parsed: ParsedManifest = {};
+  if (typeof manifest.manifest === 'string') {
+    try {
+      parsed = JSON.parse(manifest.manifest) as ParsedManifest;
+    } catch {
+      parsed = {};
+    }
+  } else {
+    parsed = manifest as ParsedManifest;
+  }
 
   const containers = parsed.containerConfigs ?? [];
   const files = parsed.entries ?? [];
@@ -55,22 +64,20 @@ export default function RestoreWizard({ manifest, onClose, onComplete }: Props) 
   const handleRestoreContainers = async () => {
     try {
       await recoveryApi.restoreContainers(manifest.backup_id ?? '', selectedContainers);
-      alert(t('recovery.containers_restored'));
+      toast(t('recovery.containers_restored'), 'success');
       setStep(2);
     } catch (error: unknown) {
-      const err = error as Error;
-      alert(`Error: ${err.message}`);
+      toast(`Error: ${error instanceof Error ? error.message : String(error)}`, 'error');
     }
   };
 
   const handleRestoreFiles = async () => {
     try {
       await recoveryApi.restoreFiles(manifest.backup_id ?? '', [], restoreDestination);
-      alert(t('recovery.files_restored'));
+      toast(t('recovery.files_restored'), 'success');
       onComplete();
     } catch (error: unknown) {
-      const err = error as Error;
-      alert(`Error: ${err.message}`);
+      toast(`Error: ${error instanceof Error ? error.message : String(error)}`, 'error');
     }
   };
 
@@ -109,7 +116,7 @@ export default function RestoreWizard({ manifest, onClose, onComplete }: Props) 
           ) : (
             <div className="border-2 border-[var(--border-default)] p-6 mb-6 max-h-96 overflow-y-auto">
               {containers.map((container) => (
-                <div key={container.id} className="flex items-center gap-4 p-2 hover:bg-gray-50">
+                <div key={container.id} className="flex items-center gap-4 p-2 hover:bg-[var(--bg-elevated)]">
                   <input
                     type="checkbox"
                     checked={selectedContainers.includes(container.id)}
