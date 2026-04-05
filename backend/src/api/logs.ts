@@ -2,6 +2,7 @@ import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify'
 import { randomUUID } from 'node:crypto'
 import { db } from '../db/database.js'
 import { activeExecutions } from '../execution/active.js'
+import { requireScope } from '../middleware/tokenAuth.js'
 
 // Short-lived SSE tokens: token → { runId, expiresAt }
 const sseTokens = new Map<string, { runId: string; expiresAt: number }>()
@@ -22,7 +23,7 @@ export async function logsRoutes(app: FastifyInstance): Promise<void> {
   // POST /api/logs/:runId/stream-token — issue short-lived SSE token (60s TTL)
   app.post<{ Params: { runId: string } }>(
     '/api/logs/:runId/stream-token',
-    { preHandler: [app.authenticate] },
+    { preHandler: [requireScope('read')] },
     async (request: FastifyRequest<{ Params: { runId: string } }>, reply: FastifyReply) => {
       const sseToken = randomUUID()
       sseTokens.set(sseToken, { runId: request.params.runId, expiresAt: Date.now() + 60_000 })
@@ -104,7 +105,7 @@ export async function logsRoutes(app: FastifyInstance): Promise<void> {
   // GET /api/logs/:runId — full log retrieval (JSON)
   app.get<{ Params: { runId: string } }>(
     '/api/logs/:runId',
-    { preHandler: [app.authenticate] },
+    { preHandler: [requireScope('read')] },
     async (request: FastifyRequest<{ Params: { runId: string } }>, reply: FastifyReply) => {
       const logs = db
         .prepare('SELECT * FROM logs WHERE run_id = ? ORDER BY id ASC')

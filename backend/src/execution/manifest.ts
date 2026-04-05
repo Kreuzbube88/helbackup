@@ -18,6 +18,7 @@ export interface Manifest {
   backupId: string
   jobId: string
   runId: string
+  targetId?: string
   timestamp: string
   helbackupVersion: string
   backupPath: string
@@ -34,6 +35,7 @@ export interface CreateManifestOptions {
   generateChecksums?: boolean
   encrypted?: boolean
   encryptionPassword?: string
+  targetId?: string
 }
 
 export async function createManifest(
@@ -70,6 +72,7 @@ export async function createManifest(
     backupId: randomUUID(),
     jobId,
     runId,
+    targetId: options.targetId,
     timestamp: new Date().toISOString(),
     helbackupVersion: 'v1.0',
     backupPath,

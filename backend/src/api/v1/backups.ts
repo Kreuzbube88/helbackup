@@ -22,6 +22,12 @@ interface ManifestRow {
 interface ManifestJson {
   entries?: { size: number }[]
   verified?: boolean
+  targetId?: string
+}
+
+interface TargetRow {
+  name: string
+  type: string
 }
 
 export async function backupsRoutesV1(app: FastifyInstance): Promise<void> {
@@ -55,13 +61,23 @@ export async function backupsRoutesV1(app: FastifyInstance): Promise<void> {
         `)
         .all(limit, offset) as ManifestRow[]
 
+      const getTarget = db.prepare('SELECT name, type FROM targets WHERE id = ?')
+
       const backups = rows.map(row => {
         let total_size: number | null = null
         let verified: boolean | null = null
+        let file_count: number | null = null
+        let target_name: string | null = null
+        let target_type: string | null = null
         try {
           const m = JSON.parse(row.manifest) as ManifestJson
           total_size = m.entries?.reduce((s, e) => s + e.size, 0) ?? null
           verified = m.verified ?? null
+          file_count = m.entries?.length ?? null
+          if (m.targetId) {
+            const t = getTarget.get(m.targetId) as TargetRow | undefined
+            if (t) { target_name = t.name; target_type = t.type }
+          }
         } catch { /* malformed manifest — skip */ }
         return {
           id: row.id,
@@ -70,10 +86,11 @@ export async function backupsRoutesV1(app: FastifyInstance): Promise<void> {
           job_name: row.job_name,
           timestamp: row.timestamp,
           total_size,
+          file_count,
           compressed_size: null,
           verified,
-          target_name: null,
-          target_type: null,
+          target_name,
+          target_type,
         }
       })
 
