@@ -252,8 +252,8 @@ export const api_tokens = {
 
 export const recovery = {
   getStatus: () => request<{ enabled: boolean }>('GET', '/recovery/status'),
-  enable: () => request<{ ok: boolean }>('POST', '/recovery/enable'),
-  disable: () => request<{ ok: boolean }>('POST', '/recovery/disable'),
+  enable: () => request<{ ok: boolean }>('POST', '/recovery/enable', {}),
+  disable: () => request<{ ok: boolean }>('POST', '/recovery/disable', {}),
   getManifests: () => request<unknown[]>('GET', '/recovery/manifests'),
   getManifest: (backupId: string) => request<unknown>('GET', `/recovery/manifests/${backupId}`),
   scan: (scanPath: string) => request<{ manifests: unknown[]; count: number }>('POST', '/recovery/scan', { path: scanPath }),
