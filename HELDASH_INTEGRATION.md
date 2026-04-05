@@ -1,63 +1,53 @@
 # HELBACKUP — HELDASH Integration Guide
 
-API base URL: `http://helbackup:8080`
+> **Token-only reference.** All endpoints listed here work with an API token (`helbackup_…`).
+> No session JWT is required or recommended for HELDASH.
+
+API base URL: `http://<helbackup-host>:3000`
 
 ---
 
 ## Authentication
 
-HELBACKUP has two auth mechanisms:
+HELDASH authenticates with a **static API token** created once in the HELBACKUP UI.
 
-### 1. API Token (recommended for HELDASH)
+### Create a token (one-time, in the UI)
 
-Tokens use the `helbackup_` prefix and are scoped to `read`, `write`, or `admin`.
+1. Open HELBACKUP → **Settings → API Tokens**
+2. Click **New Token**
+3. Name: `heldash`, Scopes: `read` (add `write` if HELDASH should trigger jobs)
+4. Copy the token — it is shown **only once**
 
-**Create a token** (requires active session — do this once in the UI or via API):
-
-```bash
-# Step 1: get a session JWT
-curl -X POST http://helbackup:8080/api/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"username":"admin","password":"<password>"}'
-# → { "token": "<jwt>", "user": { "id": 1, "username": "admin" } }
-
-# Step 2: create an API token
-curl -X POST http://helbackup:8080/api/tokens \
-  -H "Authorization: Bearer <jwt>" \
-  -H "Content-Type: application/json" \
-  -d '{"name":"heldash","scopes":["read"],"expiresInDays":365}'
-# → { "token": "helbackup_...", ... }  ← save immediately, shown only once
-```
-
-**Use in requests:**
+### Use in every request
 
 ```http
 Authorization: Bearer helbackup_<token>
 ```
 
-**Scopes:**
+### Scopes
 
-| Scope   | Can do                                      |
-|---------|---------------------------------------------|
-| `read`  | GET all status/jobs/backup data             |
-| `write` | Trigger/cancel jobs                         |
-| `admin` | Full access                                 |
-
-### 2. Session JWT
-
-Short-lived token from `POST /api/auth/login`. Used by the web UI. Not recommended for HELDASH — use API tokens instead.
+| Scope   | What it unlocks                         |
+|---------|-----------------------------------------|
+| `read`  | All GET endpoints — status, jobs, backups, history, targets |
+| `write` | Trigger jobs (`POST /api/v1/jobs/:id/trigger`) |
+| `admin` | Full access (not needed for HELDASH)    |
 
 ---
 
-## Endpoints for Dashboard Widgets
+## Endpoints
 
-### Health Check (no auth)
+All endpoints are under `/api/v1/` and accept the API token.
+Base URL example: `http://192.168.1.100:3000`
+
+---
+
+### Health Check — no auth required
 
 ```
 GET /health
 ```
 
-Response (200 healthy / 503 degraded):
+Returns 200 when healthy, 503 when degraded.
 
 ```json
 {
@@ -68,17 +58,17 @@ Response (200 healthy / 503 degraded):
 }
 ```
 
-Use this for a simple "is it reachable" ping.
+Use as a connectivity ping before other requests.
 
 ---
 
-### Widget Status — compact summary (scope: `read`)
+### Widget Status — compact summary `scope: read`
 
 ```
 GET /api/v1/widget/status
 ```
 
-**The primary endpoint for a HELDASH status widget.** Single request, all key data.
+**Recommended primary endpoint for a HELDASH status widget.** One request, all key data.
 
 ```json
 {
@@ -100,11 +90,12 @@ GET /api/v1/widget/status
 }
 ```
 
-`status` is `"ok"` or `"warning"` (any failures in last 24h).
+`status`: `"ok"` | `"warning"` (warning = any failure in last 24 h)  
+`lastBackup` is `null` if no backup has ever run.
 
 ---
 
-### System Status — extended (scope: `read`)
+### System Status — extended `scope: read`
 
 ```
 GET /api/v1/status
@@ -124,75 +115,11 @@ GET /api/v1/status
 }
 ```
 
-`status` is `"healthy"` (no failures) or `"degraded"`.
+`status`: `"healthy"` | `"degraded"`
 
 ---
 
-### Full Dashboard Data (session JWT only)
-
-```
-GET /api/dashboard
-```
-
-Returns a comprehensive payload for the full dashboard view. Requires session JWT, not API token.
-
-```json
-{
-  "systemStatus": {
-    "status": "healthy",
-    "message": "All systems operational",
-    "lastBackup": {
-      "timestamp": "2026-04-05T03:00:00.000Z",
-      "jobName": "Flash + Appdata",
-      "status": "success",
-      "duration": 142
-    },
-    "nextScheduled": {
-      "timestamp": "2026-04-06T03:00:00.000Z",
-      "jobName": "Flash + Appdata"
-    }
-  },
-  "backupHistory": [
-    { "date": "2026-04-04", "success": 2, "failed": 0, "total": 2 }
-  ],
-  "successRate": {
-    "percentage": 97,
-    "total": 60,
-    "successful": 58,
-    "failed": 2
-  },
-  "storage": {
-    "totalUsed": 10737418240,
-    "totalAvailable": 107374182400,
-    "percentage": 9,
-    "oldestBackup": "2026-02-01T00:00:00.000Z",
-    "backupCount": 62,
-    "growthTrend": { "daily": 357913941, "weekly": 2505397589 }
-  },
-  "recentJobs": [
-    {
-      "id": "run-uuid",
-      "jobName": "Flash + Appdata",
-      "status": "success",
-      "startTime": "2026-04-05T03:00:00.000Z",
-      "endTime": "2026-04-05T03:02:22.000Z",
-      "duration": 142,
-      "size": 0
-    }
-  ],
-  "warnings": [
-    { "type": "warning", "message": "No backup in over 48 hours", "action": "Check schedule" }
-  ]
-}
-```
-
-`systemStatus.status`: `"healthy"` | `"warning"` | `"critical"`  
-`warnings[].type`: `"error"` | `"warning"` | `"info"`  
-`storage` values are bytes (local targets only; cloud targets not included).
-
----
-
-### Jobs List (scope: `read`)
+### Jobs List `scope: read`
 
 ```
 GET /api/v1/jobs
@@ -202,20 +129,52 @@ GET /api/v1/jobs
 {
   "success": true,
   "data": [
-    { "id": "job-uuid", "name": "Flash + Appdata", "enabled": true, "schedule": "0 3 * * *" }
+    {
+      "id": "job-uuid",
+      "name": "Flash + Appdata",
+      "enabled": true,
+      "schedule": "0 3 * * *"
+    }
   ]
 }
 ```
 
+`enabled` is a boolean. `schedule` is a cron string or `null` (manual-only job).
+
 ---
 
-### Recent Backups (scope: `read`)
+### Targets List `scope: read`
+
+```
+GET /api/v1/targets
+```
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "target-uuid",
+      "name": "Synology NAS",
+      "type": "nas",
+      "enabled": true,
+      "created_at": "2026-01-01T00:00:00.000Z"
+    }
+  ]
+}
+```
+
+`type`: `"nas"` | `"rclone"` | `"local"`
+
+---
+
+### Recent Backups `scope: read`
 
 ```
 GET /api/v1/backups?limit=10&offset=0
 ```
 
-Max `limit`: 200 (default: 50).
+`limit` default 50, max 200.
 
 ```json
 {
@@ -240,17 +199,18 @@ Max `limit`: 200 (default: 50).
 }
 ```
 
-> `compressed_size`, `target_name`, `target_type` are always `null` — not stored in the current schema.
+> `compressed_size`, `target_name`, `target_type` are always `null` — not stored in the current schema.  
+> `total_size` is in bytes, computed from the backup manifest. `null` if manifest is unreadable.
 
 ---
 
-### Backup History (scope: `read`)
+### Backup History `scope: read`
 
 ```
 GET /api/v1/history?limit=50&offset=0&jobId=<uuid>&status=success
 ```
 
-Query parameters: `limit` (default 50, max 200), `offset`, `jobId` (filter by job), `status` (`running` | `success` | `failed` | `cancelled`).
+Query params: `limit` (default 50, max 200), `offset`, `jobId` (filter by job UUID), `status` (filter by status).
 
 ```json
 {
@@ -272,13 +232,18 @@ Query parameters: `limit` (default 50, max 200), `offset`, `jobId` (filter by jo
 }
 ```
 
+`status`: `"running"` | `"success"` | `"failed"` | `"cancelled"`  
+`ended_at` and `duration_s` are `null` while a run is still active.
+
 ---
 
-### Trigger a Job (scope: `write`)
+### Trigger a Job `scope: write`
 
 ```
 POST /api/v1/jobs/:id/trigger
 ```
+
+No request body needed.
 
 Response 202:
 
@@ -294,226 +259,11 @@ Response 202:
 }
 ```
 
----
-
-### Execution Status (session JWT only)
-
-```
-GET /api/executions/:runId
-```
-
-```json
-{
-  "id": "run-uuid",
-  "job_id": "job-uuid",
-  "status": "running",
-  "started_at": "2026-04-05T03:00:00.000Z",
-  "ended_at": null,
-  "duration_s": null
-}
-```
-
-`status`: `"running"` | `"success"` | `"failed"`
+After triggering, poll `GET /api/v1/history?jobId=<jobId>&limit=1` to track completion.
 
 ---
 
-### Prometheus Metrics (session JWT only)
-
-```
-GET /metrics
-```
-
-Returns Prometheus text format. Metrics available:
-
-| Metric | Type | Labels | Description |
-|--------|------|--------|-------------|
-| `helbackup_backups_total` | Gauge | `status`, `job_name` | Backup runs in last 24h |
-| `helbackup_storage_bytes` | Gauge | `target_name`, `type` | Backup count per job |
-| `helbackup_backup_duration_seconds` | Histogram | `job_name` | Duration buckets: 30s, 60s, 5m, 10m, 30m, 1h |
-| `helbackup_active_jobs` | Gauge | — | Currently running jobs |
-| `helbackup_recovery_mode_enabled` | Gauge | — | 1 if recovery mode active |
-
----
-
-## SSE Live Logs
-
-For monitoring active job runs in real time:
-
-```javascript
-// Step 1: issue a short-lived SSE token (60s, one-time use)
-const { sseToken } = await fetch(`/api/logs/${runId}/stream-token`, {
-  method: 'POST',
-  headers: { Authorization: `Bearer ${jwtToken}` }
-}).then(r => r.json())
-
-// Step 2: open EventSource with the token
-const es = new EventSource(`/api/logs/${runId}/stream?sseToken=${sseToken}`)
-
-es.addEventListener('log', e => {
-  const log = JSON.parse(e.data)
-  // { id, run_id, step_id, level, category, message, metadata, ts }
-})
-es.addEventListener('complete', () => es.close())
-es.addEventListener('error', e => { console.error(e); es.close() })
-```
-
-Replays all stored logs on connect, then streams live. Closes with `complete` or `error` event.
-
----
-
-## Webhooks
-
-Register a URL to receive push events (no polling needed):
-
-```bash
-curl -X POST http://helbackup:8080/api/webhooks \
-  -H "Authorization: Bearer <jwt>" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "heldash",
-    "url": "http://heldash:3000/webhooks/helbackup",
-    "secret": "optional-hmac-secret",
-    "events": ["backup_success", "backup_failed"]
-  }'
-```
-
-**Available events:** `backup_started`, `backup_success`, `backup_failed`, `restore_started`, `restore_completed`, `restore_failed`, `*` (all)
-
-**Payload:**
-
-```json
-{
-  "event": "backup_success",
-  "timestamp": "2026-04-05T03:02:22.000Z",
-  "data": { ... }
-}
-```
-
-If `secret` is set, HELBACKUP sends an `X-Webhook-Signature` HMAC-SHA256 header.
-
----
-
-## Data Fetching Strategy
-
-| Use case | Strategy | Recommended interval |
-|----------|----------|----------------------|
-| Status badge | Poll `/api/v1/widget/status` | 60s |
-| Dashboard page load | Poll `/api/dashboard` | On demand + 5min refresh |
-| Job history list | Poll `/api/v1/backups` | 5min or on demand |
-| Active job monitoring | SSE `/api/logs/:runId/stream` | Real-time (push) |
-| Alerting (failures) | Webhook `backup_failed` | Push — no polling |
-
----
-
-## Widget Code Examples
-
-### Status Badge
-
-```typescript
-interface WidgetStatus {
-  status: 'ok' | 'warning'
-  jobs: number
-  last24h: { total: number; success: number; failed: number }
-  lastBackup: { timestamp: string; status: string; duration: number } | null
-}
-
-async function getHelbackupStatus(host: string, token: string): Promise<WidgetStatus> {
-  const res = await fetch(`http://${host}/api/v1/widget/status`, {
-    headers: { Authorization: `Bearer ${token}` },
-  })
-  if (!res.ok) throw new Error(`HELBACKUP: ${res.status}`)
-  const body = await res.json() as { success: boolean; data: WidgetStatus }
-  return body.data
-}
-```
-
-### Recent Backups List
-
-```typescript
-interface BackupEntry {
-  id: number
-  backup_id: string
-  job_id: string
-  job_name: string | null
-  timestamp: string
-  total_size: number | null
-  compressed_size: null
-  verified: boolean | null
-  target_name: null
-  target_type: null
-}
-
-async function getRecentBackups(host: string, token: string, limit = 10): Promise<BackupEntry[]> {
-  const res = await fetch(`http://${host}/api/v1/backups?limit=${limit}`, {
-    headers: { Authorization: `Bearer ${token}` },
-  })
-  if (!res.ok) throw new Error(`HELBACKUP: ${res.status}`)
-  const body = await res.json() as { success: boolean; data: { backups: BackupEntry[] } }
-  return body.data.backups
-}
-```
-
-### Trigger Job + Monitor via SSE
-
-```typescript
-async function triggerAndMonitor(
-  host: string,
-  apiToken: string,
-  jwtToken: string,
-  jobId: string,
-  onLog: (msg: string) => void,
-  onDone: (success: boolean) => void
-) {
-  // Trigger
-  const trigRes = await fetch(`http://${host}/api/v1/jobs/${jobId}/trigger`, {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${apiToken}` },
-  })
-  if (!trigRes.ok) throw new Error(`Trigger failed: ${trigRes.status}`)
-  const { data } = await trigRes.json() as { data: { runId: string } }
-
-  // Get SSE token
-  const tokenRes = await fetch(`http://${host}/api/logs/${data.runId}/stream-token`, {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${jwtToken}` },
-  })
-  const { sseToken } = await tokenRes.json() as { sseToken: string }
-
-  // Stream logs
-  const es = new EventSource(`http://${host}/api/logs/${data.runId}/stream?sseToken=${sseToken}`)
-  es.addEventListener('log', e => {
-    const log = JSON.parse(e.data) as { message: string; level: string }
-    onLog(`[${log.level}] ${log.message}`)
-  })
-  es.addEventListener('complete', () => { es.close(); onDone(true) })
-  es.addEventListener('error', () => { es.close(); onDone(false) })
-}
-```
-
-### Success Rate Gauge
-
-```typescript
-interface SuccessRate {
-  percentage: number
-  total: number
-  successful: number
-  failed: number
-}
-
-// Requires session JWT (use /api/dashboard endpoint)
-async function getSuccessRate(host: string, jwtToken: string): Promise<SuccessRate> {
-  const res = await fetch(`http://${host}/api/dashboard`, {
-    headers: { Authorization: `Bearer ${jwtToken}` },
-  })
-  if (!res.ok) throw new Error(`Dashboard: ${res.status}`)
-  const body = await res.json() as { successRate: SuccessRate }
-  return body.successRate
-}
-```
-
----
-
-## Error Response Format
+## Error Format
 
 All `/api/v1/*` endpoints return structured errors:
 
@@ -527,22 +277,153 @@ All `/api/v1/*` endpoints return structured errors:
 }
 ```
 
-Error codes: `UNAUTHORIZED`, `INVALID_TOKEN`, `TOKEN_EXPIRED`, `FORBIDDEN`, `NOT_FOUND`, `VALIDATION_ERROR`, `INTERNAL_ERROR`
+Error codes: `UNAUTHORIZED` · `INVALID_TOKEN` · `TOKEN_EXPIRED` · `FORBIDDEN` · `NOT_FOUND` · `VALIDATION_ERROR` · `INTERNAL_ERROR`
 
-Legacy endpoints (`/api/dashboard`, `/api/logs`, etc.) return:
+HTTP 401 = missing/invalid token. HTTP 403 = valid token, insufficient scope.
 
-```json
-{ "error": "message string" }
+---
+
+## TypeScript Interfaces
+
+```typescript
+// Base URL helper
+const HELBACKUP = (host: string) => `http://${host}:3000`
+const AUTH = (token: string) => ({ Authorization: `Bearer ${token}` })
+
+// --- Types ---
+
+interface WidgetStatus {
+  status: 'ok' | 'warning'
+  jobs: number
+  last24h: { total: number; success: number; failed: number }
+  lastBackup: { timestamp: string; status: string; duration: number } | null
+}
+
+interface SystemStatus {
+  system: string
+  version: string
+  status: 'healthy' | 'degraded'
+  jobs: { total: number; enabled: number }
+  last24h: { success: number; failed: number }
+  timestamp: string
+}
+
+interface Job {
+  id: string
+  name: string
+  enabled: boolean
+  schedule: string | null
+}
+
+interface Target {
+  id: string
+  name: string
+  type: 'nas' | 'rclone' | 'local'
+  enabled: boolean
+  created_at: string
+}
+
+interface BackupEntry {
+  id: number
+  backup_id: string
+  job_id: string
+  job_name: string | null
+  timestamp: string
+  total_size: number | null
+  compressed_size: null
+  verified: boolean | null
+  target_name: null
+  target_type: null
+}
+
+interface HistoryEntry {
+  id: string
+  job_id: string
+  job_name: string | null
+  status: 'running' | 'success' | 'failed' | 'cancelled'
+  started_at: string
+  ended_at: string | null
+  duration_s: number | null
+}
+
+interface Pagination {
+  total: number
+  limit: number
+  offset: number
+}
+
+// --- API functions ---
+
+async function helbackupFetch<T>(url: string, token: string, init?: RequestInit): Promise<T> {
+  const res = await fetch(url, { ...init, headers: { ...AUTH(token), ...init?.headers } })
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({})) as { error?: { message?: string } }
+    throw new Error(err.error?.message ?? `HTTP ${res.status}`)
+  }
+  const body = await res.json() as { success: boolean; data: T }
+  return body.data
+}
+
+async function getWidgetStatus(host: string, token: string): Promise<WidgetStatus> {
+  return helbackupFetch<WidgetStatus>(`${HELBACKUP(host)}/api/v1/widget/status`, token)
+}
+
+async function getSystemStatus(host: string, token: string): Promise<SystemStatus> {
+  return helbackupFetch<SystemStatus>(`${HELBACKUP(host)}/api/v1/status`, token)
+}
+
+async function getJobs(host: string, token: string): Promise<Job[]> {
+  return helbackupFetch<Job[]>(`${HELBACKUP(host)}/api/v1/jobs`, token)
+}
+
+async function getRecentBackups(host: string, token: string, limit = 10): Promise<{ backups: BackupEntry[]; pagination: Pagination }> {
+  return helbackupFetch(`${HELBACKUP(host)}/api/v1/backups?limit=${limit}`, token)
+}
+
+async function getHistory(host: string, token: string, params?: { jobId?: string; status?: string; limit?: number }): Promise<{ history: HistoryEntry[]; pagination: Pagination }> {
+  const q = new URLSearchParams()
+  if (params?.jobId) q.set('jobId', params.jobId)
+  if (params?.status) q.set('status', params.status)
+  if (params?.limit) q.set('limit', String(params.limit))
+  return helbackupFetch(`${HELBACKUP(host)}/api/v1/history?${q}`, token)
+}
+
+async function triggerJob(host: string, token: string, jobId: string): Promise<{ runId: string }> {
+  return helbackupFetch(`${HELBACKUP(host)}/api/v1/jobs/${jobId}/trigger`, token, { method: 'POST' })
+}
+
+// Poll for job completion after triggering
+async function waitForJob(host: string, token: string, jobId: string, pollMs = 5000): Promise<HistoryEntry> {
+  for (;;) {
+    const { history } = await getHistory(host, token, { jobId, limit: 1 })
+    const run = history[0]
+    if (run && run.status !== 'running') return run
+    await new Promise(r => setTimeout(r, pollMs))
+  }
+}
 ```
 
-### Retry Strategy
+---
+
+## Polling Strategy
+
+| Use case | Endpoint | Recommended interval |
+|----------|----------|----------------------|
+| Status badge | `GET /api/v1/widget/status` | 60 s |
+| Job list | `GET /api/v1/jobs` | On demand |
+| Backup history | `GET /api/v1/history` | 5 min or on demand |
+| Recent backups | `GET /api/v1/backups` | 5 min or on demand |
+| Track triggered job | `GET /api/v1/history?jobId=…&limit=1` | Poll every 5 s until status ≠ `running` |
+
+---
+
+## Retry Strategy
 
 ```typescript
 async function fetchWithRetry(url: string, init: RequestInit, maxRetries = 3): Promise<Response> {
   for (let attempt = 0; attempt < maxRetries; attempt++) {
     const res = await fetch(url, init)
     if (res.status !== 503 && res.status !== 429) return res
-    // Exponential backoff: 1s, 2s, 4s
     await new Promise(r => setTimeout(r, 1000 * Math.pow(2, attempt)))
   }
   throw new Error(`Failed after ${maxRetries} retries`)
@@ -551,12 +432,14 @@ async function fetchWithRetry(url: string, init: RequestInit, maxRetries = 3): P
 
 ---
 
-## Rate Limits & Best Practices
+## What is NOT available via API token
 
-- No explicit rate limiting is configured — avoid polling more frequently than 30s
-- `/api/v1/widget/status` is the lightest endpoint; use it for status badges
-- `/api/dashboard` runs 6 parallel queries including `du`/`df` — call max once per page load
-- `/metrics` runs DB queries on each scrape — set Prometheus scrape interval ≥ 30s
-- Cache token scopes client-side; only re-validate on 401 responses
-- SSE connections are persistent — open only when actively monitoring a run
-- Webhooks are the best choice for failure alerts (zero polling overhead)
+These endpoints require a session JWT (used by the HELBACKUP web UI only) and cannot be accessed with an API token:
+
+| Endpoint | Reason |
+|----------|--------|
+| `GET /api/dashboard` | Internal UI endpoint, JWT only |
+| `GET /api/executions/:runId` | JWT only — use `GET /api/v1/history?jobId=…` to track jobs |
+| `GET /metrics` | Prometheus endpoint, JWT only |
+| `POST /api/logs/:runId/stream-token` | SSE token issuance, JWT only |
+| `POST /api/webhooks` | Webhook management, JWT only — set up in the UI |
