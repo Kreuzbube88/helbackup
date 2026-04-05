@@ -153,13 +153,14 @@ export async function executeAppdataBackup(
   try {
     if (config.method === 'tar') {
       engine.log('info', 'system', 'Creating tar archive...')
-      await createTarArchive({
+      const tarResult = await createTarArchive({
         source: config.source,
         destination: path.join(destPath, 'appdata.tar.gz'),
         compress: true,
         onProgress: ({ currentFile }) => engine.log('info', 'file', `Archiving: ${currentFile}`),
       })
-      engine.log('info', 'system', 'Tar archive created')
+      engine.addTransferred(tarResult.filesProcessed, tarResult.archiveSize)
+      engine.log('info', 'system', `Tar archive created: ${tarResult.filesProcessed} files, ${tarResult.archiveSize} bytes`)
     } else {
       engine.log('info', 'system', 'Starting rsync...')
 
