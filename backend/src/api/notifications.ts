@@ -54,12 +54,18 @@ export async function notificationRoutes(app: FastifyInstance): Promise<void> {
     }
   )
 
+  const VALID_CHANNELS = ['email', 'gotify', 'ntfy', 'pushover', 'telegram', 'discord', 'slack']
+
   // POST /api/notifications — create or update
   app.post<{ Body: SaveNotificationBody }>(
     '/api/notifications',
     { preHandler: [app.authenticate] },
     async (request: FastifyRequest<{ Body: SaveNotificationBody }>, reply: FastifyReply) => {
       const { channel, enabled, config, events } = request.body
+
+      if (!VALID_CHANNELS.includes(channel)) {
+        return reply.status(400).send({ error: `Invalid channel. Must be one of: ${VALID_CHANNELS.join(', ')}` })
+      }
 
       const existing = db.prepare('SELECT id FROM notification_config WHERE channel = ?').get(channel)
       const now = new Date().toISOString()

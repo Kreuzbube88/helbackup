@@ -59,6 +59,8 @@ export async function gfsRetentionRoutes(app: FastifyInstance): Promise<void> {
     }
   )
 
+  const VALID_SCHEMES = ['simple', 'gfs']
+
   // POST /api/targets/:targetId/gfs — save GFS config
   app.post<{ Params: { targetId: string }; Body: GFSConfigBody }>(
     '/api/targets/:targetId/gfs',
@@ -66,6 +68,14 @@ export async function gfsRetentionRoutes(app: FastifyInstance): Promise<void> {
     async (request, reply) => {
       try {
         const { retentionScheme, gfsConfig } = request.body
+
+        if (!VALID_SCHEMES.includes(retentionScheme)) {
+          return reply.status(400).send({ error: `Invalid retentionScheme. Must be one of: ${VALID_SCHEMES.join(', ')}` })
+        }
+
+        const existing = db.prepare('SELECT id FROM targets WHERE id = ?').get(request.params.targetId)
+        if (!existing) return reply.status(404).send({ error: 'Target not found' })
+
         db.prepare(`
           UPDATE targets
           SET retention_scheme = ?,

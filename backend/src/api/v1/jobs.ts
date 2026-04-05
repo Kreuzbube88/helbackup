@@ -66,8 +66,8 @@ export async function jobsRoutesV1(app: FastifyInstance): Promise<void> {
         const runId = engine.getRunId()
         activeExecutions.set(runId, engine)
 
-        engine.execute(steps).catch(err => {
-          logger.error(`API-triggered backup failed: ${(err as Error).message}`)
+        void engine.execute(steps).catch(err => {
+          logger.error(`API-triggered backup failed: ${err instanceof Error ? err.message : String(err)}`)
         }).finally(() => {
           activeExecutions.delete(runId)
         })

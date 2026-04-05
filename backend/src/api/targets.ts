@@ -26,6 +26,7 @@ interface UpdateTargetBody {
   enabled?: boolean
 }
 
+const VALID_TYPES = ['synology', 'rclone', 'local']
 const SENSITIVE_KEYS = new Set(['password', 'privateKey', 'ssh_key', 'api_key', 'token', 'client_secret', 'secret'])
 
 function sanitizeConfig(config: Record<string, unknown>): Record<string, unknown> {
@@ -73,8 +74,7 @@ export async function targetsRoutes(app: FastifyInstance): Promise<void> {
       const { name, type, config, enabled = true } = request.body
       if (!name || !type || !config) return reply.status(400).send({ error: 'Missing required fields' })
 
-      const VALID_TYPES = ['synology', 'rclone', 'local']
-      if (!VALID_TYPES.includes(type)) {
+if (!VALID_TYPES.includes(type)) {
         return reply.status(400).send({ error: `Invalid type. Must be one of: ${VALID_TYPES.join(', ')}` })
       }
 
@@ -101,8 +101,7 @@ export async function targetsRoutes(app: FastifyInstance): Promise<void> {
 
       if (name !== undefined) { updates.push('name = ?'); values.push(name) }
       if (type !== undefined) {
-        const VALID_TYPES = ['synology', 'rclone', 'local']
-        if (!VALID_TYPES.includes(type)) {
+    if (!VALID_TYPES.includes(type)) {
           return reply.status(400).send({ error: `Invalid type. Must be one of: ${VALID_TYPES.join(', ')}` })
         }
         updates.push('type = ?'); values.push(type)

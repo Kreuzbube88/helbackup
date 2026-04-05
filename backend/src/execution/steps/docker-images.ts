@@ -1,5 +1,5 @@
 import { spawn } from 'child_process'
-import { JobExecutionEngine } from '../engine.js'
+import type { JobExecutionEngine } from '../engine.js'
 import { getEncryptionPassword } from '../../utils/encryptionKey.js'
 import { encryptFileGPG } from '../../utils/gpgEncrypt.js'
 import path from 'path'

@@ -1,5 +1,5 @@
 import { executeRclone } from '../../tools/rclone.js'
-import { JobExecutionEngine } from '../engine.js'
+import type { JobExecutionEngine } from '../engine.js'
 import { getEncryptionPassword } from '../../utils/encryptionKey.js'
 import { createRcloneCryptRemote } from '../../utils/rcloneCrypt.js'
 

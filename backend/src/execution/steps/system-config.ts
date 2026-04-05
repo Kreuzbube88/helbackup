@@ -1,6 +1,6 @@
 import { spawn } from 'node:child_process'
 import { executeRsync } from '../../tools/rsync.js'
-import { JobExecutionEngine } from '../engine.js'
+import type { JobExecutionEngine } from '../engine.js'
 import { getEncryptionPassword } from '../../utils/encryptionKey.js'
 import { encryptFileGPG } from '../../utils/gpgEncrypt.js'
 import path from 'path'
