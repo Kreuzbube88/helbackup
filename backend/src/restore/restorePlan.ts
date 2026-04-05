@@ -266,7 +266,7 @@ function getPriority(containerName: string, deps: Map<string, string[]>): number
   if (name.includes('mariadb') || name.includes('mysql') || name.includes('postgres') ||
       name.includes('mongodb') || name.includes('redis')) return 4
   const containerDeps = deps.get(containerName) ?? []
-  return containerDeps.length > 0 ? 5 : 5
+  return containerDeps.length > 0 ? 5 : 6
 }
 
 function getContainerWarnings(container: ContainerConfig): string[] {

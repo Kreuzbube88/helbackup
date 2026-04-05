@@ -69,3 +69,21 @@ export function testRcloneCryptRemote(remoteName: string): Promise<boolean> {
     })
   })
 }
+
+export async function deleteRcloneCryptRemote(
+  remoteName: string,
+  rcloneConfigPath?: string
+): Promise<void> {
+  const configPath = rcloneConfigPath ?? '/app/data/rclone/rclone.conf'
+  try {
+    const content = await fs.readFile(configPath, 'utf8')
+    // Remove the [remoteName] section and all lines until the next section
+    const sectionRegex = new RegExp(`\\[${remoteName}\\][\\s\\S]*?(?=\\[|$)`, 'g')
+    const cleaned = content.replace(sectionRegex, '').replace(/\n{3,}/g, '\n\n')
+    await fs.writeFile(configPath, cleaned, 'utf8')
+    logger.info(`Deleted Rclone crypt remote: ${remoteName}`)
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err)
+    logger.warn(`Could not delete rclone crypt remote ${remoteName}: ${msg}`)
+  }
+}

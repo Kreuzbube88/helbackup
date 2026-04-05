@@ -23,29 +23,41 @@ export function LogsPage() {
 
     api.executions.get(runId).then(setRun).catch(() => {/* will retry via SSE close */})
 
-    const token = localStorage.getItem('helbackup_token')
-    const url = `/api/logs/${runId}/stream${token ? `?token=${encodeURIComponent(token)}` : ''}`
-    const es = new EventSource(url)
-    setIsLive(true)
+    let esRef: EventSource | null = null
 
-    es.addEventListener('log', e => {
-      const log = JSON.parse((e as MessageEvent).data) as LogEntry
-      if (typeof log.metadata === 'string') {
-        try { log.metadata = JSON.parse(log.metadata as unknown as string) } catch { log.metadata = null }
+    function attachSseHandlers(source: EventSource) {
+      esRef = source
+      setIsLive(true)
+
+      source.addEventListener('log', e => {
+        const log = JSON.parse((e as MessageEvent).data) as LogEntry
+        if (typeof log.metadata === 'string') {
+          try { log.metadata = JSON.parse(log.metadata as unknown as string) } catch { log.metadata = null }
+        }
+        setLogs(prev => [...prev, log])
+      })
+
+      const finish = () => {
+        setIsLive(false)
+        source.close()
+        api.executions.get(runId!).then(setRun).catch(() => {/* ignore */})
       }
-      setLogs(prev => [...prev, log])
-    })
 
-    const finish = () => {
-      setIsLive(false)
-      es.close()
-      api.executions.get(runId).then(setRun).catch(() => {/* ignore */})
+      source.addEventListener('complete', finish)
+      source.onerror = finish
     }
 
-    es.addEventListener('complete', finish)
-    es.onerror = finish
+    api.logs.requestSseToken(runId)
+      .then(({ sseToken }) => {
+        attachSseHandlers(new EventSource(`/api/logs/${runId}/stream?sseToken=${encodeURIComponent(sseToken)}`))
+      })
+      .catch(() => {
+        // Fallback: legacy JWT in URL
+        const token = localStorage.getItem('helbackup_token')
+        attachSseHandlers(new EventSource(`/api/logs/${runId}/stream${token ? `?token=${encodeURIComponent(token)}` : ''}`))
+      })
 
-    return () => { es.close() }
+    return () => { esRef?.close() }
   }, [runId])
 
   if (!runId) {

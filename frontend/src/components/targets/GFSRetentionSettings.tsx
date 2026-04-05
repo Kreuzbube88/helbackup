@@ -53,6 +53,9 @@ export default function GFSRetentionSettings({ targetId, onClose }: Props) {
   const [saving, setSaving] = useState(false)
   const [cleaning, setCleaning] = useState(false)
   const [confirmOpen, setConfirmOpen] = useState(false)
+  const [backupSizeGB, setBackupSizeGB] = useState(50)
+  const [backupsPerWeek, setBackupsPerWeek] = useState(7)
+  const [retentionDays, setRetentionDays] = useState(30)
 
   useEffect(() => {
     void loadConfig()
@@ -63,7 +66,7 @@ export default function GFSRetentionSettings({ targetId, onClose }: Props) {
       void loadPreview()
       void loadSavings()
     }
-  }, [scheme, gfsConfig])
+  }, [scheme, gfsConfig, backupSizeGB, backupsPerWeek, retentionDays])
 
   async function loadConfig() {
     try {
@@ -89,9 +92,9 @@ export default function GFSRetentionSettings({ targetId, onClose }: Props) {
   async function loadSavings() {
     try {
       const result = await api.targets.calculateGFSSavings({
-        backupSizeGB: 100,
-        backupsPerWeek: 7,
-        currentRetentionDays: 30,
+        backupSizeGB,
+        backupsPerWeek,
+        currentRetentionDays: retentionDays,
         gfsConfig,
       })
       setSavings(result)
@@ -162,7 +165,7 @@ export default function GFSRetentionSettings({ targetId, onClose }: Props) {
               <div className="text-xs text-[var(--text-muted)] mt-0.5">
                 {s === 'simple' ? t('gfs.simple_description') : t('gfs.gfs_description')}
               </div>
-              {s === 'gfs' && savings && (
+                      {s === 'gfs' && savings && savings.savings.percent > 0 && (
                 <div className="mt-2 text-xs text-emerald-400">
                   {t('gfs.estimated_savings')}: {savings.savings.percent}% ({savings.savings.storageGB} GB)
                 </div>
@@ -171,6 +174,32 @@ export default function GFSRetentionSettings({ targetId, onClose }: Props) {
           </label>
         ))}
       </div>
+
+      {/* Savings calculator inputs */}
+      {scheme === 'gfs' && (
+        <div className="border border-[var(--border-default)] p-4 space-y-3">
+          <p className="text-sm font-semibold text-[var(--text-secondary)]">{t('gfs.savings_inputs', 'Savings Calculator')}</p>
+          <div className="grid grid-cols-3 gap-3">
+            {[
+              { label: t('gfs.avg_backup_size', 'Avg Backup (GB)'), value: backupSizeGB, min: 1, max: 10000, setter: setBackupSizeGB },
+              { label: t('gfs.backups_per_week', 'Backups/Week'), value: backupsPerWeek, min: 1, max: 21, setter: setBackupsPerWeek },
+              { label: t('gfs.retention_days', 'Simple Retention (days)'), value: retentionDays, min: 1, max: 365, setter: setRetentionDays },
+            ].map(({ label, value, min, max, setter }) => (
+              <div key={label}>
+                <label className="text-xs text-[var(--text-muted)] mb-1 block">{label}</label>
+                <input
+                  type="number"
+                  min={min}
+                  max={max}
+                  value={value}
+                  onChange={e => setter(Math.max(min, Math.min(max, parseInt(e.target.value) || min)))}
+                  className="w-full bg-[var(--bg-elevated)] border border-[var(--border-default)] text-[var(--text-primary)] text-sm px-2 py-1 focus:outline-none focus:border-[var(--theme-primary)]"
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* GFS configuration sliders */}
       {scheme === 'gfs' && (

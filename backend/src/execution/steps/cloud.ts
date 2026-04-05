@@ -1,7 +1,7 @@
 import { executeRclone } from '../../tools/rclone.js'
 import type { JobExecutionEngine } from '../engine.js'
 import { getEncryptionPassword } from '../../utils/encryptionKey.js'
-import { createRcloneCryptRemote } from '../../utils/rcloneCrypt.js'
+import { createRcloneCryptRemote, deleteRcloneCryptRemote } from '../../utils/rcloneCrypt.js'
 
 export interface CloudBackupConfig {
   source: string
@@ -18,12 +18,13 @@ export async function executeCloudBackup(
   engine.log('info', 'network', `Starting cloud backup to ${config.remote}`)
 
   let effectiveRemote = config.remote
+  let cryptRemoteName: string | null = null
 
   if (config.useEncryption) {
     engine.log('info', 'network', 'Setting up Rclone Crypt for encrypted cloud backup...')
     try {
       const encryptionPassword = getEncryptionPassword()
-      const cryptRemoteName = await createRcloneCryptRemote(
+      cryptRemoteName = await createRcloneCryptRemote(
         { remoteName: config.remote, password: encryptionPassword },
         config.configPath
       )
@@ -66,5 +67,10 @@ export async function executeCloudBackup(
       error: { code: 'CLOUD_BACKUP_FAILED', stack, suggestion: 'Check rclone config and network connection' },
     })
     throw err
+  } finally {
+    // Always clean up temporary crypt remote to prevent accumulation
+    if (cryptRemoteName) {
+      await deleteRcloneCryptRemote(cryptRemoteName, config.configPath)
+    }
   }
 }

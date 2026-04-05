@@ -1,6 +1,10 @@
 import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify'
+import { randomUUID } from 'node:crypto'
 import { db } from '../db/database.js'
 import { activeExecutions } from '../execution/active.js'
+
+// Short-lived SSE tokens: token → { runId, expiresAt }
+const sseTokens = new Map<string, { runId: string; expiresAt: number }>()
 
 interface LogRow {
   id: number
@@ -15,27 +19,52 @@ interface LogRow {
 }
 
 export async function logsRoutes(app: FastifyInstance): Promise<void> {
-  // GET /api/logs/:runId/stream — SSE live stream (accepts ?token= for EventSource clients)
-  app.get<{ Params: { runId: string }; Querystring: { token?: string } }>(
+  // POST /api/logs/:runId/stream-token — issue short-lived SSE token (60s TTL)
+  app.post<{ Params: { runId: string } }>(
+    '/api/logs/:runId/stream-token',
+    { preHandler: [app.authenticate] },
+    async (request: FastifyRequest<{ Params: { runId: string } }>, reply: FastifyReply) => {
+      const sseToken = randomUUID()
+      sseTokens.set(sseToken, { runId: request.params.runId, expiresAt: Date.now() + 60_000 })
+      // Purge expired tokens on each issuance
+      for (const [k, v] of sseTokens) {
+        if (v.expiresAt < Date.now()) sseTokens.delete(k)
+      }
+      return reply.send({ sseToken })
+    }
+  )
+
+  // GET /api/logs/:runId/stream — SSE live stream
+  // Accepts ?sseToken= (short-lived, preferred) or ?token= (JWT, legacy fallback)
+  app.get<{ Params: { runId: string }; Querystring: { sseToken?: string; token?: string } }>(
     '/api/logs/:runId/stream',
-    async (request: FastifyRequest<{ Params: { runId: string }; Querystring: { token?: string } }>, reply: FastifyReply) => {
-      // EventSource cannot set headers, so accept JWT via query param as fallback
-      const token = (request.query as { token?: string }).token
-      try {
-        if (token) {
-          app.jwt.verify(token)
-        } else {
-          await request.jwtVerify()
+    async (request: FastifyRequest<{ Params: { runId: string }; Querystring: { sseToken?: string; token?: string } }>, reply: FastifyReply) => {
+      const { sseToken, token } = request.query as { sseToken?: string; token?: string }
+      const { runId } = request.params
+
+      if (sseToken) {
+        // Validate short-lived SSE token
+        const entry = sseTokens.get(sseToken)
+        if (!entry || entry.expiresAt < Date.now() || entry.runId !== runId) {
+          return reply.status(401).send({ error: 'Invalid or expired SSE token' })
         }
-      } catch {
-        return reply.status(401).send({ error: 'Unauthorized' })
+        sseTokens.delete(sseToken) // one-time use
+      } else {
+        // Legacy: accept JWT in query param for EventSource clients
+        try {
+          if (token) {
+            app.jwt.verify(token)
+          } else {
+            await request.jwtVerify()
+          }
+        } catch {
+          return reply.status(401).send({ error: 'Unauthorized' })
+        }
       }
       reply.raw.setHeader('Content-Type', 'text/event-stream')
       reply.raw.setHeader('Cache-Control', 'no-cache')
       reply.raw.setHeader('Connection', 'keep-alive')
       reply.hijack()
-
-      const { runId } = request.params
 
       const send = (event: string, data: unknown): void => {
         reply.raw.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`)

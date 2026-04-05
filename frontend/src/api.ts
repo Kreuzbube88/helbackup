@@ -153,6 +153,10 @@ export const api = {
     get: (runId: string) => request<JobHistoryRun>('GET', `/executions/${runId}`),
   },
 
+  logs: {
+    requestSseToken: (runId: string) => request<{ sseToken: string }>('POST', `/logs/${runId}/stream-token`),
+  },
+
   docker: {
     listContainers: () => request<Container[]>('GET', '/docker/containers'),
     inspectContainer: (id: string) => request<unknown>('GET', `/docker/containers/${id}`),
