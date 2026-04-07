@@ -55,10 +55,16 @@ export async function verificationRoutes(app: FastifyInstance) {
         return reply.send({ passed: checksums.length, failed: 0, missing: 0, note: 'path-unresolvable' })
       }
 
+      if (checksums.length === 0) {
+        return reply.send({ passed: 0, failed: 0, missing: 0, note: 'no-checksums' })
+      }
+
       const result: VerifyResult = { passed: 0, failed: 0, missing: 0 }
 
       for (const entry of checksums) {
-        const fullPath = path.join(backupPath, entry.path)
+        const fullPath = path.isAbsolute(entry.path)
+          ? entry.path
+          : path.join(backupPath, entry.path)
         try {
           await fs.access(fullPath)
         } catch {

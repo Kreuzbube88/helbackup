@@ -221,7 +221,15 @@
     "scan_path_placeholder": "e.g. /mnt/user/backup",
     "scan": "Scan",
     "scanning": "Scanning...",
-    "scan_no_results": "No manifests found in the specified path"
+    "scan_no_results": "No manifests found in the specified path",
+    "unknown_job": "Unknown job",
+    "backup_type_flash": "Flash Drive",
+    "backup_type_appdata": "Appdata",
+    "backup_type_vms": "Virtual Machines",
+    "backup_type_docker_images": "Docker Images",
+    "backup_type_sysconfig": "System Config",
+    "no_checksums_title": "No Checksums Available",
+    "no_checksums_body": "This backup was created without checksums (older format). Integrity cannot be verified automatically."
   },
   "setup": {
     "welcome": "Welcome to HELBACKUP",

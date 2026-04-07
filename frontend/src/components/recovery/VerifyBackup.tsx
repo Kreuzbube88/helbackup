@@ -13,6 +13,7 @@ interface VerifyResults {
   failed: number;
   missing: number;
   error?: string;
+  note?: string;
 }
 
 interface Props {
@@ -50,6 +51,23 @@ export default function VerifyBackup({ backupId, checksums, onComplete, onClose 
   }
 
   if (results) {
+    if (results.note === 'no-checksums') {
+      return (
+        <div className="border-2 border-blue-400 p-6 bg-[var(--bg-secondary)]">
+          <h3 className="text-xl font-bold mb-4">ℹ {t('recovery.no_checksums_title')}</h3>
+          <p className="text-sm mb-6 text-[var(--text-secondary)]">{t('recovery.no_checksums_body')}</p>
+          <div className="flex gap-4">
+            <Button variant="primary" onClick={onComplete}>
+              {t('recovery.proceed_with_restore')}
+            </Button>
+            <Button variant="secondary" onClick={onClose ?? onComplete}>
+              {t('buttons.cancel')}
+            </Button>
+          </div>
+        </div>
+      );
+    }
+
     const allPassed = results.failed === 0 && results.missing === 0;
 
     return (

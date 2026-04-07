@@ -58,7 +58,7 @@ export default async function recoveryRoutes(app: FastifyInstance) {
   app.get('/api/recovery/manifests', { preHandler: [app.authenticate] }, async (_request, reply) => {
     try {
       const manifests = db.prepare(
-        'SELECT * FROM manifest ORDER BY created_at DESC'
+        'SELECT m.*, j.name as job_name FROM manifest m LEFT JOIN jobs j ON m.job_id = j.id ORDER BY m.created_at DESC'
       ).all();
 
       return reply.send(manifests);

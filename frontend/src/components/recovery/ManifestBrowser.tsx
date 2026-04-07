@@ -33,7 +33,21 @@ interface Manifest {
   backupId?: string;
   created_at?: string;
   manifest?: string;
+  job_name?: string;
   [key: string]: unknown;
+}
+
+function detectBackupTypes(entries: ManifestEntry[]): string[] {
+  const types = new Set<string>()
+  for (const e of entries) {
+    const p = e.path ?? ''
+    if (p.includes('/boot') || p.startsWith('boot/')) types.add('flash')
+    if (p.includes('appdata')) types.add('appdata')
+    if (p.includes('domains')) types.add('vms')
+    if (p.includes('docker-images')) types.add('docker_images')
+    if (p.includes('sysconfig')) types.add('sysconfig')
+  }
+  return [...types]
 }
 
 interface Props {
@@ -157,6 +171,7 @@ export default function ManifestBrowser({ manifests, onSelect, onFullServerResto
             const externalVolumes = parsed.entries?.filter((e) => e.path?.includes('external-volumes')) ?? [];
             const verified = parsed.verified ?? false;
             const lastVerified = parsed.lastVerified;
+            const backupTypes = detectBackupTypes(parsed.entries ?? []);
 
             return (
               <div
@@ -166,14 +181,27 @@ export default function ManifestBrowser({ manifests, onSelect, onFullServerResto
               >
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-2">
+                    <div className="flex items-center gap-2 mb-1">
                       <h3 className="text-xl font-bold">
-                        {t('recovery.backup_from')} {formatDate(parsed.timestamp ?? manifest.created_at ?? '')}
+                        {manifest.job_name ?? t('recovery.unknown_job')}
                       </h3>
                       {encrypted && (
                         <span className={`flex items-center gap-1 px-2 py-0.5 text-xs font-bold ${unlocked ? 'bg-green-600 text-white' : 'bg-orange-500 text-white'}`}>
                           <Lock size={10} />
                           {unlocked ? t('decryption.unlocked') : t('decryption.encrypted')}
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="text-sm text-[var(--text-secondary)] mb-2">
+                      {t('recovery.backup_from')} {formatDate(parsed.timestamp ?? manifest.created_at ?? '')}
+                      {backupTypes.length > 0 && (
+                        <span className="ml-3 inline-flex gap-1">
+                          {backupTypes.map(type => (
+                            <span key={type} className="px-1.5 py-0.5 bg-[var(--bg-elevated)] border border-[var(--border-default)] text-xs font-mono">
+                              {t(`recovery.backup_type_${type}`, type)}
+                            </span>
+                          ))}
                         </span>
                       )}
                     </div>

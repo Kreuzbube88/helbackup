@@ -136,6 +136,19 @@ export async function createJobManifest(
     return
   }
 
+  // Generate checksums across all step paths, storing absolute paths for multi-step support
+  const allChecksums: ChecksumEntry[] = []
+  for (const { path: stepPath } of stepPaths) {
+    try {
+      const stepChecksums = await generateChecksums(stepPath, engine)
+      for (const c of stepChecksums) {
+        allChecksums.push({ ...c, path: path.join(stepPath, c.path) })
+      }
+    } catch (err) {
+      engine.log('warn', 'system', `Checksum generation failed for ${stepPath}: ${err instanceof Error ? err.message : String(err)}`)
+    }
+  }
+
   const backupId = randomUUID()
   const timestamp = new Date().toISOString()
   const manifest = {
@@ -148,6 +161,7 @@ export async function createJobManifest(
     stepPaths,
     entries: allEntries,
     containerConfigs,
+    checksums: allChecksums,
     verified: false,
   }
 

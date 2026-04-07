@@ -140,6 +140,7 @@ export interface BackupManifest {
   backupId?: string
   created_at?: string
   manifest?: string
+  job_name?: string
   [key: string]: unknown
 }
 

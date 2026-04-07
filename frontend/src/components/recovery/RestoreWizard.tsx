@@ -41,13 +41,17 @@ interface Props {
   onComplete: () => void;
 }
 
+function getDefaultDestination(entries: ManifestEntry[]): string {
+  const paths = entries.map(e => e.path)
+  if (paths.some(p => p.includes('/boot') || p.startsWith('boot/'))) return '/boot'
+  if (paths.some(p => p.includes('appdata'))) return '/mnt/user/appdata'
+  if (paths.some(p => p.includes('domains'))) return '/mnt/user/domains'
+  return '/mnt/user'
+}
+
 export default function RestoreWizard({ manifest, onClose, onComplete }: Props) {
   const { t } = useTranslation();
   const { toast } = useToast();
-  const [step, setStep] = useState(0);
-  const [selectedContainers, setSelectedContainers] = useState<string[]>([]);
-  const [selectedFiles, setSelectedFiles] = useState<string[]>([]);
-  const [restoreDestination, setRestoreDestination] = useState('/mnt/user');
 
   const backupId = manifest.backup_id ?? manifest.backupId ?? '';
 
@@ -64,6 +68,11 @@ export default function RestoreWizard({ manifest, onClose, onComplete }: Props) 
 
   const containers = parsed.containerConfigs ?? [];
   const allFiles = parsed.entries ?? [];
+
+  const [step, setStep] = useState(0);
+  const [selectedContainers, setSelectedContainers] = useState<string[]>([]);
+  const [selectedFiles, setSelectedFiles] = useState<string[]>([]);
+  const [restoreDestination, setRestoreDestination] = useState(() => getDefaultDestination(allFiles));
 
   const handleFileToggle = (filePath: string) => {
     setSelectedFiles(prev =>
@@ -124,7 +133,7 @@ export default function RestoreWizard({ manifest, onClose, onComplete }: Props) 
         <VerifyBackup
           backupId={backupId}
           checksums={parsed.checksums ?? []}
-          onComplete={() => setStep(1)}
+          onComplete={() => setStep(containers.length > 0 ? 1 : 2)}
           onClose={onClose}
         />
       )}
@@ -181,7 +190,7 @@ export default function RestoreWizard({ manifest, onClose, onComplete }: Props) 
               type="text"
               value={restoreDestination}
               onChange={(e) => setRestoreDestination(e.target.value)}
-              className="w-full px-4 py-2 border-2 border-[var(--border-default)]"
+              className="w-full px-4 py-2 border-2 border-[var(--border-default)] bg-[var(--bg-elevated)] text-[var(--text-primary)]"
             />
           </div>
 

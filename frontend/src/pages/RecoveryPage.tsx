@@ -155,7 +155,7 @@ export default function RecoveryPage() {
   }
 
   return (
-    <div className="p-8">
+    <div className="p-8 max-w-5xl mx-auto">
       <div className="bg-red-600 text-white p-4 mb-6 flex items-center justify-between">
         <div className="flex items-center gap-4">
           <div>
