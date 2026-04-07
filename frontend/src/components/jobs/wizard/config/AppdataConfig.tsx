@@ -9,6 +9,8 @@ export interface AppdataStepConfig {
   containers: string[]
   stopContainers: boolean
   stopOrder: string[]
+  stopDelay: number
+  restartDelay: number
 }
 
 interface Props {
@@ -73,40 +75,75 @@ export function AppdataConfig({ value, onChange, targets }: Props) {
           {t('wizard_stop_containers')}
         </label>
 
-        {value.stopContainers && stopOrderItems.length > 0 && (
-          <div className="space-y-2 pl-6">
-            <p className="text-xs text-[var(--text-muted)]">{t('stop_order_hint')}</p>
-            <div className="space-y-1">
-              {stopOrderItems.map((name, i) => (
-                <div key={name} className="flex items-center gap-2 bg-[var(--bg-primary)] border border-[var(--border-default)] px-3 py-2">
-                  <span className="text-[var(--text-muted)] text-xs w-5 text-center font-mono">{i + 1}</span>
-                  <span className="flex-1 font-mono text-xs text-[var(--text-primary)]">{name}</span>
-                  <div className="flex gap-1">
-                    <button
-                      type="button"
-                      onClick={() => moveUp(i)}
-                      disabled={i === 0}
-                      className="p-1 text-[var(--text-muted)] hover:text-[var(--text-primary)] disabled:opacity-25 transition-colors"
-                    >
-                      <ArrowUp size={12} />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => moveDown(i)}
-                      disabled={i === stopOrderItems.length - 1}
-                      className="p-1 text-[var(--text-muted)] hover:text-[var(--text-primary)] disabled:opacity-25 transition-colors"
-                    >
-                      <ArrowDown size={12} />
-                    </button>
-                  </div>
+        {value.stopContainers && (
+          <>
+            {stopOrderItems.length > 0 && (
+              <div className="space-y-2 pl-6">
+                <p className="text-xs text-[var(--text-muted)]">{t('stop_order_hint')}</p>
+                <div className="space-y-1">
+                  {stopOrderItems.map((name, i) => (
+                    <div key={name} className="flex items-center gap-2 bg-[var(--bg-primary)] border border-[var(--border-default)] px-3 py-2">
+                      <span className="text-[var(--text-muted)] text-xs w-5 text-center font-mono">{i + 1}</span>
+                      <span className="flex-1 font-mono text-xs text-[var(--text-primary)]">{name}</span>
+                      <div className="flex gap-1">
+                        <button
+                          type="button"
+                          onClick={() => moveUp(i)}
+                          disabled={i === 0}
+                          className="p-1 text-[var(--text-muted)] hover:text-[var(--text-primary)] disabled:opacity-25 transition-colors"
+                        >
+                          <ArrowUp size={12} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => moveDown(i)}
+                          disabled={i === stopOrderItems.length - 1}
+                          className="p-1 text-[var(--text-muted)] hover:text-[var(--text-primary)] disabled:opacity-25 transition-colors"
+                        >
+                          <ArrowDown size={12} />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              ))}
+                <p className="text-xs text-[var(--text-muted)] italic">{t('stop_order_note')}</p>
+              </div>
+            )}
+
+            <div className="pl-6 space-y-4 pt-2">
+              <div>
+                <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">
+                  {t('stop_delay_label')}
+                </label>
+                <input
+                  type="number"
+                  min={0}
+                  max={120}
+                  value={value.stopDelay}
+                  onChange={e => onChange({ ...value, stopDelay: Math.max(0, Math.min(120, parseInt(e.target.value) || 0)) })}
+                  className="w-24 border border-[var(--border-default)] bg-[var(--bg-secondary)] px-2 py-1 text-sm"
+                />
+                <p className="text-xs text-[var(--text-muted)] mt-1">{t('stop_delay_hint')}</p>
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">
+                  {t('restart_delay_label')}
+                </label>
+                <input
+                  type="number"
+                  min={0}
+                  max={120}
+                  value={value.restartDelay}
+                  onChange={e => onChange({ ...value, restartDelay: Math.max(0, Math.min(120, parseInt(e.target.value) || 0)) })}
+                  className="w-24 border border-[var(--border-default)] bg-[var(--bg-secondary)] px-2 py-1 text-sm"
+                />
+                <p className="text-xs text-[var(--text-muted)] mt-1">{t('restart_delay_hint')}</p>
+              </div>
             </div>
-            <p className="text-xs text-[var(--text-muted)] italic">{t('stop_order_note')}</p>
-          </div>
+          </>
         )}
       </div>
-
     </div>
   )
 }

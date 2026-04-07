@@ -105,6 +105,9 @@ export default function AdvancedSettings({ value, onChange }: Props) {
         </div>
       </div>
 
+      {/* Retention per-type hint */}
+      <p className="text-xs text-[var(--text-muted)]">{t('retention_per_type_hint')}</p>
+
       {/* Encryption */}
       <div className="flex items-start gap-4">
         <input
@@ -125,6 +128,7 @@ export default function AdvancedSettings({ value, onChange }: Props) {
             {t('encrypt_backup')}
           </label>
           <p className="text-sm opacity-70">{t('encryption_hint')}</p>
+          <p className="text-xs opacity-50 mt-1">{t('encryption_timing_note')}</p>
         </div>
       </div>
 

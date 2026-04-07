@@ -30,7 +30,7 @@ interface Props {
 
 const DEFAULT_CONFIGS = {
   flash: { targetId: '' },
-  appdata: { targetId: '', containers: [], stopContainers: true, stopOrder: [] },
+  appdata: { targetId: '', containers: [], stopContainers: true, stopOrder: [], stopDelay: 10, restartDelay: 5 },
   vms: { targetId: '', vms: [], includeDisks: false },
   docker_images: { targetId: '', images: [] },
   system_config: { targetId: '', includeItems: ['boot_config', 'network', 'users', 'plugins'] },

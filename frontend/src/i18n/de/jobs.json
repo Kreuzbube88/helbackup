@@ -121,5 +121,11 @@
   "cron_sunday": "Sonntag",
   "pre_hook": "Vor-Backup",
   "post_hook": "Nach-Backup",
-  "total": "Gesamt"
+  "total": "Gesamt",
+  "encryption_timing_note": "Hinweis: Die Verschlüsselung wird nach Abschluss des Backups angewendet. Während des Backups liegen die Daten kurzzeitig unverschlüsselt auf dem Ziel.",
+  "stop_delay_label": "Wartezeit nach Stopp (s)",
+  "stop_delay_hint": "Zusätzlicher Puffer nach dem Stoppen jedes Containers. docker stop wartet bereits auf das graceful Shutdown — diese Zeit gibt Containern Zeit, Datei-Puffer vollständig zu leeren. Empfehlung: 5–10 s für Datenbank-Container, 0–2 s für stateless Apps.",
+  "restart_delay_label": "Wartezeit nach Start (s)",
+  "restart_delay_hint": "Wartezeit nach dem Neustart jedes Containers. Gibt Zeit zum vollständigen Hochfahren. Auf 0 setzen, wenn die Container keine Initialisierungszeit benötigen.",
+  "retention_per_type_hint": "Tipp: Für unterschiedliche Aufbewahrungszeiten pro Backup-Typ verschiedene Ziele verwenden — Ziele unterstützen eigene Aufbewahrungsrichtlinien inklusive GFS (täglich / wöchentlich / monatlich)."
 }

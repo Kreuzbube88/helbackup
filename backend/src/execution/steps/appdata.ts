@@ -35,6 +35,8 @@ export interface AppdataBackupConfig {
   stopContainers: boolean
   stopOrder: string[]        // IDs in stop order
   method: 'tar' | 'rsync'
+  stopDelay?: number
+  restartDelay?: number
   useDatabaseDumps?: boolean
   databaseContainers?: string[]
   externalVolumes?: ExternalVolumeConfig[]
@@ -135,7 +137,8 @@ export async function executeAppdataBackup(
         engine.log('info', 'container', `Stopped: ${name}`, undefined, {
           container: { id, name, action: 'stop', result: 'success' }
         })
-        await new Promise(r => setTimeout(r, 10_000))
+        const stopDelay = (config.stopDelay ?? 10) * 1000
+        if (stopDelay > 0) await new Promise(r => setTimeout(r, stopDelay))
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : String(err)
         engine.log('error', 'container', `Failed to stop ${id}: ${msg}`, undefined, {
@@ -231,7 +234,8 @@ export async function executeAppdataBackup(
           engine.log('info', 'container', `Started: ${id}`, undefined, {
             container: { id, name: id, action: 'start', result: 'success' }
           })
-          await new Promise(r => setTimeout(r, 5_000))
+          const restartDelay = (config.restartDelay ?? 5) * 1000
+          if (restartDelay > 0) await new Promise(r => setTimeout(r, restartDelay))
         } catch (err: unknown) {
           const msg = err instanceof Error ? err.message : String(err)
           engine.log('error', 'container', `Failed to start ${id}: ${msg}`, undefined, {

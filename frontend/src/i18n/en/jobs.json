@@ -121,5 +121,11 @@
   "cron_sunday": "Sunday",
   "pre_hook": "Pre-backup",
   "post_hook": "Post-backup",
-  "total": "Total"
+  "total": "Total",
+  "encryption_timing_note": "Note: Encryption is applied after the backup completes. During the backup, data briefly exists unencrypted on the target.",
+  "stop_delay_label": "Wait after stop (s)",
+  "stop_delay_hint": "Extra buffer after stopping each container. docker stop already waits for graceful shutdown — this gives containers time to fully flush file buffers. Recommended: 5–10 s for database containers, 0–2 s for stateless apps.",
+  "restart_delay_label": "Wait after restart (s)",
+  "restart_delay_hint": "Wait time after restarting each container, to allow full initialization. Set to 0 if containers need no startup time.",
+  "retention_per_type_hint": "Tip: For different retention per backup type, use separate targets — targets support their own retention policies including GFS (daily / weekly / monthly)."
 }

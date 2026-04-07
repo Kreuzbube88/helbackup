@@ -75,6 +75,8 @@ function buildSteps(backupSteps: BackupStepsConfig, advanced: AdvancedSettingsVa
         containers: backupSteps.appdata.containers,
         stopContainers: backupSteps.appdata.stopContainers,
         stopOrder: backupSteps.appdata.stopOrder.length > 0 ? backupSteps.appdata.stopOrder : backupSteps.appdata.containers,
+        stopDelay: backupSteps.appdata.stopDelay,
+        restartDelay: backupSteps.appdata.restartDelay,
         method: tools.appdata,
         useDatabaseDumps: advanced.useDatabaseDumps,
         // Pass all containers as candidates — backend auto-detects and skips non-DB ones
@@ -198,6 +200,8 @@ export function JobWizard({ job, open, onClose, onSuccess }: Props) {
             containers: (s.config.containers as string[]) ?? [],
             stopContainers: (s.config.stopContainers as boolean) ?? true,
             stopOrder: (s.config.stopOrder as string[]) ?? (s.config.containers as string[]) ?? [],
+            stopDelay: typeof s.config.stopDelay === 'number' ? s.config.stopDelay : 10,
+            restartDelay: typeof s.config.restartDelay === 'number' ? s.config.restartDelay : 5,
           }
         } else if (s.type === 'vms') {
           newBackupSteps.vms = {
