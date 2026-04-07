@@ -9,8 +9,6 @@ export interface AppdataStepConfig {
   containers: string[]
   stopContainers: boolean
   stopOrder: string[]
-  useDatabaseDumps: boolean
-  useEncryption: boolean
 }
 
 interface Props {
@@ -109,27 +107,6 @@ export function AppdataConfig({ value, onChange, targets }: Props) {
         )}
       </div>
 
-      <div className="space-y-3 pt-3 border-t border-[var(--border-default)]">
-        <label className="flex items-center gap-2 text-sm text-[var(--text-secondary)] cursor-pointer">
-          <input
-            type="checkbox"
-            checked={value.useDatabaseDumps}
-            onChange={e => onChange({ ...value, useDatabaseDumps: e.target.checked })}
-            className="accent-[var(--theme-primary)]"
-          />
-          {t('use_database_dumps')}
-        </label>
-
-        <label className="flex items-center gap-2 text-sm text-[var(--text-secondary)] cursor-pointer">
-          <input
-            type="checkbox"
-            checked={value.useEncryption}
-            onChange={e => onChange({ ...value, useEncryption: e.target.checked })}
-            className="accent-[var(--theme-primary)]"
-          />
-          {t('encrypt_backup')}
-        </label>
-      </div>
     </div>
   )
 }

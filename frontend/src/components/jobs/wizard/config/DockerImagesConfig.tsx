@@ -7,7 +7,6 @@ import type { DockerImage, Target } from '../../../../api'
 export interface DockerImagesStepConfig {
   targetId: string
   images: string[]
-  useEncryption: boolean
 }
 
 interface Props {
@@ -99,15 +98,6 @@ export function DockerImagesConfig({ value, onChange, targets }: Props) {
         )}
       </div>
 
-      <label className="flex items-center gap-2 text-sm text-[var(--text-secondary)] cursor-pointer">
-        <input
-          type="checkbox"
-          checked={value.useEncryption}
-          onChange={e => onChange({ ...value, useEncryption: e.target.checked })}
-          className="accent-[var(--theme-primary)]"
-        />
-        {t('encrypt_backup')}
-      </label>
     </div>
   )
 }

@@ -72,7 +72,8 @@
     "vm_backup": "VM Backup",
     "vm_description": "Large files efficiently with Rsync",
     "cloud_backup": "Cloud Backup",
-    "cloud_description": "Multi-provider support with Rclone"
+    "cloud_description": "Multi-provider support with Rclone",
+    "no_types_selected": "No backup types with configurable methods selected"
   },
   "nas": {
     "enable_power_management": "Enable NAS power management",

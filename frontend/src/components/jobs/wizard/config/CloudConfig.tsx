@@ -6,7 +6,6 @@ import type { Target } from '../../../../api'
 export interface CloudStepConfig {
   targetId: string
   sourcePath: string
-  useEncryption: boolean
 }
 
 interface Props {
@@ -35,15 +34,6 @@ export function CloudConfig({ value, onChange, targets }: Props) {
         onChange={e => onChange({ ...value, sourcePath: e.target.value })}
         placeholder="/mnt/user/data"
       />
-      <label className="flex items-center gap-2 text-sm text-[var(--text-secondary)] cursor-pointer">
-        <input
-          type="checkbox"
-          checked={value.useEncryption}
-          onChange={e => onChange({ ...value, useEncryption: e.target.checked })}
-          className="accent-[var(--theme-primary)]"
-        />
-        {t('encrypt_backup')}
-      </label>
     </div>
   )
 }

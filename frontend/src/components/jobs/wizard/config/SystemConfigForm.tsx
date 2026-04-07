@@ -6,7 +6,6 @@ import type { Target } from '../../../../api'
 export interface SystemConfigStepConfig {
   targetId: string
   includeItems: string[]
-  useEncryption: boolean
 }
 
 interface Props {
@@ -34,15 +33,6 @@ export function SystemConfigForm({ value, onChange, targets }: Props) {
         onChange={includeItems => onChange({ ...value, includeItems })}
       />
 
-      <label className="flex items-center gap-2 text-sm text-[var(--text-secondary)] cursor-pointer">
-        <input
-          type="checkbox"
-          checked={value.useEncryption}
-          onChange={e => onChange({ ...value, useEncryption: e.target.checked })}
-          className="accent-[var(--theme-primary)]"
-        />
-        {t('encrypt_backup')}
-      </label>
     </div>
   )
 }

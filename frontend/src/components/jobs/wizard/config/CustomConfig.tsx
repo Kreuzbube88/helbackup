@@ -8,7 +8,6 @@ export interface CustomStepConfig {
   sourcePath: string
   targetId: string
   excludePatterns: string[]
-  useEncryption: boolean
 }
 
 interface Props {
@@ -53,16 +52,6 @@ export function CustomConfig({ value, onChange, targets }: Props) {
         placeholder="*.tmp, *.log, cache/"
       />
       <p className="text-xs text-[var(--text-muted)]">{t('custom_exclude_hint')}</p>
-
-      <label className="flex items-center gap-2 text-sm text-[var(--text-secondary)] cursor-pointer">
-        <input
-          type="checkbox"
-          checked={value.useEncryption}
-          onChange={e => onChange({ ...value, useEncryption: e.target.checked })}
-          className="accent-[var(--theme-primary)]"
-        />
-        {t('encrypt_backup')}
-      </label>
     </div>
   )
 }

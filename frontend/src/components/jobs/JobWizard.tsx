@@ -60,7 +60,7 @@ function buildSteps(backupSteps: BackupStepsConfig, advanced: AdvancedSettingsVa
       config: {
         source: '/unraid/boot',
         targetId: backupSteps.flash.targetId,
-        useEncryption: advanced.useEncryption || backupSteps.flash.useEncryption,
+        useEncryption: advanced.useEncryption,
       },
       retry: { max_attempts: 2, backoff: 'linear' },
     })
@@ -76,8 +76,8 @@ function buildSteps(backupSteps: BackupStepsConfig, advanced: AdvancedSettingsVa
         stopContainers: backupSteps.appdata.stopContainers,
         stopOrder: backupSteps.appdata.stopOrder.length > 0 ? backupSteps.appdata.stopOrder : backupSteps.appdata.containers,
         method: tools.appdata,
-        useDatabaseDumps: advanced.useDatabaseDumps || backupSteps.appdata.useDatabaseDumps,
-        useEncryption: advanced.useEncryption || backupSteps.appdata.useEncryption,
+        useDatabaseDumps: advanced.useDatabaseDumps,
+        useEncryption: advanced.useEncryption,
       },
       retry: { max_attempts: 2, backoff: 'linear' },
     })
@@ -91,7 +91,7 @@ function buildSteps(backupSteps: BackupStepsConfig, advanced: AdvancedSettingsVa
         destination: '/backups/vms',
         targetId: backupSteps.vms.targetId,
         includeDisks: backupSteps.vms.includeDisks,
-        useEncryption: advanced.useEncryption || backupSteps.vms.useEncryption,
+        useEncryption: advanced.useEncryption,
       },
       retry: { max_attempts: 1, backoff: 'linear' },
     })
@@ -104,7 +104,7 @@ function buildSteps(backupSteps: BackupStepsConfig, advanced: AdvancedSettingsVa
         images: backupSteps.docker_images.images,
         destination: '/backups/docker-images',
         targetId: backupSteps.docker_images.targetId,
-        useEncryption: advanced.useEncryption || backupSteps.docker_images.useEncryption,
+        useEncryption: advanced.useEncryption,
       },
       retry: { max_attempts: 1, backoff: 'linear' },
     })
@@ -117,7 +117,7 @@ function buildSteps(backupSteps: BackupStepsConfig, advanced: AdvancedSettingsVa
         destination: '/backups/system-config',
         targetId: backupSteps.system_config.targetId,
         includeItems: backupSteps.system_config.includeItems,
-        useEncryption: advanced.useEncryption || backupSteps.system_config.useEncryption,
+        useEncryption: advanced.useEncryption,
       },
       retry: { max_attempts: 2, backoff: 'linear' },
     })
@@ -130,7 +130,7 @@ function buildSteps(backupSteps: BackupStepsConfig, advanced: AdvancedSettingsVa
         source: backupSteps.cloud.sourcePath,
         remote: backupSteps.cloud.targetId,
         destination: 'cloud-backup',
-        useEncryption: advanced.useEncryption || backupSteps.cloud.useEncryption,
+        useEncryption: advanced.useEncryption,
       },
       retry: { max_attempts: 3, backoff: 'exponential' },
     })
@@ -143,7 +143,7 @@ function buildSteps(backupSteps: BackupStepsConfig, advanced: AdvancedSettingsVa
         sourcePath: backupSteps.custom.sourcePath,
         targetId: backupSteps.custom.targetId,
         excludePatterns: backupSteps.custom.excludePatterns,
-        useEncryption: advanced.useEncryption || backupSteps.custom.useEncryption,
+        useEncryption: advanced.useEncryption,
       },
       retry: { max_attempts: 2, backoff: 'linear' },
     })
@@ -180,56 +180,60 @@ export function JobWizard({ job, open, onClose, onSuccess }: Props) {
       // Reconstruct step configs from existing job steps
       const steps = (job.steps ?? []) as Array<{ type: string; config: Record<string, unknown> }>
       const newBackupSteps = { ...DEFAULT_STEPS }
+      let anyEncryption = false
+      let anyDatabaseDumps = false
       for (const s of steps) {
+        if (s.config.useEncryption === true) anyEncryption = true
         if (s.type === 'flash') {
-          newBackupSteps.flash = { targetId: (s.config.targetId as string) ?? '', useEncryption: (s.config.useEncryption as boolean) ?? false }
+          newBackupSteps.flash = { targetId: (s.config.targetId as string) ?? '' }
         } else if (s.type === 'appdata') {
           if (s.config.method) {
             setTools(prev => ({ ...prev, appdata: (s.config.method as 'tar' | 'rsync') }))
           }
+          if (s.config.useDatabaseDumps === true) anyDatabaseDumps = true
           newBackupSteps.appdata = {
             targetId: (s.config.targetId as string) ?? '',
             containers: (s.config.containers as string[]) ?? [],
             stopContainers: (s.config.stopContainers as boolean) ?? true,
             stopOrder: (s.config.stopOrder as string[]) ?? (s.config.containers as string[]) ?? [],
-            useDatabaseDumps: (s.config.useDatabaseDumps as boolean) ?? false,
-            useEncryption: (s.config.useEncryption as boolean) ?? false,
           }
         } else if (s.type === 'vms') {
           newBackupSteps.vms = {
             targetId: (s.config.targetId as string) ?? '',
             vms: (s.config.vms as string[]) ?? [],
             includeDisks: (s.config.includeDisks as boolean) ?? false,
-            useEncryption: (s.config.useEncryption as boolean) ?? false,
           }
         } else if (s.type === 'docker_images') {
           newBackupSteps.docker_images = {
             targetId: (s.config.targetId as string) ?? '',
             images: (s.config.images as string[]) ?? [],
-            useEncryption: (s.config.useEncryption as boolean) ?? false,
           }
         } else if (s.type === 'system_config') {
           newBackupSteps.system_config = {
             targetId: (s.config.targetId as string) ?? '',
             includeItems: (s.config.includeItems as string[]) ?? [],
-            useEncryption: (s.config.useEncryption as boolean) ?? false,
           }
         } else if (s.type === 'cloud') {
           newBackupSteps.cloud = {
             targetId: (s.config.remote as string) ?? '',
             sourcePath: (s.config.source as string) ?? '',
-            useEncryption: (s.config.useEncryption as boolean) ?? false,
           }
         } else if (s.type === 'custom') {
           newBackupSteps.custom = {
             sourcePath: (s.config.sourcePath as string) ?? '',
             targetId: (s.config.targetId as string) ?? '',
             excludePatterns: (s.config.excludePatterns as string[]) ?? [],
-            useEncryption: (s.config.useEncryption as boolean) ?? false,
           }
         }
       }
       setBackupSteps(newBackupSteps)
+      if (anyEncryption || anyDatabaseDumps) {
+        setAdvanced(prev => ({
+          ...prev,
+          useEncryption: anyEncryption,
+          useDatabaseDumps: anyDatabaseDumps,
+        }))
+      }
     } else {
       setBasicInfo(DEFAULT_BASIC)
       setBackupSteps(DEFAULT_STEPS)
@@ -316,7 +320,7 @@ export function JobWizard({ job, open, onClose, onSuccess }: Props) {
       <div className="min-h-[420px] overflow-y-auto max-h-[72vh]">
         {step === 1 && <StepBasicInfo value={basicInfo} onChange={setBasicInfo} />}
         {step === 2 && <StepBackupTypes value={backupSteps} onChange={setBackupSteps} targets={targets} />}
-        {step === 3 && <StepAdvanced value={advanced} onChange={setAdvanced} tools={tools} onToolsChange={setTools} />}
+        {step === 3 && <StepAdvanced value={advanced} onChange={setAdvanced} tools={tools} onToolsChange={setTools} backupSteps={backupSteps} />}
         {step === 4 && <StepReview basicInfo={basicInfo} backupSteps={backupSteps} advanced={advanced} targets={targets} />}
       </div>
 
