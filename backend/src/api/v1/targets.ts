@@ -2,16 +2,7 @@ import { FastifyInstance } from 'fastify'
 import { successResponse } from '../../utils/apiResponse.js'
 import { db } from '../../db/database.js'
 import { requireScope } from '../../middleware/tokenAuth.js'
-
-interface TargetRow {
-  id: string
-  name: string
-  type: string
-  config: string
-  enabled: number
-  created_at: string
-  updated_at: string
-}
+import type { TargetRow } from '../../types/rows.js'
 
 const SENSITIVE_KEYS = new Set(['password', 'privateKey', 'ssh_key', 'api_key', 'token', 'client_secret', 'secret'])
 

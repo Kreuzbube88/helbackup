@@ -2,6 +2,7 @@ import { FastifyInstance } from 'fastify'
 import { successResponse } from '../../utils/apiResponse.js'
 import { db } from '../../db/database.js'
 import { requireScope } from '../../middleware/tokenAuth.js'
+import type { TargetRow } from '../../types/rows.js'
 
 interface PaginationQuery {
   limit?: string
@@ -23,11 +24,6 @@ interface ManifestJson {
   entries?: { size: number }[]
   verified?: boolean
   targetId?: string
-}
-
-interface TargetRow {
-  name: string
-  type: string
 }
 
 export async function backupsRoutesV1(app: FastifyInstance): Promise<void> {

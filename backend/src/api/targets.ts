@@ -1,16 +1,7 @@
 import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify'
 import { v4 as uuidv4 } from 'uuid'
 import { db } from '../db/database.js'
-
-interface TargetRow {
-  id: string
-  name: string
-  type: string
-  config: string
-  enabled: number
-  created_at: string
-  updated_at: string
-}
+import type { TargetRow } from '../types/rows.js'
 
 interface CreateTargetBody {
   name: string

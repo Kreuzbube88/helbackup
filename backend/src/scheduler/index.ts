@@ -3,16 +3,7 @@ import { db } from '../db/database.js'
 import { logger } from '../utils/logger.js'
 import { JobExecutionEngine, type JobStep } from '../execution/engine.js'
 import { activeExecutions } from '../execution/active.js'
-
-interface JobRow {
-  id: string
-  name: string
-  schedule: string
-  steps: string
-  enabled: number
-  pre_backup_script: string | null
-  post_backup_script: string | null
-}
+import type { JobRow } from '../types/rows.js'
 
 const activeJobs = new Map<string, schedule.Job>()
 
@@ -32,6 +23,7 @@ export function initScheduler(): void {
 
 export function scheduleJob(job: JobRow): void {
   cancelJob(job.id)
+  if (!job.schedule) return
 
   const scheduled = schedule.scheduleJob(job.schedule, () => {
     logger.info({ jobId: job.id, jobName: job.name }, 'Executing scheduled job')

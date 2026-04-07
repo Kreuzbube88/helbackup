@@ -5,14 +5,7 @@ import { requireScope } from '../../middleware/tokenAuth.js'
 import { JobExecutionEngine, type JobStep } from '../../execution/engine.js'
 import { activeExecutions } from '../../execution/active.js'
 import { logger } from '../../utils/logger.js'
-
-interface JobRow {
-  id: string
-  name: string
-  enabled: number
-  schedule: string | null
-  steps: string
-}
+import type { JobRow } from '../../types/rows.js'
 
 export async function jobsRoutesV1(app: FastifyInstance): Promise<void> {
   app.get(

@@ -6,11 +6,7 @@ import { getEncryptionPassword } from '../../utils/encryptionKey.js'
 import { encryptFileGPG } from '../../utils/gpgEncrypt.js'
 import { spawn } from 'node:child_process'
 import type { JobExecutionEngine } from '../engine.js'
-
-interface TargetRow {
-  id: string
-  config: string
-}
+import type { TargetRow } from '../../types/rows.js'
 
 interface TargetConfig {
   path: string

@@ -9,11 +9,7 @@ import { dumpDatabaseContainers } from './database-dump.js'
 import { getEncryptionPassword } from '../../utils/encryptionKey.js'
 import { encryptFileGPG } from '../../utils/gpgEncrypt.js'
 import type { JobExecutionEngine } from '../engine.js'
-
-interface TargetRow {
-  id: string
-  config: string
-}
+import type { TargetRow } from '../../types/rows.js'
 
 interface TargetConfig {
   path: string

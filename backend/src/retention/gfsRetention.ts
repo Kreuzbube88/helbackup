@@ -4,6 +4,7 @@ import path from 'node:path'
 import { execFile } from 'node:child_process'
 import { promisify } from 'node:util'
 import { logger } from '../utils/logger.js'
+import type { TargetRow } from '../types/rows.js'
 
 const execFileAsync = promisify(execFile)
 
@@ -152,15 +153,6 @@ async function scanBackups(targetPath: string): Promise<BackupInfo[]> {
     logger.error(`Failed to scan backups in ${targetPath}: ${msg}`)
   }
   return backups
-}
-
-interface TargetRow {
-  id: string
-  config: string
-  retention_scheme: string
-  gfs_daily_keep: number
-  gfs_weekly_keep: number
-  gfs_monthly_keep: number
 }
 
 export async function executeGFSCleanup(

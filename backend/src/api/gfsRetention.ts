@@ -1,17 +1,7 @@
 import type { FastifyInstance } from 'fastify'
 import { db } from '../db/database.js'
 import { executeGFSCleanup, calculateGFSRetention } from '../retention/gfsRetention.js'
-
-interface TargetRow {
-  id: number
-  config: string
-  retention_scheme: string
-  gfs_daily_keep: number
-  gfs_weekly_keep: number
-  gfs_monthly_keep: number
-  retention_days: number
-  minimum_backups: number
-}
+import type { TargetRow } from '../types/rows.js'
 
 function getTargetPath(target: TargetRow): string {
   try {
@@ -61,8 +51,8 @@ export async function gfsRetentionRoutes(app: FastifyInstance): Promise<void> {
           monthlyKeep: target.gfs_monthly_keep ?? 12,
         },
         simpleRetention: {
-          days: target.retention_days ?? 30,
-          minimumBackups: target.minimum_backups ?? 3,
+          days: 30,
+          minimumBackups: 3,
         },
       })
     }

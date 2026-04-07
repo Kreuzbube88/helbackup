@@ -3,12 +3,7 @@ import { db } from '../db/database.js'
 import { JobExecutionEngine, type JobStep } from '../execution/engine.js'
 import { activeExecutions } from '../execution/active.js'
 import { logger } from '../utils/logger.js'
-
-interface JobRow {
-  id: string
-  name: string
-  steps: string
-}
+import type { JobRow } from '../types/rows.js'
 
 interface JobHistoryRow {
   id: string

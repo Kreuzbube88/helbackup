@@ -8,6 +8,7 @@ import { executeHook } from './hooks.js'
 import { notificationManager } from '../notifications/notificationManager.js'
 import { backupDurationHistogram } from '../metrics/prometheus.js'
 import { createJobManifest } from './manifest.js'
+import type { JobRow } from '../types/rows.js'
 
 const execFileAsync = promisify(execFile)
 
@@ -76,11 +77,6 @@ interface Summary {
   bytesTransferred: number
   errors: number
   warnings: number
-}
-
-interface JobRow {
-  name: string
-  use_encryption: number
 }
 
 export class JobExecutionEngine extends EventEmitter {
