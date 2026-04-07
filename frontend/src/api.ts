@@ -70,6 +70,12 @@ export interface JobHistoryRun {
   started_at: string
   ended_at: string | null
   duration_s: number | null
+  files_copied: number | null
+  files_skipped: number | null
+  files_failed: number | null
+  bytes_transferred: number | null
+  errors: number | null
+  warnings: number | null
 }
 
 export interface HistoryEntry {

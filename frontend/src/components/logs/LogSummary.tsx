@@ -10,19 +10,24 @@ interface Props {
 export function LogSummary({ logs, run }: Props) {
   const { t } = useTranslation()
 
-  const stats = logs.reduce(
-    (acc, log) => {
-      if (log.level === 'error') acc.errors++
-      if (log.level === 'warn') acc.warnings++
-      const file = log.metadata?.file as { result?: string; size?: number } | undefined
-      if (file?.result === 'copied') {
-        acc.filesCopied++
-        acc.bytesTransferred += file.size ?? 0
+  // Prefer DB summary (written after job completes), fall back to counting logs for live runs
+  const hasDbSummary = run.files_copied != null
+  const stats = hasDbSummary
+    ? {
+        filesCopied: run.files_copied ?? 0,
+        warnings: run.warnings ?? 0,
+        errors: run.errors ?? 0,
       }
-      return acc
-    },
-    { errors: 0, warnings: 0, filesCopied: 0, bytesTransferred: 0 }
-  )
+    : logs.reduce(
+        (acc, log) => {
+          if (log.level === 'error') acc.errors++
+          if (log.level === 'warn') acc.warnings++
+          const file = log.metadata?.file as { result?: string; size?: number } | undefined
+          if (file?.result === 'copied') acc.filesCopied++
+          return acc
+        },
+        { errors: 0, warnings: 0, filesCopied: 0 }
+      )
 
   return (
     <div className="grid grid-cols-4 gap-3 mb-4">

@@ -17,6 +17,12 @@ interface JobHistoryRow {
   started_at: string
   ended_at: string | null
   duration_s: number | null
+  files_copied: number | null
+  files_skipped: number | null
+  files_failed: number | null
+  bytes_transferred: number | null
+  errors: number | null
+  warnings: number | null
 }
 
 export async function executionRoutes(app: FastifyInstance): Promise<void> {
@@ -58,7 +64,13 @@ export async function executionRoutes(app: FastifyInstance): Promise<void> {
     '/api/executions/:runId',
     { preHandler: [app.authenticate] },
     async (request: FastifyRequest<{ Params: { runId: string } }>, reply: FastifyReply) => {
-      const run = db.prepare('SELECT * FROM job_history WHERE id = ?').get(request.params.runId) as JobHistoryRow | undefined
+      const run = db.prepare(`
+        SELECT jh.*, ls.files_copied, ls.files_skipped, ls.files_failed,
+               ls.bytes_transferred, ls.errors, ls.warnings
+        FROM job_history jh
+        LEFT JOIN log_summary ls ON ls.run_id = jh.id
+        WHERE jh.id = ?
+      `).get(request.params.runId) as JobHistoryRow | undefined
       if (!run) return reply.status(404).send({ error: 'Execution not found' })
       return reply.send(run)
     }
