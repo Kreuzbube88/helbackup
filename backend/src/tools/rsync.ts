@@ -51,7 +51,9 @@ export async function executeRsync(options: RsyncOptions): Promise<RsyncResult> 
       args.push(options.source, options.destination)
     }
 
-    logger.info(`Executing rsync: rsync ${args.join(' ')}`)
+    // Redact SSH key path from log output
+    const sanitizedArgs = args.map(a => a.replace(/-i '[^']*'/, "-i '***'"))
+    logger.info(`Executing rsync: rsync ${sanitizedArgs.join(' ')}`)
 
     const rsync = spawn('rsync', args)
     let bytesTransferred = 0

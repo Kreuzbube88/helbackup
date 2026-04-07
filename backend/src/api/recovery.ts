@@ -104,8 +104,10 @@ export default async function recoveryRoutes(app: FastifyInstance) {
         }
 
         const manifests: Record<string, unknown>[] = [];
+        const MAX_SCAN_DEPTH = 5;
 
-        async function scanDir(dir: string) {
+        async function scanDir(dir: string, depth = 0) {
+          if (depth > MAX_SCAN_DEPTH) return;
           try {
             const items = await fs.readdir(dir, { withFileTypes: true });
 
@@ -113,7 +115,7 @@ export default async function recoveryRoutes(app: FastifyInstance) {
               const fullPath = path.join(dir, item.name);
 
               if (item.isDirectory()) {
-                await scanDir(fullPath);
+                await scanDir(fullPath, depth + 1);
               } else if (item.name === 'manifest.json') {
                 const content = await fs.readFile(fullPath, 'utf-8');
                 const manifest = safeJsonParseOrThrow<Record<string, unknown>>(content, 'scanned manifest');
@@ -219,6 +221,11 @@ export default async function recoveryRoutes(app: FastifyInstance) {
       try {
         const { backupId, containerId, databaseType } = request.body;
 
+        // Validate containerId to prevent command injection in generated restore commands
+        if (!/^[a-zA-Z0-9][a-zA-Z0-9_.-]*$/.test(containerId)) {
+          return reply.status(400).send({ error: 'Invalid container ID' });
+        }
+
         const manifestRecord = db.prepare(
           'SELECT * FROM manifest WHERE backup_id = ?'
         ).get(backupId) as Record<string, unknown> | undefined;
@@ -310,6 +317,10 @@ export default async function recoveryRoutes(app: FastifyInstance) {
         }
 
         const backupPath = manifest.backupPath;
+
+        if (!isSafePath(backupPath)) {
+          return reply.status(400).send({ error: 'Backup path from manifest is not safe' });
+        }
 
         await fs.mkdir(destination, { recursive: true });
 

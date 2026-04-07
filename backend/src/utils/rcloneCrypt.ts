@@ -41,7 +41,7 @@ export async function createRcloneCryptRemote(
 
 function obscurePassword(password: string): Promise<string> {
   return new Promise((resolve, reject) => {
-    const proc = spawn('rclone', ['obscure', password])
+    const proc = spawn('rclone', ['obscure', '-'], { stdio: ['pipe', 'pipe', 'pipe'] })
 
     let output = ''
     proc.stdout.on('data', (data: Buffer) => {
@@ -57,6 +57,9 @@ function obscurePassword(password: string): Promise<string> {
     })
 
     proc.on('error', reject)
+
+    proc.stdin.write(password)
+    proc.stdin.end()
   })
 }
 

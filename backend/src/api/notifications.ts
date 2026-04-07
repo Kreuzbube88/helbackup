@@ -62,7 +62,17 @@ export async function notificationRoutes(app: FastifyInstance): Promise<void> {
     async (request: FastifyRequest<{ Params: { channel: string } }>, reply: FastifyReply) => {
       const row = db.prepare('SELECT * FROM notification_config WHERE channel = ?').get(request.params.channel) as NotificationConfigRow | undefined
       if (!row) return reply.status(404).send({ error: 'Channel not found' })
-      return reply.send(row)
+
+      const SENSITIVE_KEYS = ['pass', 'password', 'token', 'botToken', 'secret', 'apiKey', 'userKey', 'webhookUrl']
+      try {
+        const cfg = JSON.parse(row.config) as Record<string, unknown>
+        for (const key of SENSITIVE_KEYS) {
+          if (key in cfg) cfg[key] = '••••••'
+        }
+        return reply.send({ ...row, config: JSON.stringify(cfg) })
+      } catch {
+        return reply.send(row)
+      }
     }
   )
 

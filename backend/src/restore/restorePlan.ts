@@ -1,10 +1,10 @@
 import { db } from '../db/database.js'
-import { exec } from 'child_process'
+import { execFile } from 'child_process'
 import { promisify } from 'util'
 import { logger } from '../utils/logger.js'
 import { safeJsonParseOrThrow } from '../utils/safeJson.js'
 
-const execAsync = promisify(exec)
+const execFileAsync = promisify(execFile)
 
 export interface RestoreItem {
   type: 'flash' | 'appdata' | 'vm' | 'docker-image' | 'system-config' | 'database'
@@ -303,7 +303,8 @@ async function runPreFlightChecks(
   }
 
   try {
-    const { stdout } = await execAsync('df -B1 /mnt/user 2>/dev/null | tail -1')
+    const { stdout: dfOut } = await execFileAsync('df', ['-B1', '/mnt/user'])
+    const stdout = dfOut.trim().split('\n').pop() ?? ''
     const available = parseInt(stdout.split(/\s+/)[3] ?? '0', 10)
     checks.diskSpace.available = isNaN(available) ? 0 : available
     checks.diskSpace.sufficient = checks.diskSpace.available > totalSize * 1.2
@@ -315,7 +316,7 @@ async function runPreFlightChecks(
   }
 
   try {
-    const { stdout } = await execAsync('docker ps -a --format "{{.Names}}" 2>/dev/null')
+    const { stdout } = await execFileAsync('docker', ['ps', '-a', '--format', '{{.Names}}'])
     const existingContainers = stdout.split('\n').filter(Boolean)
     for (const item of items) {
       if (item.type === 'appdata') {

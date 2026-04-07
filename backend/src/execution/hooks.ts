@@ -1,5 +1,8 @@
 import { spawn } from 'child_process'
+import path from 'node:path'
 import { logger } from '../utils/logger.js'
+
+const ALLOWED_HOOK_DIRS = ['/app/config/hooks', '/app/data/hooks']
 
 export interface HookResult {
   success: boolean
@@ -11,6 +14,12 @@ export async function executeHook(
   type: 'pre' | 'post',
   context: Record<string, string>
 ): Promise<HookResult> {
+  const resolved = path.resolve(scriptPath)
+  if (!ALLOWED_HOOK_DIRS.some(dir => resolved.startsWith(dir + '/'))) {
+    logger.error(`Hook path rejected (not in allowed directories): ${resolved}`)
+    return { success: false, output: `Hook path not allowed: ${resolved}` }
+  }
+
   return new Promise((resolve) => {
     logger.info(`Executing ${type}-backup hook: ${scriptPath}`)
 
