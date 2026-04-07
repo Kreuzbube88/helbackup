@@ -28,8 +28,12 @@ Sichert Docker Container-Konfigurationen von `/mnt/user/appdata`.
 **Optionen:**
 ```
 Stop containers before backup: ✅ (empfohlen!)
+Stop Delay: 10  (Sekunden Wartezeit nach Container-Stop)
 Container restart after: ✅
+Restart Delay: 5  (Sekunden Wartezeit nach Container-Restart)
 ```
+
+`stopDelay` und `restartDelay` sind konfigurierbar (Standard: 10s / 5s). Auf `0` setzen um den Sleep zu überspringen — für schnelle Container ok, für Datenbank-Container erhöhen.
 
 **Ausgeschlossen (automatisch):**
 - `*/logs/*`
@@ -91,6 +95,25 @@ Password: [verschlüsselt gespeichert]
 ```
 
 Details: [Datenbank-Backup](backup-databases.md)
+
+## Custom Paths
+
+Sichert beliebige Pfade, die von den Standard-Typen nicht abgedeckt werden.
+
+**Konfiguration:**
+```
+Source Path: /mnt/host/user/data/mein-ordner
+Target: Local Backups
+Exclude Patterns: *.tmp, *.log, cache/
+Encryption: ☐ (optional)
+```
+
+**Ablauf:**
+1. Quellpfad validieren
+2. Rsync in Target: `custom/<ordnername>/<YYYY-MM-DD>/`
+3. Optional: GPG-Verschlüsselung (tar.gz → .gpg)
+
+> **Hinweis:** Der Pfad muss im Container erreichbar sein. Unraid-Pfade über `/mnt/host/user/...` angeben.
 
 ---
 Zurück: [Jobs erstellen](creating-jobs.md)

@@ -28,9 +28,13 @@ Backs up Docker container configurations from `/mnt/user/appdata`.
 **Options:**
 ```
 Stop containers before backup: ✅ (recommended!)
+Stop Delay: 10  (seconds to wait after container stop)
 Restart containers after: ✅
+Restart Delay: 5  (seconds to wait after container restart)
 Database Dumps: ✅ (optional — dumps databases before stopping containers)
 ```
+
+`stopDelay` and `restartDelay` are configurable (default: 10s / 5s). Set to `0` to skip the sleep — fine for fast containers, increase for database containers.
 
 **Excluded (automatically):**
 - `*/logs/*`
@@ -74,6 +78,25 @@ Exports Unraid system configuration as JSON:
 - Shares
 - Plugins
 - Disk assignments
+
+## Custom Paths
+
+Backs up arbitrary paths not covered by the standard backup types.
+
+**Configuration:**
+```
+Source Path: /mnt/host/user/data/my-folder
+Target: Local Backups
+Exclude Patterns: *.tmp, *.log, cache/
+Encryption: ☐ (optional)
+```
+
+**Process:**
+1. Validate source path
+2. Rsync to target: `custom/<foldername>/<YYYY-MM-DD>/`
+3. Optional: GPG encryption (tar.gz → .gpg)
+
+> **Note:** The path must be reachable inside the container. Use `/mnt/host/user/...` for Unraid user share paths.
 
 ---
 Back: [Creating Jobs](creating-jobs.md)

@@ -2,11 +2,12 @@
 
 ## Prerequisites
 
-- Unraid 6.9 or newer
-- Community Apps plugin installed
-- At least 2 GB free storage for Appdata
+- Docker socket `/var/run/docker.sock` accessible
+- Host mounts configured for Flash/Appdata/Restore (see below)
 
 ## Installation via Community Apps
+
+> The Community Apps plugin is only required for store installation. Alternatively: Docker Compose (see below).
 
 ### Step 1: Open Community Apps
 
@@ -16,17 +17,25 @@
 
 ### Step 2: Configure Container Template
 
-| Setting | Value | Description |
-|---------|-------|-------------|
-| Port | 3000 | WebGUI port (changeable) |
-| Appdata | /mnt/user/appdata/helbackup | Config & database |
-| Docker Socket | /var/run/docker.sock | Container access (required!) |
+**Required paths:**
 
-**Recommended additional paths:**
-```
-Container Path: /mnt/user  →  Host Path: /mnt/user  (Read/Write)
-Container Path: /mnt/cache →  Host Path: /mnt/cache (Read/Write)
-```
+| Container Path | Host Path | Purpose |
+|---|---|---|
+| `/app/config` | `/mnt/user/appdata/helbackup/config` | Configuration |
+| `/app/data` | `/mnt/user/appdata/helbackup/data` | Database |
+| `/app/logs` | `/mnt/user/appdata/helbackup/logs` | Logs |
+| `/var/run/docker.sock` | `/var/run/docker.sock` | Docker API |
+| `/unraid/boot` | `/boot` | Flash Drive Backup |
+| `/mnt/host/user` | `/mnt/user` | Appdata & Restore |
+
+**Optional — required for VM backups only:**
+
+| Container Path | Host Path |
+|---|---|
+| `/unraid/libvirt` | `/etc/libvirt` (Read-Only) |
+| `/var/run/libvirt/libvirt-sock` | `/var/run/libvirt/libvirt-sock` |
+
+> **Note:** `privileged: false` — no privileged container required.
 
 ### Step 3: Start Container
 
@@ -39,6 +48,51 @@ Container Path: /mnt/cache →  Host Path: /mnt/cache (Read/Write)
 ```
 http://YOUR-UNRAID-IP:3000
 Example: http://192.168.1.100:3000
+```
+
+## Installation via Docker Compose
+
+Create `.env` file:
+
+```env
+JWT_SECRET=<random long string>
+TZ=Europe/Berlin
+```
+
+`docker-compose.yml`:
+
+```yaml
+services:
+  helbackup:
+    image: ghcr.io/kreuzbube88/helbackup:latest
+    container_name: helbackup
+    restart: unless-stopped
+    privileged: false
+    ports:
+      - "3000:3000"
+    environment:
+      - JWT_SECRET=${JWT_SECRET:?Set JWT_SECRET in .env}
+      - SECURE_COOKIES=${SECURE_COOKIES:-false}
+      - TZ=${TZ:-Europe/Berlin}
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+      - PUID=${PUID:-99}
+      - PGID=${PGID:-100}
+      - LIBVIRT_DEFAULT_URI=qemu:///system
+    volumes:
+      - /mnt/user/appdata/helbackup/config:/app/config
+      - /mnt/user/appdata/helbackup/data:/app/data
+      - /mnt/user/appdata/helbackup/logs:/app/logs
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /boot:/unraid/boot
+      - /mnt/user:/mnt/host/user
+      # Optional — required for VM backups:
+      # - /mnt/cache:/mnt/cache:ro
+      # - /etc/libvirt:/unraid/libvirt:ro
+      # - /var/run/libvirt/libvirt-sock:/var/run/libvirt/libvirt-sock
+```
+
+```bash
+docker compose up -d
 ```
 
 ## Post-Installation Checklist

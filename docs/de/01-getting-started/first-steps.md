@@ -8,6 +8,12 @@ In 15 Minuten hast du:
 - Test-Backup durchgeführt
 - Benachrichtigungen eingerichtet
 
+## Anmeldung
+
+Öffne `http://YOUR-UNRAID-IP:3000` und melde dich an. Beim ersten Start wird ein Setup-Wizard gestartet.
+
+**"Angemeldet bleiben"** — aktiviere die Checkbox beim Login für ein dauerhaftes Session-Token (30 Tage, localStorage). Ohne Checkbox: Session läuft nach 24 Stunden ab (sessionStorage).
+
 ## Schritt 1: Backup Target erstellen
 
 1. **Navigation:** Settings → Targets → "New Target"

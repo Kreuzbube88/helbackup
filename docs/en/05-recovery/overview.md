@@ -43,6 +43,20 @@ Dry Run: ✅ (recommended for testing!)
 Verify after restore: ✅
 ```
 
+## Backup List & Scan
+
+Backup cards show **job name**, date, and backup type as a badge. Older backups without checksums show an info note instead of an error.
+
+If no backups appear in the list (e.g. after database loss):
+1. Click the "Scan for Backups" button
+2. HELBACKUP scans `/app/data` for existing manifests
+3. Found backups are imported and appear in the list
+
+## Restore Wizard
+
+- The container step is automatically skipped if the backup contains no containers
+- The restore destination path is pre-filled based on the backup type
+
 ## Restore History
 
 All restores are logged:

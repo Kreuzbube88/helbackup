@@ -43,6 +43,20 @@ Dry Run: ✅ (empfohlen zum Testen!)
 Verify after restore: ✅
 ```
 
+## Backup-Übersicht & Scan
+
+Backup-Karten zeigen **Job-Name**, Datum und Backup-Typ als Badge. Ältere Backups ohne Checksums zeigen einen Info-Hinweis anstatt eines Fehlers.
+
+Wenn keine Backups in der Liste erscheinen (z.B. nach Datenverlust der Datenbank):
+1. "Scan for Backups" Button klicken
+2. HELBACKUP durchsucht `/app/data` nach vorhandenen Manifests
+3. Gefundene Backups werden importiert und erscheinen in der Liste
+
+## Restore-Wizard
+
+- Container-Schritt wird automatisch übersprungen wenn das Backup keine Container enthält
+- Restore-Zielpfad wird aus dem Backup-Typ vorausgefüllt
+
 ## Restore-History
 
 Alle Restores werden protokolliert:

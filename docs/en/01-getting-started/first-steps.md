@@ -8,6 +8,12 @@ In 15 minutes you'll have:
 - Test backup completed
 - Notifications set up
 
+## Login
+
+Open `http://YOUR-UNRAID-IP:3000` and log in. On first start, a setup wizard will launch.
+
+**"Remember me"** — check this box at login for a persistent session token (30 days, localStorage). Without it: session expires after 24 hours (sessionStorage).
+
 ## Step 1: Create Backup Target
 
 1. **Navigate:** Settings → Targets → "New Target"
