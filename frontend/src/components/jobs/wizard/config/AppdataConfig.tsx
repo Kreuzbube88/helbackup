@@ -62,6 +62,8 @@ export function AppdataConfig({ value, onChange, targets }: Props) {
         onChange={handleContainersChange}
       />
 
+      <p className="text-xs text-[var(--text-muted)] italic">{t('appdata_helbackup_excluded')}</p>
+
       <div className="space-y-3 pt-3 border-t border-[var(--border-default)]">
         <label className="flex items-center gap-2 text-sm text-[var(--text-secondary)] cursor-pointer">
           <input

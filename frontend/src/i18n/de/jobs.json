@@ -48,6 +48,7 @@
   "pre_backup_script": "Vor-Backup Skript",
   "post_backup_script": "Nach-Backup Skript",
   "encrypt_backup": "Backup verschlüsseln",
+  "appdata_helbackup_excluded": "Der HELBACKUP-Container wird automatisch ausgeschlossen und nicht mit gesichert.",
   "encryption_hint": "AES-256 Verschlüsselung (Cloud: Rclone Crypt, Lokal: GPG)",
   "execute_confirm_title": "Backup jetzt starten",
   "execute_confirm_message": "Dieser Backup-Job wird sofort gestartet. Fortfahren?",

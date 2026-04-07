@@ -69,7 +69,7 @@ export async function executeAppdataBackup(
     : [...rawStopOrder]
 
   if (helbackupId) {
-    engine.log('warn', 'system', 'HELBACKUP container excluded from backup scope')
+    engine.log('info', 'system', 'HELBACKUP container excluded from backup scope')
   }
 
   const target = db.prepare('SELECT * FROM targets WHERE id = ?').get(config.targetId) as TargetRow | undefined
