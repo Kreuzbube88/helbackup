@@ -96,10 +96,14 @@ Full documentation is available in the [`docs/`](docs/README.md) folder in both 
 
 ## Requirements
 
-- Unraid 6.9 or newer
-- Community Apps plugin (for store installation)
-- ~500 MB disk space for the container
-- Docker socket access
+- **Unraid 6.12** or newer
+- **RAM:** ~256 MB reserved for the container
+- **Disk:** ~250 MB for the container image + space for appdata/logs (typically a few MB)
+- **Port 3000** available on the host (configurable)
+- **Docker socket** `/var/run/docker.sock` — required for container stop/start during backups
+- **Host mounts** `/boot` and `/mnt/user` — required for Flash Drive and Appdata/VM restore
+- **Network access** — required for NAS targets (SSH/Rsync), cloud targets (Rclone), Wake-on-LAN
+- Community Apps plugin (only required for store installation)
 
 ---
 
