@@ -1,7 +1,9 @@
 import { useState } from 'react';
-import { Lock, Search } from 'lucide-react';
+import { Lock, Search, RefreshCw, HardDrive, Server, Cpu, Package, Settings } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '../common/Button';
+import { Card } from '../common/Card';
+import { Input } from '../common/Input';
 import { recovery as recoveryApi } from '../../api';
 import { formatBytes } from '../../utils/format';
 import UnlockBackupDialog from '../encryption/UnlockBackupDialog';
@@ -37,6 +39,21 @@ interface Manifest {
   [key: string]: unknown;
 }
 
+interface Props {
+  manifests: Manifest[];
+  onSelect: (manifest: Manifest) => void;
+  onFullServerRestore: (manifest: Manifest) => void;
+  onRefresh: () => void;
+}
+
+const BACKUP_TYPE_ICONS: Record<string, React.ReactNode> = {
+  flash: <HardDrive size={10} />,
+  appdata: <Package size={10} />,
+  vms: <Cpu size={10} />,
+  docker_images: <Server size={10} />,
+  sysconfig: <Settings size={10} />,
+}
+
 function detectBackupTypes(entries: ManifestEntry[]): string[] {
   const types = new Set<string>()
   for (const e of entries) {
@@ -48,13 +65,6 @@ function detectBackupTypes(entries: ManifestEntry[]): string[] {
     if (p.includes('sysconfig')) types.add('sysconfig')
   }
   return [...types]
-}
-
-interface Props {
-  manifests: Manifest[];
-  onSelect: (manifest: Manifest) => void;
-  onFullServerRestore: (manifest: Manifest) => void;
-  onRefresh: () => void;
 }
 
 export default function ManifestBrowser({ manifests, onSelect, onFullServerRestore, onRefresh }: Props) {
@@ -120,37 +130,39 @@ export default function ManifestBrowser({ manifests, onSelect, onFullServerResto
   };
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-2xl font-bold">{t('recovery.available_backups')}</h2>
-        <Button variant="secondary" onClick={onRefresh}>
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h2 className="text-xl font-semibold text-[var(--text-primary)]">
+          {t('recovery.available_backups')}
+        </h2>
+        <Button variant="secondary" size="sm" onClick={onRefresh}>
+          <RefreshCw size={12} />
           {t('recovery.refresh')}
         </Button>
       </div>
 
       {manifests.length === 0 ? (
-        <div className="border-2 border-[var(--border-default)] p-8 text-center space-y-6">
-          <p className="text-lg opacity-70">{t('recovery.no_backups_found')}</p>
-          <div className="max-w-md mx-auto space-y-3">
-            <p className="text-sm text-[var(--text-secondary)]">{t('recovery.scan_hint')}</p>
+        <Card className="p-8 text-center space-y-4 corner-cuts">
+          <p className="text-sm text-[var(--text-muted)]">{t('recovery.no_backups_found')}</p>
+          <div className="max-w-sm mx-auto space-y-2">
+            <p className="text-xs text-[var(--text-muted)]">{t('recovery.scan_hint')}</p>
             <div className="flex gap-2">
-              <input
-                type="text"
+              <Input
                 value={scanPath}
                 onChange={e => setScanPath(e.target.value)}
                 placeholder={t('recovery.scan_path_placeholder')}
-                className="flex-1 px-3 py-2 text-sm bg-[var(--bg-elevated)] border border-[var(--border-default)] text-[var(--text-primary)] placeholder:text-[var(--text-muted)]"
+                className="flex-1 text-xs"
               />
-              <Button variant="primary" onClick={handleScan} disabled={scanning || !scanPath.trim()}>
-                <Search size={14} />
+              <Button variant="primary" size="sm" onClick={handleScan} disabled={scanning || !scanPath.trim()}>
+                <Search size={12} />
                 {scanning ? t('recovery.scanning') : t('recovery.scan')}
               </Button>
             </div>
-            {scanError && <p className="text-sm text-red-400">{scanError}</p>}
+            {scanError && <p className="text-xs text-red-400">{scanError}</p>}
           </div>
-        </div>
+        </Card>
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-3">
           {manifests.map((manifest) => {
             let parsed: ParsedManifest;
             try {
@@ -168,98 +180,88 @@ export default function ManifestBrowser({ manifests, onSelect, onFullServerResto
             const totalSize = parsed.entries?.reduce((sum, e) => sum + (e.size ?? 0), 0) ?? 0;
             const fileCount = parsed.entries?.length ?? 0;
             const containerCount = parsed.containerConfigs?.length ?? 0;
-            const externalVolumes = parsed.entries?.filter((e) => e.path?.includes('external-volumes')) ?? [];
             const verified = parsed.verified ?? false;
             const lastVerified = parsed.lastVerified;
             const backupTypes = detectBackupTypes(parsed.entries ?? []);
 
             return (
-              <div
+              <Card
                 key={backupId}
-                className="border-2 border-[var(--border-default)] p-6 hover:border-blue-500 cursor-pointer"
+                hover
                 onClick={() => handleSelect(manifest)}
+                className="corner-cuts p-5"
               >
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <h3 className="text-xl font-bold">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1 min-w-0">
+                    {/* Title row */}
+                    <div className="flex items-center gap-2 mb-0.5 flex-wrap">
+                      <h3 className="text-base font-semibold text-[var(--text-primary)] truncate">
                         {manifest.job_name ?? t('recovery.unknown_job')}
                       </h3>
                       {encrypted && (
-                        <span className={`flex items-center gap-1 px-2 py-0.5 text-xs font-bold ${unlocked ? 'bg-green-600 text-white' : 'bg-orange-500 text-white'}`}>
-                          <Lock size={10} />
+                        <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 text-xs font-mono ${unlocked ? 'border border-emerald-500 text-emerald-400' : 'border border-amber-500 text-amber-400'}`}>
+                          <Lock size={9} />
                           {unlocked ? t('decryption.unlocked') : t('decryption.encrypted')}
                         </span>
                       )}
                     </div>
 
-                    <div className="text-sm text-[var(--text-secondary)] mb-2">
-                      {t('recovery.backup_from')} {formatDate(parsed.timestamp ?? manifest.created_at ?? '')}
-                      {backupTypes.length > 0 && (
-                        <span className="ml-3 inline-flex gap-1">
-                          {backupTypes.map(type => (
-                            <span key={type} className="px-1.5 py-0.5 bg-[var(--bg-elevated)] border border-[var(--border-default)] text-xs font-mono">
-                              {t(`recovery.backup_type_${type}`, type)}
-                            </span>
-                          ))}
+                    {/* Date + type badges */}
+                    <div className="flex items-center gap-2 mb-3 flex-wrap">
+                      <span className="text-xs text-[var(--text-muted)] font-mono">
+                        {formatDate(parsed.timestamp ?? manifest.created_at ?? '')}
+                      </span>
+                      {backupTypes.map(type => (
+                        <span key={type} className="inline-flex items-center gap-1 px-1.5 py-0.5 border border-[var(--border-default)] text-[var(--text-muted)] text-xs font-mono">
+                          {BACKUP_TYPE_ICONS[type]}
+                          {t(`recovery.backup_type_${type}`, type)}
                         </span>
+                      ))}
+                    </div>
+
+                    {/* Stats row */}
+                    <div className="flex items-center gap-4 text-xs font-mono text-[var(--text-muted)]">
+                      <span>{fileCount} {t('recovery.files').toLowerCase()}</span>
+                      {containerCount > 0 && (
+                        <span>{containerCount} {t('recovery.containers').toLowerCase()}</span>
+                      )}
+                      {totalSize > 0 && (
+                        <span className="text-[var(--text-secondary)]">{formatBytes(totalSize)}</span>
                       )}
                     </div>
 
-                    <div className="grid grid-cols-3 gap-4 text-sm">
-                      <div>
-                        <span className="opacity-70">{t('recovery.files')}:</span>
-                        <span className="ml-2 font-bold">{fileCount}</span>
-                      </div>
-                      <div>
-                        <span className="opacity-70">{t('recovery.containers')}:</span>
-                        <span className="ml-2 font-bold">{containerCount}</span>
-                      </div>
-                      <div>
-                        <span className="opacity-70">{t('recovery.total_size')}:</span>
-                        <span className="ml-2 font-bold">{formatBytes(totalSize)}</span>
-                      </div>
-                    </div>
-
-                    {parsed.helbackupExport && (
-                      <div className="mt-2 text-sm text-green-600 font-bold">
-                        {t('recovery.includes_helbackup_config')}
-                      </div>
-                    )}
-
-                    {externalVolumes.length > 0 && (
-                      <div className="mt-2 text-sm">
-                        <span className="opacity-70">{t('recovery.external_volumes')}:</span>
-                        <span className="ml-2 font-bold">{externalVolumes.length} {t('recovery.volumes')}</span>
-                      </div>
-                    )}
-
+                    {/* Verified badge */}
                     <div className="flex items-center gap-2 mt-2">
                       {verified ? (
-                        <span className="px-3 py-1 bg-green-500 text-white text-sm font-bold">
+                        <span className="inline-flex items-center gap-1 text-xs font-mono text-emerald-400 border border-emerald-500/40 px-1.5 py-0.5">
                           ✓ {t('recovery.verified')}
+                          {lastVerified && (
+                            <span className="text-[var(--text-muted)]">· {new Date(lastVerified).toLocaleDateString()}</span>
+                          )}
                         </span>
                       ) : (
-                        <span className="px-3 py-1 bg-yellow-500 text-white text-sm font-bold">
+                        <span className="inline-flex items-center gap-1 text-xs font-mono text-amber-400 border border-amber-500/40 px-1.5 py-0.5">
                           ⚠ {t('recovery.not_verified')}
                         </span>
                       )}
-                      {lastVerified && (
-                        <span className="text-sm opacity-70">
-                          {t('recovery.last_verified')}: {new Date(lastVerified).toLocaleString()}
+                      {parsed.helbackupExport && (
+                        <span className="text-xs font-mono text-[var(--theme-glow)] border border-[var(--theme-glow)]/40 px-1.5 py-0.5">
+                          {t('recovery.includes_helbackup_config')}
                         </span>
                       )}
                     </div>
                   </div>
 
-                  <div className="flex flex-col gap-2">
-                    <Button variant="primary">
+                  {/* Action buttons */}
+                  <div className="flex flex-col gap-2 flex-shrink-0" onClick={e => e.stopPropagation()}>
+                    <Button variant="primary" size="sm" onClick={() => handleSelect(manifest)}>
                       {encrypted && !unlocked ? t('decryption.unlock') : t('recovery.restore')}
                     </Button>
                     {(!encrypted || unlocked) && (
                       <Button
                         variant="secondary"
-                        onClick={(e) => { e.stopPropagation(); onFullServerRestore(manifest); }}
+                        size="sm"
+                        onClick={() => onFullServerRestore(manifest)}
                       >
                         {t('recovery.full_server_restore_btn')}
                       </Button>
@@ -267,14 +269,15 @@ export default function ManifestBrowser({ manifests, onSelect, onFullServerResto
                     {(!encrypted || unlocked) && containerCount > 0 && (
                       <Button
                         variant="secondary"
-                        onClick={(e) => { e.stopPropagation(); setDbRestoreManifest(manifest); }}
+                        size="sm"
+                        onClick={() => setDbRestoreManifest(manifest)}
                       >
                         {t('recovery.restore_database')}
                       </Button>
                     )}
                   </div>
                 </div>
-              </div>
+              </Card>
             );
           })}
         </div>
@@ -298,7 +301,7 @@ export default function ManifestBrowser({ manifests, onSelect, onFullServerResto
           return null;
         }
         return (
-          <div className="mt-6">
+          <div className="mt-4">
             <DatabaseRestoreWizard
               backupId={getBackupId(dbRestoreManifest)}
               containers={(parsed.containerConfigs ?? []) as Array<{ id: string; name: string; image: string }>}

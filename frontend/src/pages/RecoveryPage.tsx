@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { ShieldAlert, ShieldOff, AlertTriangle } from 'lucide-react';
 import { recovery as recoveryApi, type BackupManifest } from '../api';
 import { Button } from '../components/common/Button';
+import { Card } from '../components/common/Card';
 import ManifestBrowser from '../components/recovery/ManifestBrowser';
 import RestoreWizard from '../components/recovery/RestoreWizard';
 import FullServerRestoreWizard from '../components/recovery/FullServerRestoreWizard';
@@ -35,7 +37,7 @@ export default function RecoveryPage() {
       const status = await recoveryApi.getStatus();
       setIsRecoveryMode(status.enabled);
     } catch {
-      // non-critical: silently fail, remain in non-recovery mode
+      // non-critical
     }
   };
 
@@ -86,38 +88,53 @@ export default function RecoveryPage() {
 
   if (!isRecoveryMode) {
     return (
-      <div className="p-8 max-w-2xl mx-auto">
-        <div className="border-4 border-red-500 bg-[var(--bg-secondary)] p-8 text-center">
-          <h1 className="text-3xl font-bold mb-4 text-red-400">
-            {t('recovery.disaster_recovery_mode')}
-          </h1>
+      <div className="flex-1 p-6 bg-grid relative flex items-start justify-center pt-16">
+        <div className="w-full max-w-lg space-y-4 animate-slide-up">
+          <Card className="border-2 border-red-500 shadow-[0_0_40px_rgba(239,68,68,0.25)] corner-cuts p-8 text-center">
+            {/* Neon top accent */}
+            <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-red-500 to-transparent" />
 
-          <p className="mb-6 text-lg text-[var(--text-primary)]">
-            {t('recovery.warning_message')}
-          </p>
+            <div className="flex justify-center mb-4">
+              <div className="p-3 border border-red-500 shadow-[0_0_20px_rgba(239,68,68,0.4)]">
+                <ShieldAlert size={32} className="text-red-400" />
+              </div>
+            </div>
 
-          <div className="bg-[var(--bg-elevated)] border-2 border-red-500 p-6 mb-6 text-left">
-            <h2 className="font-bold mb-2 text-[var(--text-primary)]">{t('recovery.when_to_use')}</h2>
-            <ul className="list-disc list-inside space-y-2 text-[var(--text-secondary)]">
-              <li>{t('recovery.use_case_1')}</li>
-              <li>{t('recovery.use_case_2')}</li>
-              <li>{t('recovery.use_case_3')}</li>
-            </ul>
-          </div>
+            <h1 className="text-2xl font-bold mb-2 text-red-400" style={{ textShadow: '0 0 20px rgba(239,68,68,0.6)' }}>
+              {t('recovery.disaster_recovery_mode')}
+            </h1>
+            <p className="text-sm text-[var(--text-secondary)] mb-6">
+              {t('recovery.warning_message')}
+            </p>
 
-          <Button
-            variant="primary"
-            onClick={handleEnableRecovery}
-            className="bg-red-600 hover:bg-red-700"
-          >
-            {t('recovery.enable_recovery_mode')}
-          </Button>
+            <div className="bg-[var(--bg-secondary)] border border-red-500/40 p-4 mb-6 text-left">
+              <p className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-2">
+                {t('recovery.when_to_use')}
+              </p>
+              <ul className="space-y-1.5">
+                {['use_case_1', 'use_case_2', 'use_case_3'].map(key => (
+                  <li key={key} className="flex items-center gap-2 text-sm text-[var(--text-secondary)]">
+                    <span className="w-1 h-1 bg-red-400 flex-shrink-0" />
+                    {t(`recovery.${key}`)}
+                  </li>
+                ))}
+              </ul>
+            </div>
 
-          <div className="mt-4">
-            <Button variant="ghost" size="sm" onClick={() => setShowGuide(true)}>
-              {t('guide.open_guide')}
-            </Button>
-          </div>
+            <div className="space-y-2">
+              <Button
+                variant="danger"
+                className="w-full"
+                onClick={handleEnableRecovery}
+              >
+                <ShieldAlert size={14} />
+                {t('recovery.enable_recovery_mode')}
+              </Button>
+              <Button variant="ghost" size="sm" className="w-full" onClick={() => setShowGuide(true)}>
+                {t('guide.open_guide')}
+              </Button>
+            </div>
+          </Card>
         </div>
 
         <FirstBackupWizard
@@ -155,26 +172,41 @@ export default function RecoveryPage() {
   }
 
   return (
-    <div className="p-8 max-w-5xl mx-auto">
-      <div className="bg-red-600 text-white p-4 mb-6 flex items-center justify-between">
-        <div className="flex items-center gap-4">
+    <div className="flex-1 p-6 bg-grid relative space-y-4 overflow-auto">
+      {/* Recovery mode active banner */}
+      <div className="border border-red-500 bg-[var(--bg-card)] shadow-[0_0_16px_rgba(239,68,68,0.2)] p-3 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="relative flex-shrink-0">
+            <span className="absolute inset-0 animate-ping bg-red-500 opacity-30 rounded-full" />
+            <ShieldAlert size={18} className="text-red-400 relative" />
+          </div>
           <div>
-            <h1 className="text-xl font-bold">{t('recovery.recovery_mode_active')}</h1>
-            <p className="text-sm">{t('recovery.normal_operations_suspended')}</p>
+            <span className="text-sm font-semibold text-red-400">
+              {t('recovery.recovery_mode_active')}
+            </span>
+            <span className="ml-3 text-xs text-[var(--text-muted)]">
+              {t('recovery.normal_operations_suspended')}
+            </span>
           </div>
         </div>
-        <Button variant="secondary" onClick={handleDisableRecovery}>
+        <Button variant="secondary" size="sm" onClick={handleDisableRecovery}>
+          <ShieldOff size={14} />
           {t('recovery.exit_recovery_mode')}
         </Button>
       </div>
 
       {loading && (
-        <div className="text-center py-8 text-[var(--text-muted)]">{t('loading')}</div>
+        <div className="text-center py-12 text-[var(--text-muted)] text-sm font-mono">
+          {t('loading')}
+        </div>
       )}
       {loadError && (
-        <div className="border-2 border-red-500 bg-[var(--bg-secondary)] p-4 mb-6 text-red-400">
-          {t('error')}: {loadError}
-        </div>
+        <Card className="border border-red-500/60 p-4">
+          <div className="flex items-center gap-2 text-red-400 text-sm">
+            <AlertTriangle size={14} />
+            {t('error')}: {loadError}
+          </div>
+        </Card>
       )}
       {!loading && (
         <ManifestBrowser
