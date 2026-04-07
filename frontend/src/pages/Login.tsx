@@ -14,6 +14,7 @@ export function Login() {
 
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
+  const [rememberMe, setRememberMe] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
@@ -32,8 +33,8 @@ export function Login() {
     setError('')
     setLoading(true)
     try {
-      const data = await api.auth.login(username, password)
-      setAuth(data.token, data.user)
+      const data = await api.auth.login(username, password, rememberMe)
+      setAuth(data.token, data.user, rememberMe)
     } catch (err) {
       if (err instanceof ApiError && err.status === 401) {
         setError(t('login.error_invalid'))
@@ -126,6 +127,16 @@ export function Login() {
                     required
                     error={error}
                   />
+
+                  <label className="flex items-center gap-2 text-sm text-[var(--text-secondary)] cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={rememberMe}
+                      onChange={e => setRememberMe(e.target.checked)}
+                      className="accent-[var(--theme-primary)]"
+                    />
+                    {t('login.remember_me')}
+                  </label>
 
                   <Button
                     type="submit"

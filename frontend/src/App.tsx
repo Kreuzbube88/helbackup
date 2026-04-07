@@ -36,7 +36,7 @@ function ProtectedLayout() {
   useEffect(() => {
     if (!isAuthenticated) return
     api.auth.me().then(data => {
-      setAuth(localStorage.getItem('helbackup_token') ?? '', data.user)
+      setAuth(localStorage.getItem('helbackup_token') ?? sessionStorage.getItem('helbackup_token') ?? '', data.user, !!localStorage.getItem('helbackup_token'))
     }).catch(() => {
       logout()
     })

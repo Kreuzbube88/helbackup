@@ -54,7 +54,7 @@ export function LogsPage() {
       })
       .catch(() => {
         if (cancelled) return
-        const token = localStorage.getItem('helbackup_token')
+        const token = localStorage.getItem('helbackup_token') ?? sessionStorage.getItem('helbackup_token')
         attachSseHandlers(new EventSource(`/api/logs/${runId}/stream${token ? `?token=${encodeURIComponent(token)}` : ''}`))
       })
 

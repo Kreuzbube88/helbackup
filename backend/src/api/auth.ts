@@ -6,6 +6,7 @@ import { verifyRecoveryKey } from '../utils/recoveryKey.js'
 interface LoginBody {
   username: string
   password: string
+  rememberMe?: boolean
 }
 
 interface ChangePasswordBody {
@@ -63,7 +64,8 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
 
       db.prepare('UPDATE admin SET last_login = ? WHERE id = 1').run(new Date().toISOString())
 
-      const token = app.jwt.sign({ id: admin.id, username: admin.username }, { expiresIn: '7d' })
+      const expiresIn = request.body.rememberMe ? '30d' : '24h'
+      const token = app.jwt.sign({ id: admin.id, username: admin.username }, { expiresIn })
       return reply.send({ token, user: sanitizeAdmin(admin) })
     }
   )

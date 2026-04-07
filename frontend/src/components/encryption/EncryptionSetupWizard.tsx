@@ -161,7 +161,7 @@ export default function EncryptionSetupWizard({ onComplete, onCancel }: Props) {
           </Button>
           <Button
             variant="secondary"
-            onClick={() => navigator.clipboard.writeText(recoveryKey)}
+            onClick={() => { navigator.clipboard.writeText(recoveryKey).catch(() => { window.prompt('Copy this key:', recoveryKey) }) }}
             className="flex-1"
           >
             {t('common:encryption.copy_key')}

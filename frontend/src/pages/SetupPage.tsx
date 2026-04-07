@@ -210,7 +210,7 @@ export function SetupPage({ onComplete }: Props) {
               </Button>
               <Button
                 variant="secondary"
-                onClick={() => { void navigator.clipboard.writeText(recoveryKey) }}
+                onClick={() => { navigator.clipboard.writeText(recoveryKey).catch(() => { window.prompt('Copy this key:', recoveryKey) }) }}
                 className="flex-1 justify-center text-xs"
               >
                 {t('setup.copy_key')}

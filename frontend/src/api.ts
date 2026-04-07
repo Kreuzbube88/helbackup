@@ -8,7 +8,7 @@ export class ApiError extends Error {
 const BASE = '/api'
 
 function getToken(): string | null {
-  return localStorage.getItem('helbackup_token')
+  return localStorage.getItem('helbackup_token') ?? sessionStorage.getItem('helbackup_token')
 }
 
 async function request<T>(
@@ -150,8 +150,8 @@ export const api = {
   },
 
   auth: {
-    login: (username: string, password: string) =>
-      request<LoginResponse>('POST', '/auth/login', { username, password }),
+    login: (username: string, password: string, rememberMe = false) =>
+      request<LoginResponse>('POST', '/auth/login', { username, password, rememberMe }),
     logout: () =>
       request<{ ok: boolean }>('POST', '/auth/logout'),
     me: () =>
