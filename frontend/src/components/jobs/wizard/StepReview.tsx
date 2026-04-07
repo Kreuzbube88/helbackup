@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next'
-import { HardDrive, FolderOpen, Monitor, Container, Settings, Cloud, Calendar, Zap } from 'lucide-react'
+import { HardDrive, FolderOpen, Monitor, Container, Settings, Cloud, FolderCog, Calendar, Zap } from 'lucide-react'
 import type { BasicInfo } from './StepBasicInfo'
 import type { BackupStepsConfig } from './StepBackupTypes'
 import type { AdvancedSettingsValue } from '../AdvancedSettings'
@@ -19,6 +19,7 @@ const TYPE_ICONS: Record<string, React.ReactNode> = {
   docker_images: <Container size={14} />,
   system_config: <Settings size={14} />,
   cloud: <Cloud size={14} />,
+  custom: <FolderCog size={14} />,
 }
 
 export function StepReview({ basicInfo, backupSteps, advanced, targets }: Props) {

@@ -18,7 +18,7 @@ export interface JobHooks {
 
 export interface JobStep {
   id: string
-  type: 'flash' | 'appdata' | 'vms' | 'docker_images' | 'system_config' | 'cloud'
+  type: 'flash' | 'appdata' | 'vms' | 'docker_images' | 'system_config' | 'cloud' | 'custom'
   config: Record<string, unknown>
 }
 
@@ -266,6 +266,11 @@ export class JobExecutionEngine extends EventEmitter {
       case 'cloud': {
         const { executeCloudBackup } = await import('./steps/cloud.js')
         await executeCloudBackup(cfg as unknown as Parameters<typeof executeCloudBackup>[0], this)
+        break
+      }
+      case 'custom': {
+        const { executeCustomBackup } = await import('./steps/custom.js')
+        await executeCustomBackup(cfg as unknown as Parameters<typeof executeCustomBackup>[0], this)
         break
       }
       default:

@@ -30,6 +30,7 @@ const DEFAULT_STEPS: BackupStepsConfig = {
   docker_images: null,
   system_config: null,
   cloud: null,
+  custom: null,
 }
 
 const DEFAULT_TOOLS: ToolSelection = {
@@ -141,6 +142,19 @@ function buildSteps(backupSteps: BackupStepsConfig, advanced: AdvancedSettingsVa
     })
   }
 
+  if (backupSteps.custom) {
+    steps.push({
+      id: crypto_uuid(), type: 'custom',
+      config: {
+        sourcePath: backupSteps.custom.sourcePath,
+        targetId: backupSteps.custom.targetId,
+        excludePatterns: backupSteps.custom.excludePatterns,
+        useEncryption: advanced.useEncryption || backupSteps.custom.useEncryption,
+      },
+      retry: { max_attempts: 2, backoff: 'linear' },
+    })
+  }
+
   return steps
 }
 
@@ -210,6 +224,13 @@ export function JobWizard({ job, open, onClose, onSuccess }: Props) {
           newBackupSteps.cloud = {
             targetId: (s.config.remote as string) ?? '',
             sourcePath: (s.config.source as string) ?? '',
+            useEncryption: (s.config.useEncryption as boolean) ?? false,
+          }
+        } else if (s.type === 'custom') {
+          newBackupSteps.custom = {
+            sourcePath: (s.config.sourcePath as string) ?? '',
+            targetId: (s.config.targetId as string) ?? '',
+            excludePatterns: (s.config.excludePatterns as string[]) ?? [],
             useEncryption: (s.config.useEncryption as boolean) ?? false,
           }
         }
