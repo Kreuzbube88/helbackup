@@ -78,8 +78,8 @@ export function NotificationSettings() {
   function handleSelect(id: ChannelId) {
     const existing = configs.find(c => c.channel === id)
     if (existing) {
-      setChannelConfig(JSON.parse(existing.config) as Record<string, unknown>)
-      setSelectedEvents(JSON.parse(existing.events) as string[])
+      try { setChannelConfig(JSON.parse(existing.config) as Record<string, unknown>) } catch { setChannelConfig(defaultConfig(id)) }
+      try { setSelectedEvents(JSON.parse(existing.events) as string[]) } catch { setSelectedEvents(DEFAULT_EVENTS) }
       setEnabled(existing.enabled === 1)
     } else {
       setChannelConfig(defaultConfig(id))

@@ -44,13 +44,26 @@ function detectPreset(cron: string | null): Preset {
   return 'custom'
 }
 
+function parseCronParts(cron: string | null) {
+  if (!cron) return { hour: '2', minute: '0', weekday: '1', monthday: '1' }
+  const parts = cron.trim().split(/\s+/)
+  if (parts.length !== 5) return { hour: '2', minute: '0', weekday: '1', monthday: '1' }
+  return {
+    minute: parts[0] === '*' ? '0' : parts[0],
+    hour: parts[1] === '*' ? '2' : parts[1],
+    monthday: parts[2] === '*' ? '1' : parts[2],
+    weekday: parts[4] === '*' ? '1' : parts[4],
+  }
+}
+
 export function CronBuilder({ value, onChange }: Props) {
   const { t } = useTranslation('jobs')
+  const initial = parseCronParts(value)
   const [preset, setPreset] = useState<Preset>(() => detectPreset(value))
-  const [hour, setHour] = useState('2')
-  const [minute, setMinute] = useState('0')
-  const [weekday, setWeekday] = useState('1')
-  const [monthday, setMonthday] = useState('1')
+  const [hour, setHour] = useState(initial.hour)
+  const [minute, setMinute] = useState(initial.minute)
+  const [weekday, setWeekday] = useState(initial.weekday)
+  const [monthday, setMonthday] = useState(initial.monthday)
   const [customCron, setCustomCron] = useState(value ?? '')
 
   useEffect(() => {

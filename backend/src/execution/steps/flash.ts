@@ -67,7 +67,7 @@ export async function executeFlashBackup(
       const tarFile = path.join(destPath, 'flash-backup.tar.gz')
 
       await new Promise<void>((resolve, reject) => {
-        const tar = spawn('tar', ['-czf', tarFile, '-C', destPath, '.'])
+        const tar = spawn('tar', ['-czf', tarFile, '--exclude=flash-backup.tar.gz', '--exclude=*.gpg', '-C', destPath, '.'])
         tar.on('close', (code) => code === 0 ? resolve() : reject(new Error(`tar failed with code ${code}`)))
         tar.on('error', reject)
       })

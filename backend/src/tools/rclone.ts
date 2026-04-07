@@ -39,6 +39,12 @@ export async function executeRclone(options: RcloneOptions): Promise<RcloneResul
     rclone.stdout.on('data', (data: Buffer) => {
       const output = data.toString()
       if (options.onLog) options.onLog(output)
+    })
+
+    // Rclone sends progress/stats to stderr
+    rclone.stderr.on('data', (data: Buffer) => {
+      const output = data.toString()
+      if (options.onLog) options.onLog(output)
 
       // "Transferred:   1.234 MiB / 10.000 MiB, 12%, 123.45 KiB/s, ETA 1m23s"
       const progressMatch = output.match(
@@ -53,7 +59,6 @@ export async function executeRclone(options: RcloneOptions): Promise<RcloneResul
             eta: progressMatch[4],
           })
         }
-        // Parse bytes from the transferred string (e.g. "1.234 MiB")
         const sizeMatch = progressMatch[1].match(/([\d.]+)\s+(\w+)/)
         if (sizeMatch) {
           const value = parseFloat(sizeMatch[1])
@@ -61,12 +66,6 @@ export async function executeRclone(options: RcloneOptions): Promise<RcloneResul
           bytesTransferred = Math.round(value * (units[sizeMatch[2]] ?? 1))
         }
       }
-    })
-
-    rclone.stderr.on('data', (data: Buffer) => {
-      const error = data.toString()
-      logger.error(`Rclone stderr: ${error}`)
-      if (options.onLog) options.onLog(`ERROR: ${error}`)
     })
 
     rclone.on('close', (code: number | null) => {

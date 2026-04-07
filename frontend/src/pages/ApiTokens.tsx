@@ -222,7 +222,8 @@ export function ApiTokens() {
             </thead>
             <tbody>
               {tokens.map(token => {
-                const scopes = JSON.parse(token.scopes) as string[]
+                let scopes: string[]
+                try { scopes = JSON.parse(token.scopes) as string[] } catch { scopes = [] }
                 return (
                   <tr key={token.id} className="border-b border-[var(--border-default)] last:border-0">
                     <td className="px-4 py-3 font-mono text-xs">{token.name}</td>

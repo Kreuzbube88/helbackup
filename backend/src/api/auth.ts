@@ -63,7 +63,7 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
 
       db.prepare('UPDATE admin SET last_login = ? WHERE id = 1').run(new Date().toISOString())
 
-      const token = app.jwt.sign({ id: admin.id, username: admin.username })
+      const token = app.jwt.sign({ id: admin.id, username: admin.username }, { expiresIn: '7d' })
       return reply.send({ token, user: sanitizeAdmin(admin) })
     }
   )

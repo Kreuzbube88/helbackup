@@ -4,13 +4,22 @@ import { executeGFSCleanup, calculateGFSRetention } from '../retention/gfsRetent
 
 interface TargetRow {
   id: number
-  path: string
+  config: string
   retention_scheme: string
   gfs_daily_keep: number
   gfs_weekly_keep: number
   gfs_monthly_keep: number
   retention_days: number
   minimum_backups: number
+}
+
+function getTargetPath(target: TargetRow): string {
+  try {
+    const cfg = JSON.parse(target.config) as { path?: string }
+    return cfg.path ?? ''
+  } catch {
+    return ''
+  }
 }
 
 interface GFSConfigBody {
@@ -111,7 +120,7 @@ export async function gfsRetentionRoutes(app: FastifyInstance): Promise<void> {
 
         const plan = await executeGFSCleanup(
           parseInt(request.params.targetId),
-          target.path,
+          getTargetPath(target),
           true
         )
         return reply.send(plan)
@@ -135,7 +144,7 @@ export async function gfsRetentionRoutes(app: FastifyInstance): Promise<void> {
 
         const plan = await executeGFSCleanup(
           parseInt(request.params.targetId),
-          target.path,
+          getTargetPath(target),
           false
         )
         return reply.send(plan)

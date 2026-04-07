@@ -253,7 +253,7 @@ export async function executeAppdataBackup(
         // rsync method: tar the destination directory, then encrypt
         const tarFile = path.join(destPath, 'appdata-rsync.tar.gz')
         await new Promise<void>((resolve, reject) => {
-          const tar = spawn('tar', ['-czf', tarFile, '-C', destPath, '.', '--exclude=appdata-rsync.tar.gz'])
+          const tar = spawn('tar', ['-czf', tarFile, '--exclude=appdata-rsync.tar.gz', '--exclude=*.gpg', '-C', destPath, '.'])
           tar.on('close', (code) => code === 0 ? resolve() : reject(new Error(`tar failed with code ${code}`)))
           tar.on('error', reject)
         })

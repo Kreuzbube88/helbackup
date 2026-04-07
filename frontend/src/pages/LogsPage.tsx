@@ -20,12 +20,13 @@ export function LogsPage() {
 
   useEffect(() => {
     if (!runId) return
+    let cancelled = false
+    let esRef: EventSource | null = null
 
     api.executions.get(runId).then(setRun).catch(() => {/* will retry via SSE close */})
 
-    let esRef: EventSource | null = null
-
     function attachSseHandlers(source: EventSource) {
+      if (cancelled) { source.close(); return }
       esRef = source
       setIsLive(true)
 
@@ -40,7 +41,7 @@ export function LogsPage() {
       const finish = () => {
         setIsLive(false)
         source.close()
-        api.executions.get(runId!).then(setRun).catch(() => {/* ignore */})
+        if (!cancelled) api.executions.get(runId!).then(setRun).catch(() => {/* ignore */})
       }
 
       source.addEventListener('complete', finish)
@@ -49,15 +50,15 @@ export function LogsPage() {
 
     api.logs.requestSseToken(runId)
       .then(({ sseToken }) => {
-        attachSseHandlers(new EventSource(`/api/logs/${runId}/stream?sseToken=${encodeURIComponent(sseToken)}`))
+        if (!cancelled) attachSseHandlers(new EventSource(`/api/logs/${runId}/stream?sseToken=${encodeURIComponent(sseToken)}`))
       })
       .catch(() => {
-        // Fallback: legacy JWT in URL
+        if (cancelled) return
         const token = localStorage.getItem('helbackup_token')
         attachSseHandlers(new EventSource(`/api/logs/${runId}/stream${token ? `?token=${encodeURIComponent(token)}` : ''}`))
       })
 
-    return () => { esRef?.close() }
+    return () => { cancelled = true; esRef?.close() }
   }, [runId])
 
   if (!runId) {

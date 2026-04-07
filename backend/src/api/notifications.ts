@@ -29,7 +29,19 @@ export async function notificationRoutes(app: FastifyInstance): Promise<void> {
     { preHandler: [app.authenticate] },
     async (_request: FastifyRequest, reply: FastifyReply) => {
       const rows = db.prepare('SELECT * FROM notification_config ORDER BY channel').all() as NotificationConfigRow[]
-      return reply.send(rows)
+      const SENSITIVE_KEYS = ['pass', 'password', 'token', 'botToken', 'secret', 'apiKey', 'userKey', 'webhookUrl']
+      const sanitized = rows.map(row => {
+        try {
+          const cfg = JSON.parse(row.config) as Record<string, unknown>
+          for (const key of SENSITIVE_KEYS) {
+            if (key in cfg) cfg[key] = '••••••'
+          }
+          return { ...row, config: JSON.stringify(cfg) }
+        } catch {
+          return row
+        }
+      })
+      return reply.send(sanitized)
     }
   )
 

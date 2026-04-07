@@ -1,3 +1,4 @@
+import fs from 'fs/promises'
 import { db } from '../db/database.js'
 import { logger } from '../utils/logger.js'
 
@@ -41,6 +42,15 @@ export async function applyRetentionPolicy(
 
     if (policy.deleteOlderThanDays && ageDays > policy.deleteOlderThanDays) {
       try {
+        // Delete backup files on disk if backupPath exists
+        try {
+          const parsed = JSON.parse(manifest.manifest) as { backupPath?: string }
+          if (parsed.backupPath) {
+            await fs.rm(parsed.backupPath, { recursive: true, force: true })
+            logger.info(`Deleted backup files: ${parsed.backupPath}`)
+          }
+        } catch { /* manifest parse or fs error — still delete DB record */ }
+
         db.prepare('DELETE FROM manifest WHERE id = ?').run(manifest.id)
         logger.info(`Deleted old backup: ${manifest.backup_id} (${ageDays.toFixed(1)} days old)`)
         deleted++
