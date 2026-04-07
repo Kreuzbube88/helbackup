@@ -21,6 +21,7 @@ export interface JobStep {
   id: string
   type: 'flash' | 'appdata' | 'vms' | 'docker_images' | 'system_config' | 'cloud' | 'custom'
   config: Record<string, unknown>
+  retry?: { max_attempts: number; backoff: 'linear' | 'exponential' }
 }
 
 export type LogLevel = 'debug' | 'info' | 'warn' | 'error'
@@ -84,7 +85,6 @@ export class JobExecutionEngine extends EventEmitter {
   private readonly jobId: string
   private readonly jobName: string
   private readonly startedAt: string
-  private readonly useEncryption: boolean
   private sequence = 0
   private backupPaths: Array<{ type: string; path: string; targetId?: string }> = []
   private summary: Summary = {
@@ -101,9 +101,8 @@ export class JobExecutionEngine extends EventEmitter {
     this.runId = randomUUID()
     this.jobId = jobId
     this.startedAt = new Date().toISOString()
-    const jobRow = db.prepare('SELECT name, use_encryption FROM jobs WHERE id = ?').get(jobId) as JobRow | undefined
+    const jobRow = db.prepare('SELECT name FROM jobs WHERE id = ?').get(jobId) as Pick<JobRow, 'name'> | undefined
     this.jobName = jobRow?.name ?? jobId
-    this.useEncryption = (jobRow?.use_encryption ?? 0) === 1
 
     db.prepare(
       'INSERT INTO job_history (id, job_id, status, started_at) VALUES (?, ?, ?, ?)'
@@ -129,19 +128,42 @@ export class JobExecutionEngine extends EventEmitter {
       }
 
       for (const step of steps) {
+        const maxAttempts = step.retry?.max_attempts ?? 1
+        const backoffType = step.retry?.backoff ?? 'linear'
+
         this.emit('step:start', { stepId: step.id, type: step.type })
         this.log('info', 'system', `Starting step: ${step.type}`, step.id)
 
-        try {
-          await this.executeStep(step)
-          this.emit('step:complete', { stepId: step.id })
-          this.log('info', 'system', `Step completed: ${step.type}`, step.id)
-        } catch (err: unknown) {
-          const message = err instanceof Error ? err.message : String(err)
-          this.emit('step:error', { stepId: step.id, error: message })
-          this.log('error', 'system', `Step failed: ${message}`, step.id)
-          throw err
+        let lastErr: unknown
+        for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+          try {
+            await this.executeStep(step)
+            this.emit('step:complete', { stepId: step.id })
+            this.log('info', 'system', `Step completed: ${step.type}`, step.id)
+            lastErr = undefined
+            break
+          } catch (err: unknown) {
+            lastErr = err
+            const message = err instanceof Error ? err.message : String(err)
+            if (attempt < maxAttempts) {
+              const delayMs = backoffType === 'exponential'
+                ? Math.pow(2, attempt - 1) * 5000
+                : attempt * 5000
+              this.log('warn', 'system',
+                `Step failed (attempt ${attempt}/${maxAttempts}), retrying in ${delayMs / 1000}s: ${message}`,
+                step.id
+              )
+              await new Promise(r => setTimeout(r, delayMs))
+            } else {
+              this.emit('step:error', { stepId: step.id, error: message })
+              this.log('error', 'system',
+                `Step failed after ${maxAttempts} attempt(s): ${message}`,
+                step.id
+              )
+            }
+          }
         }
+        if (lastErr !== undefined) throw lastErr
       }
 
       const duration = this.elapsedSeconds()
@@ -230,43 +252,40 @@ export class JobExecutionEngine extends EventEmitter {
   }
 
   private async executeStep(step: JobStep): Promise<void> {
-    // Inject job-level encryption flag into every step config
-    const cfg = { ...step.config, useEncryption: this.useEncryption }
-
     switch (step.type) {
       case 'flash': {
         const { executeFlashBackup } = await import('./steps/flash.js')
-        await executeFlashBackup(cfg as unknown as Parameters<typeof executeFlashBackup>[0], this)
+        await executeFlashBackup(step.config as unknown as Parameters<typeof executeFlashBackup>[0], this)
         break
       }
       case 'appdata': {
         const { executeAppdataBackup } = await import('./steps/appdata.js')
-        await executeAppdataBackup(cfg as unknown as Parameters<typeof executeAppdataBackup>[0], this)
+        await executeAppdataBackup(step.config as unknown as Parameters<typeof executeAppdataBackup>[0], this)
         break
       }
       case 'vms': {
         const { executeVMBackup } = await import('./steps/vms.js')
-        await executeVMBackup(cfg as unknown as Parameters<typeof executeVMBackup>[0], this)
+        await executeVMBackup(step.config as unknown as Parameters<typeof executeVMBackup>[0], this)
         break
       }
       case 'docker_images': {
         const { executeDockerImageExport } = await import('./steps/docker-images.js')
-        await executeDockerImageExport(cfg as unknown as Parameters<typeof executeDockerImageExport>[0], this)
+        await executeDockerImageExport(step.config as unknown as Parameters<typeof executeDockerImageExport>[0], this)
         break
       }
       case 'system_config': {
         const { executeSystemConfigBackup } = await import('./steps/system-config.js')
-        await executeSystemConfigBackup(cfg as unknown as Parameters<typeof executeSystemConfigBackup>[0], this)
+        await executeSystemConfigBackup(step.config as unknown as Parameters<typeof executeSystemConfigBackup>[0], this)
         break
       }
       case 'cloud': {
         const { executeCloudBackup } = await import('./steps/cloud.js')
-        await executeCloudBackup(cfg as unknown as Parameters<typeof executeCloudBackup>[0], this)
+        await executeCloudBackup(step.config as unknown as Parameters<typeof executeCloudBackup>[0], this)
         break
       }
       case 'custom': {
         const { executeCustomBackup } = await import('./steps/custom.js')
-        await executeCustomBackup(cfg as unknown as Parameters<typeof executeCustomBackup>[0], this)
+        await executeCustomBackup(step.config as unknown as Parameters<typeof executeCustomBackup>[0], this)
         break
       }
       default:

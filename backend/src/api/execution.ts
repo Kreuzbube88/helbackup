@@ -47,9 +47,14 @@ export async function executionRoutes(app: FastifyInstance): Promise<void> {
       const runId = engine.getRunId()
       activeExecutions.set(runId, engine)
 
+      const hooks = {
+        prePath: job.pre_backup_script ?? undefined,
+        postPath: job.post_backup_script ?? undefined,
+      }
+
       void (async () => {
         try {
-          await engine.execute(steps)
+          await engine.execute(steps, hooks)
         } catch (err: unknown) {
           logger.error({ runId, err }, 'Job execution failed')
         } finally {

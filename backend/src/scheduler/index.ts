@@ -28,6 +28,14 @@ export function scheduleJob(job: JobRow): void {
   const scheduled = schedule.scheduleJob(job.schedule, () => {
     logger.info({ jobId: job.id, jobName: job.name }, 'Executing scheduled job')
 
+    // Skip if this job is already running
+    for (const [, engine] of activeExecutions) {
+      if (engine.getJobId() === job.id) {
+        logger.warn({ jobId: job.id }, 'Scheduled job skipped — previous run still active')
+        return
+      }
+    }
+
     let steps: JobStep[]
     try {
       steps = JSON.parse(job.steps) as JobStep[]

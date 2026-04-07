@@ -51,6 +51,8 @@ export interface Job {
   steps: unknown[]
   created_at: string
   updated_at: string
+  pre_backup_script: string | null
+  post_backup_script: string | null
 }
 
 export interface Target {
@@ -167,9 +169,9 @@ export const api = {
   jobs: {
     getAll: () => request<Job[]>('GET', '/jobs'),
     getById: (id: string) => request<Job>('GET', `/jobs/${id}`),
-    create: (data: { name: string; schedule?: string; steps: unknown[]; enabled?: boolean }) =>
+    create: (data: { name: string; schedule?: string; steps: unknown[]; enabled?: boolean; preBackupScript?: string; postBackupScript?: string }) =>
       request<Job>('POST', '/jobs', data),
-    update: (id: string, data: Partial<{ name: string; schedule: string | null; steps: unknown[]; enabled: boolean }>) =>
+    update: (id: string, data: Partial<{ name: string; schedule: string | null; steps: unknown[]; enabled: boolean; preBackupScript: string | null; postBackupScript: string | null }>) =>
       request<Job>('PUT', `/jobs/${id}`, data),
     delete: (id: string) => request<{ ok: boolean }>('DELETE', `/jobs/${id}`),
     getHistory: (id: string) => request<unknown[]>('GET', `/jobs/${id}/history`),

@@ -77,6 +77,8 @@ function buildSteps(backupSteps: BackupStepsConfig, advanced: AdvancedSettingsVa
         stopOrder: backupSteps.appdata.stopOrder.length > 0 ? backupSteps.appdata.stopOrder : backupSteps.appdata.containers,
         method: tools.appdata,
         useDatabaseDumps: advanced.useDatabaseDumps,
+        // Pass all containers as candidates — backend auto-detects and skips non-DB ones
+        databaseContainers: advanced.useDatabaseDumps ? backupSteps.appdata.containers : [],
         useEncryption: advanced.useEncryption,
       },
       retry: { max_attempts: 2, backoff: 'linear' },
@@ -227,13 +229,13 @@ export function JobWizard({ job, open, onClose, onSuccess }: Props) {
         }
       }
       setBackupSteps(newBackupSteps)
-      if (anyEncryption || anyDatabaseDumps) {
-        setAdvanced(prev => ({
-          ...prev,
-          useEncryption: anyEncryption,
-          useDatabaseDumps: anyDatabaseDumps,
-        }))
-      }
+      setAdvanced(prev => ({
+        ...prev,
+        useEncryption: anyEncryption,
+        useDatabaseDumps: anyDatabaseDumps,
+        preBackupScript: job.pre_backup_script ?? undefined,
+        postBackupScript: job.post_backup_script ?? undefined,
+      }))
     } else {
       setBasicInfo(DEFAULT_BASIC)
       setBackupSteps(DEFAULT_STEPS)
@@ -254,6 +256,8 @@ export function JobWizard({ job, open, onClose, onSuccess }: Props) {
           schedule: basicInfo.schedule,
           enabled: basicInfo.enabled,
           steps,
+          preBackupScript: advanced.preBackupScript ?? null,
+          postBackupScript: advanced.postBackupScript ?? null,
         })
         toast(t('updated'), 'success')
       } else {
@@ -262,6 +266,8 @@ export function JobWizard({ job, open, onClose, onSuccess }: Props) {
           ...(basicInfo.schedule ? { schedule: basicInfo.schedule } : {}),
           enabled: basicInfo.enabled,
           steps,
+          ...(advanced.preBackupScript ? { preBackupScript: advanced.preBackupScript } : {}),
+          ...(advanced.postBackupScript ? { postBackupScript: advanced.postBackupScript } : {}),
         })
         toast(t('created'), 'success')
       }

@@ -221,13 +221,31 @@ export async function executeVMBackup(
       const encryptionPassword = getEncryptionPassword()
       const entries = await fs.readdir(destPath)
 
-      for (const file of entries) {
-        if (!file.endsWith('.xml')) continue
-        const xmlPath = path.join(destPath, file)
-        const encryptedPath = `${xmlPath}.gpg`
-        await encryptFileGPG(xmlPath, encryptedPath, encryptionPassword)
-        await fs.unlink(xmlPath)
-        engine.log('info', 'system', `Encrypted: ${file}`)
+      for (const entry of entries) {
+        const entryPath = path.join(destPath, entry)
+        const stat = await fs.stat(entryPath)
+
+        if (stat.isFile()) {
+          // Encrypt individual files (XML configs)
+          const encryptedPath = `${entryPath}.gpg`
+          await encryptFileGPG(entryPath, encryptedPath, encryptionPassword)
+          await fs.unlink(entryPath)
+          engine.log('info', 'system', `Encrypted: ${entry}`)
+        } else if (stat.isDirectory()) {
+          // Tar+encrypt VM disk directories (vdisks can be large)
+          const { spawn: spawnProc } = await import('child_process')
+          const tarFile = `${entryPath}.tar.gz`
+          await new Promise<void>((resolve, reject) => {
+            const tar = spawnProc('tar', ['-czf', tarFile, '-C', destPath, entry])
+            tar.on('close', code => code === 0 ? resolve() : reject(new Error(`tar failed with code ${code}`)))
+            tar.on('error', reject)
+          })
+          const encryptedFile = `${tarFile}.gpg`
+          await encryptFileGPG(tarFile, encryptedFile, encryptionPassword)
+          await fs.unlink(tarFile)
+          await fs.rm(entryPath, { recursive: true })
+          engine.log('info', 'system', `Encrypted disk directory: ${entry}`)
+        }
       }
 
       engine.log('info', 'system', 'VM backups encrypted')
