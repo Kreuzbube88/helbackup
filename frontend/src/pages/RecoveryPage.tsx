@@ -22,6 +22,8 @@ export default function RecoveryPage() {
   const [showFullServerWizard, setShowFullServerWizard] = useState(false);
   const [fullServerManifest, setFullServerManifest] = useState<Manifest | null>(null);
   const [showGuide, setShowGuide] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
     loadStatus();
@@ -38,11 +40,15 @@ export default function RecoveryPage() {
   };
 
   const loadManifests = async () => {
+    setLoading(true);
+    setLoadError(null);
     try {
       const data = await recoveryApi.getManifests();
       setManifests(data);
-    } catch {
-      // non-critical: show empty list
+    } catch (err: unknown) {
+      setLoadError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -162,12 +168,22 @@ export default function RecoveryPage() {
         </Button>
       </div>
 
-      <ManifestBrowser
-        manifests={manifests}
-        onSelect={handleSelectManifest}
-        onFullServerRestore={handleFullServerRestore}
-        onRefresh={loadManifests}
-      />
+      {loading && (
+        <div className="text-center py-8 text-[var(--text-muted)]">{t('loading')}</div>
+      )}
+      {loadError && (
+        <div className="border-2 border-red-500 bg-[var(--bg-secondary)] p-4 mb-6 text-red-400">
+          {t('error')}: {loadError}
+        </div>
+      )}
+      {!loading && (
+        <ManifestBrowser
+          manifests={manifests}
+          onSelect={handleSelectManifest}
+          onFullServerRestore={handleFullServerRestore}
+          onRefresh={loadManifests}
+        />
+      )}
     </div>
   );
 }

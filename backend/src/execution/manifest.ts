@@ -131,6 +131,11 @@ export async function createJobManifest(
     } catch { /* no container configs */ }
   }
 
+  if (stepPaths.length === 0) {
+    engine.log('warn', 'system', 'No backup paths recorded — skipping job manifest')
+    return
+  }
+
   const backupId = randomUUID()
   const timestamp = new Date().toISOString()
   const manifest = {
@@ -146,9 +151,18 @@ export async function createJobManifest(
     verified: false,
   }
 
+  // Write manifest.json to disk so recovery scan can find it
+  const manifestJson = JSON.stringify(manifest, null, 2)
+  try {
+    const manifestPath = path.join(stepPaths[0].path, 'manifest.json')
+    await fs.writeFile(manifestPath, manifestJson)
+  } catch {
+    // Non-critical: DB insert below is the primary storage
+  }
+
   db.prepare(
     'INSERT INTO manifest (backup_id, job_id, manifest, created_at) VALUES (?, ?, ?, ?)'
-  ).run(backupId, jobId, JSON.stringify(manifest), timestamp)
+  ).run(backupId, jobId, manifestJson, timestamp)
 
   engine.log('info', 'system', `Job manifest created: ${allEntries.length} files across ${stepPaths.length} step(s)`)
 }

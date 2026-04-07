@@ -29,6 +29,7 @@ interface ParsedManifest {
 
 interface Manifest {
   backup_id?: string;
+  backupId?: string;
   manifest?: string;
   [key: string]: unknown;
 }
@@ -46,6 +47,8 @@ export default function RestoreWizard({ manifest, onClose, onComplete }: Props) 
   const [selectedContainers, setSelectedContainers] = useState<string[]>([]);
   const [selectedFiles, setSelectedFiles] = useState<string[]>([]);
   const [restoreDestination, setRestoreDestination] = useState('/mnt/user');
+
+  const backupId = manifest.backup_id ?? manifest.backupId ?? '';
 
   let parsed: ParsedManifest = {};
   if (typeof manifest.manifest === 'string') {
@@ -83,7 +86,7 @@ export default function RestoreWizard({ manifest, onClose, onComplete }: Props) 
 
   const handleRestoreContainers = async () => {
     try {
-      await recoveryApi.restoreContainers(manifest.backup_id ?? '', selectedContainers);
+      await recoveryApi.restoreContainers(backupId, selectedContainers);
       toast(t('recovery.containers_restored'), 'success');
       setStep(2);
     } catch (error: unknown) {
@@ -93,7 +96,7 @@ export default function RestoreWizard({ manifest, onClose, onComplete }: Props) 
 
   const handleRestoreFiles = async () => {
     try {
-      await recoveryApi.restoreFiles(manifest.backup_id ?? '', selectedFiles, restoreDestination);
+      await recoveryApi.restoreFiles(backupId, selectedFiles, restoreDestination);
       toast(t('recovery.files_restored'), 'success');
       onComplete();
     } catch (error: unknown) {
@@ -121,14 +124,14 @@ export default function RestoreWizard({ manifest, onClose, onComplete }: Props) 
         <div className={`flex-1 h-2 ${step >= 0 ? 'bg-blue-500' : 'bg-gray-300'}`} />
         <div className={`flex-1 h-2 ${step >= 1 ? 'bg-blue-500' : 'bg-gray-300'}`} />
         <div className={`flex-1 h-2 ${step >= 2 ? 'bg-blue-500' : 'bg-gray-300'}`} />
-        <div className={`flex-1 h-2 ${step >= 3 ? 'bg-blue-500' : 'bg-gray-300'}`} />
       </div>
 
       {step === 0 && (
         <VerifyBackup
-          backupId={manifest.backup_id ?? ''}
+          backupId={backupId}
           checksums={parsed.checksums ?? []}
           onComplete={() => setStep(1)}
+          onClose={onClose}
         />
       )}
 

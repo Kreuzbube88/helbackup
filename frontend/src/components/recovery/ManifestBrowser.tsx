@@ -144,9 +144,14 @@ export default function ManifestBrowser({ manifests, onSelect, onFullServerResto
       ) : (
         <div className="space-y-4">
           {manifests.map((manifest) => {
-            const parsed: ParsedManifest = typeof manifest.manifest === 'string'
-              ? JSON.parse(manifest.manifest) as ParsedManifest
-              : manifest as ParsedManifest;
+            let parsed: ParsedManifest;
+            try {
+              parsed = typeof manifest.manifest === 'string'
+                ? JSON.parse(manifest.manifest) as ParsedManifest
+                : manifest as ParsedManifest;
+            } catch {
+              parsed = {};
+            }
 
             const backupId = getBackupId(manifest);
             const encrypted = isEncrypted(parsed, manifest);

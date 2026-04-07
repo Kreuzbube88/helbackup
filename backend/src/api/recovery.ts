@@ -133,15 +133,19 @@ export default async function recoveryRoutes(app: FastifyInstance) {
         // Import found manifests into DB (skip duplicates)
         let imported = 0;
         for (const m of manifests) {
-          const backupId = (m.backupId ?? m.backup_id ?? randomUUID()) as string;
-          const jobId = (m.jobId ?? m.job_id ?? 'unknown') as string;
-          const timestamp = (m.timestamp ?? m.created_at ?? new Date().toISOString()) as string;
-          const exists = db.prepare('SELECT 1 FROM manifest WHERE backup_id = ?').get(backupId);
-          if (!exists) {
-            db.prepare(
-              'INSERT INTO manifest (backup_id, job_id, manifest, created_at) VALUES (?, ?, ?, ?)'
-            ).run(backupId, jobId, JSON.stringify(m), timestamp);
-            imported++;
+          try {
+            const backupId = (m.backupId ?? m.backup_id ?? randomUUID()) as string;
+            const jobId = (m.jobId ?? m.job_id ?? 'scanned') as string;
+            const timestamp = (m.timestamp ?? m.created_at ?? new Date().toISOString()) as string;
+            const exists = db.prepare('SELECT 1 FROM manifest WHERE backup_id = ?').get(backupId);
+            if (!exists) {
+              db.prepare(
+                'INSERT INTO manifest (backup_id, job_id, manifest, created_at) VALUES (?, ?, ?, ?)'
+              ).run(backupId, jobId, JSON.stringify(m), timestamp);
+              imported++;
+            }
+          } catch (insertErr) {
+            logger.warn(`[recovery/scan] Failed to import manifest: ${insertErr instanceof Error ? insertErr.message : String(insertErr)}`);
           }
         }
         logger.info(`[recovery/scan] Found ${manifests.length} manifests, imported ${imported} new`);

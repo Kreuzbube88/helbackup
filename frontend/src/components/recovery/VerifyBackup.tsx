@@ -19,9 +19,10 @@ interface Props {
   backupId: string;
   checksums: ChecksumEntry[];
   onComplete: () => void;
+  onClose?: () => void;
 }
 
-export default function VerifyBackup({ backupId, checksums, onComplete }: Props) {
+export default function VerifyBackup({ backupId, checksums, onComplete, onClose }: Props) {
   const { t } = useTranslation();
   const [verifying, setVerifying] = useState(false);
   const [results, setResults] = useState<VerifyResults | null>(null);
@@ -80,9 +81,22 @@ export default function VerifyBackup({ backupId, checksums, onComplete }: Props)
           </div>
         )}
 
-        <Button variant="primary" onClick={onComplete}>
-          {allPassed ? t('recovery.proceed_with_restore') : t('buttons.close')}
-        </Button>
+        <div className="flex gap-4">
+          {allPassed ? (
+            <Button variant="primary" onClick={onComplete}>
+              {t('recovery.proceed_with_restore')}
+            </Button>
+          ) : (
+            <>
+              <Button variant="secondary" onClick={onClose ?? onComplete}>
+                {t('buttons.close')}
+              </Button>
+              <Button variant="primary" className="bg-yellow-600 hover:bg-yellow-700" onClick={onComplete}>
+                {t('recovery.proceed_anyway')}
+              </Button>
+            </>
+          )}
+        </div>
       </div>
     );
   }
@@ -93,7 +107,7 @@ export default function VerifyBackup({ backupId, checksums, onComplete }: Props)
 
       <p className="mb-4 opacity-70">{t('recovery.verify_backup_description')}</p>
 
-      <div className="bg-blue-50 border-2 border-blue-500 p-4 mb-6">
+      <div className="bg-[var(--bg-elevated)] border-2 border-blue-500 p-4 mb-6">
         <p className="text-sm">
           {t('recovery.checksums_count')}: <strong>{checksums.length}</strong>
         </p>
