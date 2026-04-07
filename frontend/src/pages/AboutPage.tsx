@@ -1,11 +1,12 @@
 import { useTranslation } from 'react-i18next'
-import { Github, Package, BookOpen } from 'lucide-react'
+import { Github, Package, BookOpen, Coffee } from 'lucide-react'
 import { Card } from '../components/common/Card'
 
 const VERSION = '0.1.0'
 const GITHUB_URL = 'https://github.com/Kreuzbube88/helbackup'
 const REGISTRY_URL = 'https://github.com/Kreuzbube88/helbackup/pkgs/container/helbackup'
 const CHANGELOG_URL = 'https://github.com/Kreuzbube88/helbackup/releases/latest'
+const DONATE_URL = 'https://paypal.me/kreuzbube88'
 
 interface StackRow {
   labelKey: string
@@ -25,6 +26,7 @@ const LINK_ITEMS = [
   { href: GITHUB_URL,    icon: <Github size={14} />,    labelKey: 'links.github' },
   { href: REGISTRY_URL,  icon: <Package size={14} />,   labelKey: 'links.registry' },
   { href: CHANGELOG_URL, icon: <BookOpen size={14} />,  labelKey: 'links.changelog' },
+  { href: DONATE_URL,    icon: <Coffee size={14} />,    labelKey: 'links.donate' },
 ]
 
 export function AboutPage() {
