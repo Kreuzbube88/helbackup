@@ -158,7 +158,14 @@ export async function executeAppdataBackup(
       engine.addTransferred(tarResult.filesProcessed, tarResult.archiveSize)
       engine.log('info', 'system', `Tar archive created: ${tarResult.filesProcessed} files, ${tarResult.archiveSize} bytes`)
     } else {
-      engine.log('info', 'system', 'Starting rsync...')
+      // Verify source exists and is not empty before rsync
+      try {
+        const entries = await fs.readdir(config.source)
+        engine.log('info', 'system', `Starting rsync: ${config.source} → ${destPath} (${entries.length} top-level entries)`)
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err)
+        throw new Error(`Appdata source path not accessible: ${config.source} — ${msg}`)
+      }
 
       // Collect global + per-container exclusions
       const containerExclusions: string[] = []
