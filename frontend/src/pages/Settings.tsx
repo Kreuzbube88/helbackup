@@ -1,4 +1,3 @@
-// Force rebuild 2026-04-05
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Card } from '../components/common/Card'

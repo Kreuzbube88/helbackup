@@ -83,14 +83,12 @@ function updateBackupMetrics(): void {
   } catch { /* job_history table may not exist yet */ }
 }
 
-interface RecoveryRow { enabled: number }
-
 function updateRuntimeMetrics(): void {
   activeJobsGauge.set(activeExecutions.size)
 
   try {
-    const row = db.prepare('SELECT enabled FROM recovery_config LIMIT 1').get() as RecoveryRow | undefined
-    recoveryModeGauge.set(row?.enabled === 1 ? 1 : 0)
+    const row = db.prepare("SELECT value FROM settings WHERE key = 'recovery_mode'").get() as { value: string } | undefined
+    recoveryModeGauge.set(row?.value === '1' ? 1 : 0)
   } catch { /* table may not exist yet */ }
 }
 

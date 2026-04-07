@@ -161,10 +161,15 @@ await app.register(fastifyStatic, {
   decorateReply: false,
 })
 
+// Cache SPA index.html at startup to avoid synchronous reads on every 404
+let spaHtml: string | null = null
+try {
+  spaHtml = fs.readFileSync('/app/frontend/dist/index.html', 'utf-8')
+} catch { /* not available in dev */ }
+
 app.setNotFoundHandler(async (request, reply) => {
-  if (!request.url.startsWith('/api')) {
-    const html = fs.readFileSync('/app/frontend/dist/index.html', 'utf-8')
-    return reply.type('text/html').send(html)
+  if (!request.url.startsWith('/api') && spaHtml) {
+    return reply.type('text/html').send(spaHtml)
   }
   reply.status(404).send({ error: 'Not Found' })
 })

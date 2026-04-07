@@ -1,4 +1,5 @@
 import { type FastifyInstance } from 'fastify'
+import { randomUUID } from 'node:crypto'
 import fs from 'fs/promises'
 import path from 'path'
 import { verifyEncryptionPassword } from '../utils/encryptionKey.js'
@@ -62,7 +63,7 @@ export async function decryptionRoutes(app: FastifyInstance): Promise<void> {
       }
 
       const encryptedManifest = path.join(backupPath, 'manifest.json.gpg')
-      const tempManifest = `/tmp/manifest-${Date.now()}.json`
+      const tempManifest = `/tmp/manifest-${randomUUID()}.json`
 
       try {
         await decryptFileGPG(encryptedManifest, tempManifest, password)
@@ -94,7 +95,7 @@ export async function decryptionRoutes(app: FastifyInstance): Promise<void> {
       }
 
       const encryptedArchive = path.join(backupPath, 'backup-archive.tar.gz.gpg')
-      const tempArchive = `/tmp/backup-${Date.now()}.tar.gz`
+      const tempArchive = `/tmp/backup-${randomUUID()}.tar.gz`
 
       try {
         await decryptFileGPG(encryptedArchive, tempArchive, password)

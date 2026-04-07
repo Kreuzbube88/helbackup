@@ -1,4 +1,3 @@
-// Force rebuild 2026-04-05
 // DESIGN RULE ENFORCEMENT:
 // 1. NO browser alerts - use Toast/ConfirmModal
 // 2. ALL destructive actions require ConfirmModal

@@ -155,8 +155,8 @@ async function scanBackups(targetPath: string): Promise<BackupInfo[]> {
 }
 
 interface TargetRow {
-  id: number
-  path: string
+  id: string
+  config: string
   retention_scheme: string
   gfs_daily_keep: number
   gfs_weekly_keep: number
@@ -164,7 +164,7 @@ interface TargetRow {
 }
 
 export async function executeGFSCleanup(
-  targetId: number,
+  targetId: string,
   targetPath: string,
   dryRun: boolean
 ): Promise<GFSRetentionPlan> {

@@ -34,6 +34,13 @@ export async function executionRoutes(app: FastifyInstance): Promise<void> {
       const job = db.prepare('SELECT * FROM jobs WHERE id = ?').get(request.params.id) as JobRow | undefined
       if (!job) return reply.status(404).send({ error: 'Job not found' })
 
+      // Prevent concurrent execution of the same job
+      for (const [, engine] of activeExecutions) {
+        if (engine.getJobId() === job.id) {
+          return reply.status(409).send({ error: 'Job is already running' })
+        }
+      }
+
       let steps: JobStep[]
       try {
         steps = JSON.parse(job.steps) as JobStep[]

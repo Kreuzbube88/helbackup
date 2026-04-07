@@ -119,7 +119,7 @@ export async function gfsRetentionRoutes(app: FastifyInstance): Promise<void> {
         if (!target) return reply.status(404).send({ error: 'Target not found' })
 
         const plan = await executeGFSCleanup(
-          parseInt(request.params.targetId),
+          request.params.targetId,
           getTargetPath(target),
           true
         )
@@ -143,7 +143,7 @@ export async function gfsRetentionRoutes(app: FastifyInstance): Promise<void> {
         if (!target) return reply.status(404).send({ error: 'Target not found' })
 
         const plan = await executeGFSCleanup(
-          parseInt(request.params.targetId),
+          request.params.targetId,
           getTargetPath(target),
           false
         )
