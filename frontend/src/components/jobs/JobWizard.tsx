@@ -11,6 +11,7 @@ import { StepAdvanced } from './wizard/StepAdvanced'
 import { StepReview } from './wizard/StepReview'
 import type { AdvancedSettingsValue } from './AdvancedSettings'
 import type { ToolSelection } from '../tools/ToolSelector'
+import { cryptoUUID } from '../../utils/format'
 
 interface Props {
   job?: Job | null
@@ -50,19 +51,12 @@ const DEFAULT_ADVANCED: AdvancedSettingsValue = {
   useEncryption: false,
 }
 
-function crypto_uuid(): string {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
-    const r = Math.random() * 16 | 0
-    return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16)
-  })
-}
-
 function buildSteps(backupSteps: BackupStepsConfig, advanced: AdvancedSettingsValue, tools: ToolSelection): unknown[] {
   const steps: unknown[] = []
 
   if (backupSteps.flash) {
     steps.push({
-      id: crypto_uuid(), type: 'flash',
+      id: cryptoUUID(), type: 'flash',
       config: {
         source: '/unraid/boot',
         targetId: backupSteps.flash.targetId,
@@ -74,7 +68,7 @@ function buildSteps(backupSteps: BackupStepsConfig, advanced: AdvancedSettingsVa
 
   if (backupSteps.appdata) {
     steps.push({
-      id: crypto_uuid(), type: 'appdata',
+      id: cryptoUUID(), type: 'appdata',
       config: {
         source: '/unraid/user/appdata',
         targetId: backupSteps.appdata.targetId,
@@ -91,7 +85,7 @@ function buildSteps(backupSteps: BackupStepsConfig, advanced: AdvancedSettingsVa
 
   if (backupSteps.vms) {
     steps.push({
-      id: crypto_uuid(), type: 'vms',
+      id: cryptoUUID(), type: 'vms',
       config: {
         vms: backupSteps.vms.vms,
         destination: '/backups/vms',
@@ -105,7 +99,7 @@ function buildSteps(backupSteps: BackupStepsConfig, advanced: AdvancedSettingsVa
 
   if (backupSteps.docker_images) {
     steps.push({
-      id: crypto_uuid(), type: 'docker_images',
+      id: cryptoUUID(), type: 'docker_images',
       config: {
         images: backupSteps.docker_images.images,
         destination: '/backups/docker-images',
@@ -118,7 +112,7 @@ function buildSteps(backupSteps: BackupStepsConfig, advanced: AdvancedSettingsVa
 
   if (backupSteps.system_config) {
     steps.push({
-      id: crypto_uuid(), type: 'system_config',
+      id: cryptoUUID(), type: 'system_config',
       config: {
         destination: '/backups/system-config',
         targetId: backupSteps.system_config.targetId,
@@ -131,7 +125,7 @@ function buildSteps(backupSteps: BackupStepsConfig, advanced: AdvancedSettingsVa
 
   if (backupSteps.cloud) {
     steps.push({
-      id: crypto_uuid(), type: 'cloud',
+      id: cryptoUUID(), type: 'cloud',
       config: {
         source: backupSteps.cloud.sourcePath,
         remote: backupSteps.cloud.targetId,
@@ -144,7 +138,7 @@ function buildSteps(backupSteps: BackupStepsConfig, advanced: AdvancedSettingsVa
 
   if (backupSteps.custom) {
     steps.push({
-      id: crypto_uuid(), type: 'custom',
+      id: cryptoUUID(), type: 'custom',
       config: {
         sourcePath: backupSteps.custom.sourcePath,
         targetId: backupSteps.custom.targetId,

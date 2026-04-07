@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Button } from '../common/Button';
 import { useToast } from '../common/Toast';
 import { recovery as recoveryApi } from '../../api';
+import { formatBytes } from '../../utils/format';
 import VerifyBackup from './VerifyBackup';
 
 interface ContainerConfig {
@@ -103,13 +104,6 @@ export default function RestoreWizard({ manifest, onClose, onComplete }: Props) 
       toast(t('recovery.restore_error', { message: error instanceof Error ? error.message : String(error) }), 'error');
     }
   };
-
-  function formatBytes(bytes: number): string {
-    if (bytes < 1024) return `${bytes} B`
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
-    if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
-    return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)} GB`
-  }
 
   return (
     <div className="p-8 max-w-4xl mx-auto">

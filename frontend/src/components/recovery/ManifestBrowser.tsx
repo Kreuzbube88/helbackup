@@ -3,6 +3,7 @@ import { Lock, Search } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '../common/Button';
 import { recovery as recoveryApi } from '../../api';
+import { formatBytes } from '../../utils/format';
 import UnlockBackupDialog from '../encryption/UnlockBackupDialog';
 import DatabaseRestoreWizard from './DatabaseRestoreWizard';
 
@@ -104,13 +105,6 @@ export default function ManifestBrowser({ manifests, onSelect, onFullServerResto
     return new Date(dateStr).toLocaleString(undefined);
   };
 
-  const formatSize = (bytes: number) => {
-    if (bytes < 1024) return bytes + ' B';
-    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
-    if (bytes < 1024 * 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
-    return (bytes / (1024 * 1024 * 1024)).toFixed(2) + ' GB';
-  };
-
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
@@ -195,7 +189,7 @@ export default function ManifestBrowser({ manifests, onSelect, onFullServerResto
                       </div>
                       <div>
                         <span className="opacity-70">{t('recovery.total_size')}:</span>
-                        <span className="ml-2 font-bold">{formatSize(totalSize)}</span>
+                        <span className="ml-2 font-bold">{formatBytes(totalSize)}</span>
                       </div>
                     </div>
 

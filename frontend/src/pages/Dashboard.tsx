@@ -5,21 +5,13 @@ import {
   CheckCircle, AlertTriangle, XCircle, Activity,
   HardDrive, Briefcase, RefreshCw, Settings, Zap,
 } from 'lucide-react'
+import { formatBytes } from '../utils/format'
 import { Card } from '../components/common/Card'
 import { Button } from '../components/common/Button'
 import { ConfirmModal } from '../components/common/ConfirmModal'
 import { useToast } from '../components/common/Toast'
 import { FirstBackupWizard } from '../components/onboarding/FirstBackupWizard'
 import { api, dashboard as dashboardApi, type DashboardData } from '../api'
-
-function formatBytes(bytes: number): string {
-  if (bytes === 0) return '0 B'
-  const gb = bytes / (1024 ** 3)
-  if (gb >= 1) return `${gb.toFixed(2)} GB`
-  const mb = bytes / (1024 ** 2)
-  if (mb >= 1) return `${mb.toFixed(1)} MB`
-  return `${Math.round(bytes / 1024)} KB`
-}
 
 function formatDuration(seconds: number): string {
   if (seconds < 60) return `${seconds}s`
@@ -218,7 +210,7 @@ export function Dashboard() {
               <span className="font-mono">{data.successRate.failed}</span>
             </div>
             <div className="flex justify-between border-t border-[var(--border-default)] pt-1 mt-1">
-              <span>Total</span>
+              <span>{t('dashboard.total')}</span>
               <span className="font-mono">{data.successRate.total}</span>
             </div>
           </div>

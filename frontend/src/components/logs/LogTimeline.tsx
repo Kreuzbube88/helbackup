@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
+import { formatBytes } from '../../utils/format'
 
 export interface LogEntry {
   id: string
@@ -73,13 +74,6 @@ function LogLine({ log }: { log: LogEntry }) {
       )}
     </div>
   )
-}
-
-function formatBytes(b: number): string {
-  if (b < 1024) return `${b}B`
-  if (b < 1024 ** 2) return `${(b / 1024).toFixed(1)}KB`
-  if (b < 1024 ** 3) return `${(b / 1024 ** 2).toFixed(1)}MB`
-  return `${(b / 1024 ** 3).toFixed(2)}GB`
 }
 
 function formatSpeed(bps: number): string {

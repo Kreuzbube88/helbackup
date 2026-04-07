@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { Button } from '../common/Button'
 import { ConfirmModal } from '../common/ConfirmModal'
 import { recovery as recoveryApi, type RestoreOptions, type RestorePlan } from '../../api'
+import { formatBytes } from '../../utils/format'
 
 interface Manifest {
   backup_id?: string
@@ -28,12 +29,6 @@ const DEFAULT_OPTIONS: RestoreOptions = {
 }
 
 const OPTION_KEYS = Object.keys(DEFAULT_OPTIONS) as (keyof RestoreOptions)[]
-
-function formatBytes(bytes: number): string {
-  if (bytes === 0) return '0 B'
-  if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
-  return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)} GB`
-}
 
 function formatDuration(seconds: number): string {
   const m = Math.floor(seconds / 60)

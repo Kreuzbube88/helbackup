@@ -9,6 +9,7 @@ import { useToast } from '../common/Toast'
 import { CronBuilder } from '../jobs/wizard/CronBuilder'
 import { NASTargetForm, type NASPowerConfig } from '../targets/NASTargetForm'
 import { api } from '../../api'
+import { cryptoUUID } from '../../utils/format'
 
 type TargetType = 'local' | 'nas' | 'rclone'
 // Steps: 1=Target, 2=BackupTypes, 3=Schedule+Name, 4=Review, 5=Done
@@ -23,13 +24,6 @@ interface Props {
 
 const DEFAULT_NAS_POWER: NASPowerConfig = {
   enabled: false, mac: '', ip: '', ssh: { username: '' }, autoShutdown: false,
-}
-
-function crypto_uuid(): string {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
-    const r = Math.random() * 16 | 0
-    return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16)
-  })
 }
 
 export function FirstBackupWizard({ open, onClose, onSuccess }: Props) {
@@ -120,7 +114,7 @@ export function FirstBackupWizard({ open, onClose, onSuccess }: Props) {
       })
 
       const steps = Array.from(selectedTypes).map(type => {
-        const base = { id: crypto_uuid(), retry: { max_attempts: 2, backoff: 'linear' as const } }
+        const base = { id: cryptoUUID(), retry: { max_attempts: 2, backoff: 'linear' as const } }
         switch (type) {
           case 'flash':
             return { ...base, type: 'flash', config: { source: '/unraid/boot', targetId: target.id, useEncryption: false } }
