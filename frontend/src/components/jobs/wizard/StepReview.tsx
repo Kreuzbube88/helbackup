@@ -81,8 +81,8 @@ export function StepReview({ basicInfo, backupSteps, advanced, targets }: Props)
           {advanced.useDatabaseDumps && <p>✓ {t('use_database_dumps')}</p>}
           {advanced.useEncryption && <p>✓ {t('encrypt_backup')}</p>}
           {advanced.retentionDays && <p>✓ {t('delete_older_than_days')}: {advanced.retentionDays}d</p>}
-          {advanced.preBackupScript && <p>✓ Pre: {advanced.preBackupScript}</p>}
-          {advanced.postBackupScript && <p>✓ Post: {advanced.postBackupScript}</p>}
+          {advanced.preBackupScript && <p>✓ {t('pre_hook')}: {advanced.preBackupScript}</p>}
+          {advanced.postBackupScript && <p>✓ {t('post_hook')}: {advanced.postBackupScript}</p>}
         </div>
       </div>
     </div>

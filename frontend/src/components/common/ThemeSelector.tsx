@@ -4,12 +4,12 @@ import { Palette } from 'lucide-react'
 
 type Theme = 'blue' | 'purple' | 'green' | 'orange'
 
-const THEMES: { id: Theme; label: string; color: string; glow: string }[] = [
-  { id: 'blue',   label: 'Cyber Blue',    color: '#0EA5E9', glow: '#06B6D4' },
-  { id: 'purple', label: 'Neon Purple',   color: '#7C3AED', glow: '#D946EF' },
-  { id: 'green',  label: 'Matrix Green',  color: '#10B981', glow: '#059669' },
-  { id: 'orange', label: 'Fire Orange',   color: '#F97316', glow: '#F59E0B' },
-]
+const THEME_IDS = [
+  { id: 'blue' as Theme,   key: 'cyber_blue',   color: '#0EA5E9', glow: '#06B6D4' },
+  { id: 'purple' as Theme, key: 'neon_purple',  color: '#7C3AED', glow: '#D946EF' },
+  { id: 'green' as Theme,  key: 'matrix_green', color: '#10B981', glow: '#059669' },
+  { id: 'orange' as Theme, key: 'fire_orange',  color: '#F97316', glow: '#F59E0B' },
+] as const
 
 const STORAGE_KEY = 'helbackup_theme'
 
@@ -50,11 +50,11 @@ export function ThemeSelector({ compact = false }: ThemeSelectorProps) {
     return (
       <div className="flex gap-2 items-center">
         <Palette size={14} className="text-[var(--text-muted)]" />
-        {THEMES.map(th => (
+        {THEME_IDS.map(th => (
           <button
             key={th.id}
             onClick={() => setTheme(th.id)}
-            title={th.label}
+            title={t(`theme.${th.key}`)}
             className="w-5 h-5 rounded-full border-2 transition-all"
             style={{
               backgroundColor: th.color,
@@ -73,7 +73,7 @@ export function ThemeSelector({ compact = false }: ThemeSelectorProps) {
         {t('theme.label', { defaultValue: 'Theme' })}
       </label>
       <div className="grid grid-cols-2 gap-2">
-        {THEMES.map(th => (
+        {THEME_IDS.map(th => (
           <button
             key={th.id}
             onClick={() => setTheme(th.id)}
@@ -89,7 +89,7 @@ export function ThemeSelector({ compact = false }: ThemeSelectorProps) {
               className="w-4 h-4 shrink-0 rounded-full"
               style={{ backgroundColor: th.color, boxShadow: `0 0 6px ${th.glow}` }}
             />
-            {th.label}
+            {t(`theme.${th.key}`)}
           </button>
         ))}
       </div>

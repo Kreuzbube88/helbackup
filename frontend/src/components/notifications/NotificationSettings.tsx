@@ -18,16 +18,9 @@ const CHANNELS = [
 
 type ChannelId = typeof CHANNELS[number]['id']
 
-const EVENTS = [
-  { id: 'backup_success',      label: 'Backup Success' },
-  { id: 'backup_failed',       label: 'Backup Failed' },
-  { id: 'backup_started',      label: 'Backup Started' },
-  { id: 'backup_warning',      label: 'Backup Warning' },
-  { id: 'verification_failed', label: 'Verification Failed' },
-  { id: 'retention_cleanup',   label: 'Retention Cleanup' },
-  { id: 'restore_failed',      label: 'Restore Failed' },
-  { id: 'disk_space_low',      label: 'Disk Space Low' },
-  { id: 'system_error',        label: 'System Error' },
+const EVENT_IDS = [
+  'backup_success', 'backup_failed', 'backup_started', 'backup_warning',
+  'verification_failed', 'retention_cleanup', 'restore_failed', 'disk_space_low', 'system_error',
 ] as const
 
 const DEFAULT_EVENTS = ['backup_failed', 'verification_failed', 'system_error']
@@ -142,63 +135,62 @@ export function NotificationSettings() {
       case 'email':
         return (
           <div className="flex flex-col gap-3">
-            <Input label="SMTP Host" value={(cfg.host as string) ?? ''} onChange={e => setChannelConfig(c => ({ ...c, host: e.target.value }))} placeholder="smtp.gmail.com" />
-            <Input label="Port" type="number" value={(cfg.port as number) ?? 587} onChange={e => setChannelConfig(c => ({ ...c, port: parseInt(e.target.value) }))} />
+            <Input label={t('notifications.smtp_host')} value={(cfg.host as string) ?? ''} onChange={e => setChannelConfig(c => ({ ...c, host: e.target.value }))} placeholder="smtp.gmail.com" />
+            <Input label={t('notifications.port')} type="number" value={(cfg.port as number) ?? 587} onChange={e => setChannelConfig(c => ({ ...c, port: parseInt(e.target.value) }))} />
             <label className="flex items-center gap-2 text-sm text-[var(--text-secondary)]">
               <input type="checkbox" checked={(cfg.secure as boolean) ?? false} onChange={e => setChannelConfig(c => ({ ...c, secure: e.target.checked }))} />
-              Use TLS/SSL
+              {t('notifications.use_tls')}
             </label>
-            <Input label="Username" value={((cfg.auth as Record<string,string>)?.user) ?? ''} onChange={e => setNestedConfig(['auth', 'user'], e.target.value)} />
-            <Input label="Password" type="password" value={((cfg.auth as Record<string,string>)?.pass) ?? ''} onChange={e => setNestedConfig(['auth', 'pass'], e.target.value)} />
-            <Input label="From Address" value={(cfg.from as string) ?? ''} onChange={e => setChannelConfig(c => ({ ...c, from: e.target.value }))} placeholder="helbackup@example.com" />
-            <Input label="To Address" value={(cfg.to as string) ?? ''} onChange={e => setChannelConfig(c => ({ ...c, to: e.target.value }))} placeholder="admin@example.com" />
+            <Input label={t('notifications.username')} value={((cfg.auth as Record<string,string>)?.user) ?? ''} onChange={e => setNestedConfig(['auth', 'user'], e.target.value)} />
+            <Input label={t('notifications.password')} type="password" value={((cfg.auth as Record<string,string>)?.pass) ?? ''} onChange={e => setNestedConfig(['auth', 'pass'], e.target.value)} />
+            <Input label={t('notifications.from_address')} value={(cfg.from as string) ?? ''} onChange={e => setChannelConfig(c => ({ ...c, from: e.target.value }))} placeholder="helbackup@example.com" />
+            <Input label={t('notifications.to_address')} value={(cfg.to as string) ?? ''} onChange={e => setChannelConfig(c => ({ ...c, to: e.target.value }))} placeholder="admin@example.com" />
           </div>
         )
       case 'gotify':
         return (
           <div className="flex flex-col gap-3">
-            <Input label="Gotify URL" value={(cfg.url as string) ?? ''} onChange={e => setChannelConfig(c => ({ ...c, url: e.target.value }))} placeholder="https://gotify.example.com" />
-            <Input label="App Token" value={(cfg.token as string) ?? ''} onChange={e => setChannelConfig(c => ({ ...c, token: e.target.value }))} placeholder="AQr..." />
+            <Input label={t('notifications.server_url')} value={(cfg.url as string) ?? ''} onChange={e => setChannelConfig(c => ({ ...c, url: e.target.value }))} placeholder="https://gotify.example.com" />
+            <Input label={t('notifications.app_token')} value={(cfg.token as string) ?? ''} onChange={e => setChannelConfig(c => ({ ...c, token: e.target.value }))} placeholder="AQr..." />
           </div>
         )
       case 'ntfy':
         return (
           <div className="flex flex-col gap-3">
-            <Input label="ntfy Server URL" value={(cfg.url as string) ?? 'https://ntfy.sh'} onChange={e => setChannelConfig(c => ({ ...c, url: e.target.value }))} placeholder="https://ntfy.sh" />
-            <Input label="Topic" value={(cfg.topic as string) ?? ''} onChange={e => setChannelConfig(c => ({ ...c, topic: e.target.value }))} placeholder="helbackup-alerts" />
-            <Input label="Token (optional)" value={(cfg.token as string) ?? ''} onChange={e => setChannelConfig(c => ({ ...c, token: e.target.value }))} placeholder="tk_..." />
+            <Input label={t('notifications.server_url')} value={(cfg.url as string) ?? 'https://ntfy.sh'} onChange={e => setChannelConfig(c => ({ ...c, url: e.target.value }))} placeholder="https://ntfy.sh" />
+            <Input label={t('notifications.topic')} value={(cfg.topic as string) ?? ''} onChange={e => setChannelConfig(c => ({ ...c, topic: e.target.value }))} placeholder="helbackup-alerts" />
+            <Input label={t('notifications.token_optional')} value={(cfg.token as string) ?? ''} onChange={e => setChannelConfig(c => ({ ...c, token: e.target.value }))} placeholder="tk_..." />
           </div>
         )
       case 'pushover':
         return (
           <div className="flex flex-col gap-3">
-            <Input label="App Token" value={(cfg.token as string) ?? ''} onChange={e => setChannelConfig(c => ({ ...c, token: e.target.value }))} placeholder="azGDORePK8gMaC0..." />
-            <Input label="User Key" value={(cfg.user as string) ?? ''} onChange={e => setChannelConfig(c => ({ ...c, user: e.target.value }))} placeholder="uQiRzpo4DXghDm..." />
+            <Input label={t('notifications.app_token')} value={(cfg.token as string) ?? ''} onChange={e => setChannelConfig(c => ({ ...c, token: e.target.value }))} placeholder="azGDORePK8gMaC0..." />
+            <Input label={t('notifications.user_key')} value={(cfg.user as string) ?? ''} onChange={e => setChannelConfig(c => ({ ...c, user: e.target.value }))} placeholder="uQiRzpo4DXghDm..." />
           </div>
         )
       case 'telegram':
         return (
           <div className="flex flex-col gap-3">
-            <Input label="Bot Token" value={(cfg.botToken as string) ?? ''} onChange={e => setChannelConfig(c => ({ ...c, botToken: e.target.value }))} placeholder="123456789:ABCdefGHIjklMNOpqrsTUVwxyz1234567890" />
-            <Input label="Chat ID" value={(cfg.chatId as string) ?? ''} onChange={e => setChannelConfig(c => ({ ...c, chatId: e.target.value }))} placeholder="-1001234567890" />
+            <Input label={t('notifications.bot_token')} value={(cfg.botToken as string) ?? ''} onChange={e => setChannelConfig(c => ({ ...c, botToken: e.target.value }))} placeholder="123456789:ABCdefGHIjklMNOpqrsTUVwxyz1234567890" />
+            <Input label={t('notifications.chat_id')} value={(cfg.chatId as string) ?? ''} onChange={e => setChannelConfig(c => ({ ...c, chatId: e.target.value }))} placeholder="-1001234567890" />
             <p className="text-xs text-[var(--text-secondary)]">
-              Create a bot via @BotFather, start a chat, then get the chat_id from
-              https://api.telegram.org/bot&lt;TOKEN&gt;/getUpdates
+              {t('notifications.telegram_hint')}
             </p>
           </div>
         )
       case 'discord':
         return (
           <div className="flex flex-col gap-3">
-            <Input label="Webhook URL" value={(cfg.webhookUrl as string) ?? ''} onChange={e => setChannelConfig(c => ({ ...c, webhookUrl: e.target.value }))} placeholder="https://discord.com/api/webhooks/..." />
-            <p className="text-xs text-[var(--text-secondary)]">Server Settings → Integrations → Webhooks → New Webhook</p>
+            <Input label={t('notifications.webhook_url')} value={(cfg.webhookUrl as string) ?? ''} onChange={e => setChannelConfig(c => ({ ...c, webhookUrl: e.target.value }))} placeholder="https://discord.com/api/webhooks/..." />
+            <p className="text-xs text-[var(--text-secondary)]">{t('notifications.discord_hint')}</p>
           </div>
         )
       case 'slack':
         return (
           <div className="flex flex-col gap-3">
-            <Input label="Webhook URL" value={(cfg.webhookUrl as string) ?? ''} onChange={e => setChannelConfig(c => ({ ...c, webhookUrl: e.target.value }))} placeholder="https://hooks.slack.com/services/..." />
-            <p className="text-xs text-[var(--text-secondary)]">Workspace Settings → Apps → Incoming Webhooks</p>
+            <Input label={t('notifications.webhook_url')} value={(cfg.webhookUrl as string) ?? ''} onChange={e => setChannelConfig(c => ({ ...c, webhookUrl: e.target.value }))} placeholder="https://hooks.slack.com/services/..." />
+            <p className="text-xs text-[var(--text-secondary)]">{t('notifications.slack_hint')}</p>
           </div>
         )
     }
@@ -224,7 +216,7 @@ export function NotificationSettings() {
               >
                 <div className="font-medium text-sm">{ch.name}</div>
                 <div className="text-xs text-[var(--text-secondary)] mt-0.5">
-                  {row ? (row.enabled ? '● Enabled' : '○ Disabled') : 'Not configured'}
+                  {row ? (row.enabled ? t('notifications.status_enabled') : t('notifications.status_disabled')) : t('notifications.not_configured')}
                 </div>
               </button>
             )
@@ -257,15 +249,15 @@ export function NotificationSettings() {
                   {t('notifications.events')}
                 </p>
                 <div className="flex flex-col gap-1.5">
-                  {EVENTS.map(ev => (
-                    <label key={ev.id} className="flex items-center gap-2 text-sm cursor-pointer">
+                  {EVENT_IDS.map(ev => (
+                    <label key={ev} className="flex items-center gap-2 text-sm cursor-pointer">
                       <input
                         type="checkbox"
-                        checked={selectedEvents.includes(ev.id)}
-                        onChange={() => toggleEvent(ev.id)}
+                        checked={selectedEvents.includes(ev)}
+                        onChange={() => toggleEvent(ev)}
                         className="w-4 h-4"
                       />
-                      {ev.label}
+                      {t(`notifications.event_${ev}`)}
                     </label>
                   ))}
                 </div>

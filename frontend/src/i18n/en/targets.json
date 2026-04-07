@@ -20,5 +20,11 @@
   "updated": "Target updated successfully",
   "update_error": "Failed to update target",
   "retention": "Retention Settings",
-  "help_type": "Local: fastest, no network needed. NAS: backs up over SSH, supports Wake-on-LAN. Cloud: uses Rclone to sync to S3, Backblaze, Google Drive, and many others."
+  "help_type": "Local: fastest, no network needed. NAS: backs up over SSH, supports Wake-on-LAN. Cloud: uses Rclone to sync to S3, Backblaze, Google Drive, and many others.",
+  "path": "Path",
+  "host": "Host",
+  "port": "Port",
+  "remote_name": "Remote Name",
+  "remote_path": "Remote Path",
+  "keep_current_hint": "Leave blank to keep current"
 }

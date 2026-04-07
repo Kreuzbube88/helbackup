@@ -20,5 +20,11 @@
   "updated": "Ziel erfolgreich aktualisiert",
   "update_error": "Ziel konnte nicht aktualisiert werden",
   "retention": "Aufbewahrungseinstellungen",
-  "help_type": "Lokal: am schnellsten, kein Netzwerk nötig. NAS: sichert über SSH, unterstützt Wake-on-LAN. Cloud: verwendet Rclone zur Synchronisation mit S3, Backblaze, Google Drive und vielen anderen."
+  "help_type": "Lokal: am schnellsten, kein Netzwerk nötig. NAS: sichert über SSH, unterstützt Wake-on-LAN. Cloud: verwendet Rclone zur Synchronisation mit S3, Backblaze, Google Drive und vielen anderen.",
+  "path": "Pfad",
+  "host": "Host",
+  "port": "Port",
+  "remote_name": "Remote-Name",
+  "remote_path": "Remote-Pfad",
+  "keep_current_hint": "Leer lassen um aktuelles beizubehalten"
 }

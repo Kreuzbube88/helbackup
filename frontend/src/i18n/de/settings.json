@@ -2,7 +2,11 @@
   "title": "Einstellungen",
   "theme": {
     "label": "Farbschema",
-    "description": "Wähle ein Farbschema für die Benutzeroberfläche"
+    "description": "Wähle ein Farbschema für die Benutzeroberfläche",
+    "cyber_blue": "Cyber Blue",
+    "neon_purple": "Neon Purple",
+    "matrix_green": "Matrix Green",
+    "fire_orange": "Fire Orange"
   },
   "language": {
     "label": "Sprache",

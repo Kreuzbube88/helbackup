@@ -16,16 +16,16 @@ interface Props {
   onSuccess: () => void
 }
 
-const TARGET_TYPES = [
-  { value: 'local', label: 'Local Filesystem' },
-  { value: 'nas', label: 'NAS (SSH/Rsync)' },
-  { value: 'rclone', label: 'Cloud (Rclone)' },
-]
-
 type TargetType = 'local' | 'nas' | 'rclone'
 
 export function TargetCreateModal({ open, onClose, onSuccess }: Props) {
   const { t } = useTranslation('targets')
+
+  const TARGET_TYPES = [
+    { value: 'local', label: t('type_local') },
+    { value: 'nas', label: t('type_nas') },
+    { value: 'rclone', label: t('type_rclone') },
+  ]
   const { toast } = useToast()
   const [loading, setLoading] = useState(false)
   const [confirmClose, setConfirmClose] = useState(false)
@@ -123,16 +123,16 @@ export function TargetCreateModal({ open, onClose, onSuccess }: Props) {
         </div>
 
         {type === 'local' && (
-          <Input label="Path" value={localPath} onChange={e => setLocalPath(e.target.value)} required />
+          <Input label={t('path')} value={localPath} onChange={e => setLocalPath(e.target.value)} required />
         )}
 
         {type === 'nas' && (
           <>
-            <Input label="Host" value={nasHost} onChange={e => setNasHost(e.target.value)} required />
-            <Input label="Port" type="number" value={nasPort} onChange={e => setNasPort(Number(e.target.value))} />
+            <Input label={t('host')} value={nasHost} onChange={e => setNasHost(e.target.value)} required />
+            <Input label={t('port')} type="number" value={nasPort} onChange={e => setNasPort(Number(e.target.value))} />
             <Input label={t('common:nas.username')} value={nasUser} onChange={e => setNasUser(e.target.value)} required />
             <Input label={t('common:nas.password')} type="password" value={nasPass} onChange={e => setNasPass(e.target.value)} />
-            <Input label="Path" value={nasPath} onChange={e => setNasPath(e.target.value)} required />
+            <Input label={t('path')} value={nasPath} onChange={e => setNasPath(e.target.value)} required />
             <div className="border border-[var(--border-default)] p-3">
               <NASTargetForm value={nasPower} onChange={setNasPower} />
             </div>
@@ -141,8 +141,8 @@ export function TargetCreateModal({ open, onClose, onSuccess }: Props) {
 
         {type === 'rclone' && (
           <>
-            <Input label="Remote Name" value={remoteName} onChange={e => setRemoteName(e.target.value)} required />
-            <Input label="Remote Path" value={remotePath} onChange={e => setRemotePath(e.target.value)} required />
+            <Input label={t('remote_name')} value={remoteName} onChange={e => setRemoteName(e.target.value)} required />
+            <Input label={t('remote_path')} value={remotePath} onChange={e => setRemotePath(e.target.value)} required />
           </>
         )}
 

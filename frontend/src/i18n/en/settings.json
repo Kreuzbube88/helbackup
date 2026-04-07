@@ -2,7 +2,11 @@
   "title": "Settings",
   "theme": {
     "label": "Color Theme",
-    "description": "Choose a color theme for the interface"
+    "description": "Choose a color theme for the interface",
+    "cyber_blue": "Cyber Blue",
+    "neon_purple": "Neon Purple",
+    "matrix_green": "Matrix Green",
+    "fire_orange": "Fire Orange"
   },
   "language": {
     "label": "Language",

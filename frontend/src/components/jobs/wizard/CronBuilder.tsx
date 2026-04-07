@@ -20,16 +20,6 @@ const MINUTES = [0, 5, 10, 15, 20, 30, 45].map(m => ({
   label: String(m).padStart(2, '0'),
 }))
 
-const WEEKDAYS = [
-  { value: '1', label: 'Monday' },
-  { value: '2', label: 'Tuesday' },
-  { value: '3', label: 'Wednesday' },
-  { value: '4', label: 'Thursday' },
-  { value: '5', label: 'Friday' },
-  { value: '6', label: 'Saturday' },
-  { value: '0', label: 'Sunday' },
-]
-
 const MONTHDAYS = Array.from({ length: 28 }, (_, i) => ({
   value: String(i + 1),
   label: String(i + 1),
@@ -58,6 +48,17 @@ function parseCronParts(cron: string | null) {
 
 export function CronBuilder({ value, onChange }: Props) {
   const { t } = useTranslation('jobs')
+
+  const WEEKDAYS = [
+    { value: '1', label: t('cron_monday') },
+    { value: '2', label: t('cron_tuesday') },
+    { value: '3', label: t('cron_wednesday') },
+    { value: '4', label: t('cron_thursday') },
+    { value: '5', label: t('cron_friday') },
+    { value: '6', label: t('cron_saturday') },
+    { value: '0', label: t('cron_sunday') },
+  ]
+
   const initial = parseCronParts(value)
   const [preset, setPreset] = useState<Preset>(() => detectPreset(value))
   const [hour, setHour] = useState(initial.hour)

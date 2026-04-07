@@ -111,5 +111,15 @@
   "cron_expression": "Cron expression",
   "help_name": "Give this job a descriptive name so you can identify it easily in the dashboard and history.",
   "help_schedule": "Set how often this backup should run automatically. Leave on \"Manual\" if you want to trigger it yourself.",
-  "help_backup_types": "Each backup type backs up a different part of your Unraid system. You can enable as many as you need — each one can be configured to use a different target."
+  "help_backup_types": "Each backup type backs up a different part of your Unraid system. You can enable as many as you need — each one can be configured to use a different target.",
+  "cron_monday": "Monday",
+  "cron_tuesday": "Tuesday",
+  "cron_wednesday": "Wednesday",
+  "cron_thursday": "Thursday",
+  "cron_friday": "Friday",
+  "cron_saturday": "Saturday",
+  "cron_sunday": "Sunday",
+  "pre_hook": "Pre-backup",
+  "post_hook": "Post-backup",
+  "total": "Total"
 }
