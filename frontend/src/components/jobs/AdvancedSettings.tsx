@@ -84,7 +84,7 @@ export default function AdvancedSettings({ value, onChange }: Props) {
               retentionDays: e.target.value ? parseInt(e.target.value) : undefined,
             })}
             placeholder="30"
-            className="w-full border border-[var(--border-default)] bg-[var(--bg-input)] px-3 py-2"
+            className="w-full border border-[var(--border-default)] bg-[var(--bg-secondary)] px-3 py-2"
           />
         </div>
 
@@ -100,7 +100,7 @@ export default function AdvancedSettings({ value, onChange }: Props) {
               ...value,
               retentionMinimum: parseInt(e.target.value) || 3,
             })}
-            className="w-full border border-[var(--border-default)] bg-[var(--bg-input)] px-3 py-2"
+            className="w-full border border-[var(--border-default)] bg-[var(--bg-secondary)] px-3 py-2"
           />
         </div>
       </div>
@@ -152,7 +152,7 @@ export default function AdvancedSettings({ value, onChange }: Props) {
             value={value.preBackupScript ?? ''}
             onChange={(e) => onChange({ ...value, preBackupScript: e.target.value || undefined })}
             placeholder="/mnt/user/scripts/pre-backup.sh"
-            className="w-full border border-[var(--border-default)] bg-[var(--bg-input)] px-3 py-2 font-mono text-sm"
+            className="w-full border border-[var(--border-default)] bg-[var(--bg-secondary)] px-3 py-2 font-mono text-sm"
           />
         </div>
 
@@ -165,7 +165,7 @@ export default function AdvancedSettings({ value, onChange }: Props) {
             value={value.postBackupScript ?? ''}
             onChange={(e) => onChange({ ...value, postBackupScript: e.target.value || undefined })}
             placeholder="/mnt/user/scripts/post-backup.sh"
-            className="w-full border border-[var(--border-default)] bg-[var(--bg-input)] px-3 py-2 font-mono text-sm"
+            className="w-full border border-[var(--border-default)] bg-[var(--bg-secondary)] px-3 py-2 font-mono text-sm"
           />
         </div>
       </div>

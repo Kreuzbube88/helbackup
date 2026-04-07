@@ -53,9 +53,8 @@ export function LogsPage() {
         if (!cancelled) attachSseHandlers(new EventSource(`/api/logs/${runId}/stream?sseToken=${encodeURIComponent(sseToken)}`))
       })
       .catch(() => {
-        if (cancelled) return
-        const token = localStorage.getItem('helbackup_token') ?? sessionStorage.getItem('helbackup_token')
-        attachSseHandlers(new EventSource(`/api/logs/${runId}/stream${token ? `?token=${encodeURIComponent(token)}` : ''}`))
+        // Do not fall back to passing JWT in URL — it would leak in logs/history
+        if (!cancelled) setIsLive(false)
       })
 
     return () => { cancelled = true; esRef?.close() }

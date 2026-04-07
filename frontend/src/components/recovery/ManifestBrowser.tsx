@@ -267,9 +267,14 @@ export default function ManifestBrowser({ manifests, onSelect, onFullServerResto
       )}
 
       {dbRestoreManifest && (() => {
-        const parsed: ParsedManifest = typeof dbRestoreManifest.manifest === 'string'
-          ? JSON.parse(dbRestoreManifest.manifest) as ParsedManifest
-          : dbRestoreManifest as ParsedManifest;
+        let parsed: ParsedManifest;
+        try {
+          parsed = typeof dbRestoreManifest.manifest === 'string'
+            ? JSON.parse(dbRestoreManifest.manifest) as ParsedManifest
+            : dbRestoreManifest as ParsedManifest;
+        } catch {
+          return null;
+        }
         return (
           <div className="mt-6">
             <DatabaseRestoreWizard

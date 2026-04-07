@@ -262,7 +262,7 @@ export default function FullServerRestoreWizard({ manifest, onClose }: Props) {
         </div>
 
         <div className="flex gap-4">
-          <Button variant="primary" onClick={() => navigate('/logs')} className="flex-1">
+          <Button variant="primary" onClick={() => navigate('/history')} className="flex-1">
             {t('recovery.view_logs')}
           </Button>
           <Button variant="secondary" onClick={onClose} className="flex-1">
