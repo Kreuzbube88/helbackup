@@ -130,7 +130,23 @@ export default async function recoveryRoutes(app: FastifyInstance) {
 
         await scanDir(scanPath);
 
-        return reply.send({ manifests, count: manifests.length });
+        // Import found manifests into DB (skip duplicates)
+        let imported = 0;
+        for (const m of manifests) {
+          const backupId = (m.backupId ?? m.backup_id ?? randomUUID()) as string;
+          const jobId = (m.jobId ?? m.job_id ?? 'unknown') as string;
+          const timestamp = (m.timestamp ?? m.created_at ?? new Date().toISOString()) as string;
+          const exists = db.prepare('SELECT 1 FROM manifest WHERE backup_id = ?').get(backupId);
+          if (!exists) {
+            db.prepare(
+              'INSERT INTO manifest (backup_id, job_id, manifest, created_at) VALUES (?, ?, ?, ?)'
+            ).run(backupId, jobId, JSON.stringify(m), timestamp);
+            imported++;
+          }
+        }
+        logger.info(`[recovery/scan] Found ${manifests.length} manifests, imported ${imported} new`);
+
+        return reply.send({ manifests, count: manifests.length, imported });
       } catch (error: unknown) {
         return reply.status(500).send({ error: error instanceof Error ? error.message : String(error) });
       }

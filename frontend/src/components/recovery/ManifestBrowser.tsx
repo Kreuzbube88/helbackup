@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { Lock } from 'lucide-react';
+import { Lock, Search } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '../common/Button';
+import { recovery as recoveryApi } from '../../api';
 import UnlockBackupDialog from '../encryption/UnlockBackupDialog';
 import DatabaseRestoreWizard from './DatabaseRestoreWizard';
 
@@ -46,6 +47,27 @@ export default function ManifestBrowser({ manifests, onSelect, onFullServerResto
   const [pendingEncrypted, setPendingEncrypted] = useState<Manifest | null>(null);
   const [unlockedSessions, setUnlockedSessions] = useState<Map<string, string>>(new Map());
   const [dbRestoreManifest, setDbRestoreManifest] = useState<Manifest | null>(null);
+  const [scanPath, setScanPath] = useState('');
+  const [scanning, setScanning] = useState(false);
+  const [scanError, setScanError] = useState<string | null>(null);
+
+  const handleScan = async () => {
+    if (!scanPath.trim()) return;
+    setScanning(true);
+    setScanError(null);
+    try {
+      const result = await recoveryApi.scan(scanPath.trim());
+      if (result.count === 0) {
+        setScanError(t('recovery.scan_no_results'));
+      } else {
+        onRefresh();
+      }
+    } catch (err: unknown) {
+      setScanError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setScanning(false);
+    }
+  };
 
   const getBackupId = (m: Manifest) => m.backup_id ?? m.backupId ?? '';
 
@@ -99,8 +121,25 @@ export default function ManifestBrowser({ manifests, onSelect, onFullServerResto
       </div>
 
       {manifests.length === 0 ? (
-        <div className="border-2 border-[var(--border-default)] p-8 text-center">
+        <div className="border-2 border-[var(--border-default)] p-8 text-center space-y-6">
           <p className="text-lg opacity-70">{t('recovery.no_backups_found')}</p>
+          <div className="max-w-md mx-auto space-y-3">
+            <p className="text-sm text-[var(--text-secondary)]">{t('recovery.scan_hint')}</p>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={scanPath}
+                onChange={e => setScanPath(e.target.value)}
+                placeholder={t('recovery.scan_path_placeholder')}
+                className="flex-1 px-3 py-2 text-sm bg-[var(--bg-elevated)] border border-[var(--border-default)] text-[var(--text-primary)] placeholder:text-[var(--text-muted)]"
+              />
+              <Button variant="primary" onClick={handleScan} disabled={scanning || !scanPath.trim()}>
+                <Search size={14} />
+                {scanning ? t('recovery.scanning') : t('recovery.scan')}
+              </Button>
+            </div>
+            {scanError && <p className="text-sm text-red-400">{scanError}</p>}
+          </div>
         </div>
       ) : (
         <div className="space-y-4">

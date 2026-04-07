@@ -50,6 +50,7 @@ export default function RecoveryPage() {
     try {
       await recoveryApi.enable();
       setIsRecoveryMode(true);
+      await loadManifests();
       toast(t('recovery.recovery_mode_enabled'), 'success');
     } catch (error: unknown) {
       toast(`${t('recovery.failed_enable')}: ${error instanceof Error ? error.message : String(error)}`, 'error');

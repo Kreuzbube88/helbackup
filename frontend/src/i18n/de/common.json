@@ -214,7 +214,12 @@
     "failed_enable": "Recovery Modus konnte nicht aktiviert werden",
     "recovery_mode_disabled": "Recovery Modus beendet",
     "failed_disable": "Recovery Modus konnte nicht beendet werden",
-    "restore_error": "Fehler: {{message}}"
+    "restore_error": "Fehler: {{message}}",
+    "scan_hint": "Backup-Verzeichnis scannen, um Manifests zu finden:",
+    "scan_path_placeholder": "z.B. /mnt/user/backup",
+    "scan": "Scannen",
+    "scanning": "Scanne...",
+    "scan_no_results": "Keine Manifests im angegebenen Pfad gefunden"
   },
   "setup": {
     "welcome": "Willkommen bei HELBACKUP",
