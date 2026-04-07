@@ -96,13 +96,10 @@ Full documentation is available in the [`docs/`](docs/README.md) folder in both 
 
 ## Requirements
 
-- **Unraid 6.12** or newer
-- **RAM:** ~256 MB reserved for the container
-- **Disk:** ~250 MB for the container image + space for appdata/logs (typically a few MB)
-- **Port 3000** available on the host (configurable)
 - **Docker socket** `/var/run/docker.sock` — required for container stop/start during backups
 - **Host mounts** `/boot` and `/mnt/user` — required for Flash Drive and Appdata/VM restore
 - **Network access** — required for NAS targets (SSH/Rsync), cloud targets (Rclone), Wake-on-LAN
+- **VM backups (optional):** Libvirt socket `/var/run/libvirt/libvirt-sock` and config mount `/etc/libvirt` — required for VM stop/start and XML export
 - Community Apps plugin (only required for store installation)
 
 ---
