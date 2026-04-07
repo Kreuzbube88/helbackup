@@ -59,23 +59,32 @@ services:
     privileged: false
     ports:
       - "3000:3000"
+    environment:
+      - JWT_SECRET=your_secret_here   # openssl rand -hex 32
+      - SECURE_COOKIES=false          # true when using HTTPS via reverse proxy
+      - TZ=Europe/Berlin
+      - LOG_LEVEL=info
+      - PUID=99
+      - PGID=100
+      - LIBVIRT_DEFAULT_URI=qemu:///system
     volumes:
-      - /mnt/user/appdata/helbackup/data:/app/data
       - /mnt/user/appdata/helbackup/config:/app/config
+      - /mnt/user/appdata/helbackup/data:/app/data
       - /mnt/user/appdata/helbackup/logs:/app/logs
       - /var/run/docker.sock:/var/run/docker.sock
-      - /boot:/unraid/boot:ro
-      - /mnt/user:/unraid/user:ro
+      - /boot:/unraid/boot                          # rw — required for Flash restore
+      - /mnt/user:/mnt/host/user                    # rw — required for Appdata/VM restore
+      # Optional — required for VM backups:
+      # - /mnt/cache:/mnt/cache:ro
+      # - /etc/libvirt:/unraid/libvirt:ro
+      # - /var/run/libvirt/libvirt-sock:/var/run/libvirt/libvirt-sock
 ```
-
 
 ---
 
 ## Quick Start
 
 After installation, open the web UI and follow the **onboarding wizard** — it walks you through creating your first backup target and job in under 5 minutes. You can also launch it anytime via the **Quick Start Guide** button on the Dashboard.
-
-For full documentation see [docs/](docs/README.md).
 
 ---
 

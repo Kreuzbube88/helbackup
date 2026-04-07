@@ -3,20 +3,25 @@ services:
     image: ghcr.io/kreuzbube88/helbackup:latest
     container_name: helbackup
     restart: unless-stopped
-    privileged: true                    # Required for /boot access
+    privileged: false
     ports:
       - "3000:3000"
     environment:
       - JWT_SECRET=${JWT_SECRET:?Set JWT_SECRET in .env}
+      - SECURE_COOKIES=${SECURE_COOKIES:-false}
       - TZ=${TZ:-Europe/Berlin}
       - LOG_LEVEL=${LOG_LEVEL:-info}
+      - PUID=${PUID:-99}
+      - PGID=${PGID:-100}
       - LIBVIRT_DEFAULT_URI=qemu:///system
     volumes:
       - /mnt/user/appdata/helbackup/config:/app/config
       - /mnt/user/appdata/helbackup/data:/app/data
       - /mnt/user/appdata/helbackup/logs:/app/logs
-      - /boot:/unraid/boot:ro
-      - /mnt/user:/unraid/user:ro
       - /var/run/docker.sock:/var/run/docker.sock
-      - /etc/libvirt:/unraid/libvirt:ro
-      - /var/run/libvirt/libvirt-sock:/var/run/libvirt/libvirt-sock
+      - /boot:/unraid/boot
+      - /mnt/user:/mnt/host/user
+      # Optional — required for VM backups:
+      # - /mnt/cache:/mnt/cache:ro
+      # - /etc/libvirt:/unraid/libvirt:ro
+      # - /var/run/libvirt/libvirt-sock:/var/run/libvirt/libvirt-sock

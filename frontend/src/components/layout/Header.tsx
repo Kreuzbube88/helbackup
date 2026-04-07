@@ -11,9 +11,14 @@ export function Header() {
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
 
   return (
-    <header className="h-14 bg-[var(--bg-secondary)] border-b border-[var(--border-default)] flex items-center justify-end px-6 shrink-0">
+    <header className="h-14 bg-[var(--bg-secondary)] border-b border-[var(--border-default)] flex items-center justify-between shrink-0">
+      {/* Left: Logo aligned with sidebar */}
+      <div className="w-56 flex items-center justify-center shrink-0">
+        <img src="/favicon.png" alt="" className="h-7 w-7" />
+      </div>
+
       {/* Right: Theme + User */}
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-4 px-6">
         <ThemeSelector compact />
 
         <div className="flex items-center gap-2 text-sm text-[var(--text-secondary)]">
