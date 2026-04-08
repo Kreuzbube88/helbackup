@@ -74,11 +74,10 @@ export async function nasRoutes(app: FastifyInstance): Promise<void> {
         const safeName = host.replace(/[^a-z0-9]/gi, '_')
         const keyPath = `/app/config/ssh/nas_${safeName}`
         await fs.mkdir('/app/config/ssh', { recursive: true })
-        await execFileAsync('ssh-keygen', ['-t', 'ed25519', '-f', keyPath, '-N', '', '-C', `helbackup@${host}`, '-q'])
-          .catch((err: unknown) => {
-            const msg = err instanceof Error ? err.message : String(err)
-            if (!msg.includes('already exists')) throw err
-          })
+        const keyExists = await fs.access(keyPath).then(() => true).catch(() => false)
+        if (!keyExists) {
+          await execFileAsync('ssh-keygen', ['-t', 'ed25519', '-f', keyPath, '-N', '', '-C', `helbackup@${host}`, '-q'])
+        }
         await fs.chmod(keyPath, 0o600)
         const pubKey = await fs.readFile(`${keyPath}.pub`, 'utf-8')
         await deployPublicKey({ host, port, username, password }, pubKey.trim())
