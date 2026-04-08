@@ -111,17 +111,14 @@ export async function deployPublicKey(config: SSHConfig, publicKey: string): Pro
       // Create home dir if missing (Synology: /var/services/homes/<user> not created until User Home service enabled)
       // then append public key to authorized_keys idempotently
       const key = publicKey.trim()
-      // Use printf instead of echo to avoid interpretation of escape sequences
-      // Resolve $HOME via passwd to avoid mismatches between SSH-session $HOME and sshd's AuthorizedKeysFile lookup
       const cmd = [
-        // Fix home dir if missing (Synology: not created until User Home service is enabled); run in subshell so && chain continues regardless
-        '( [ -d "$HOME" ] || { sudo mkdir -p "$HOME" && sudo chown "$(id -u):$(id -g)" "$HOME"; } ) 2>/dev/null; true',
-        // Remove group/other write bits — SSH StrictModes rejects keys when home dir is g/o-writable (Synology default: 777)
-        'chmod g-w,o-w "$HOME" 2>/dev/null; true',
         'mkdir -p "$HOME/.ssh"',
         'chmod 700 "$HOME/.ssh"',
         `grep -qxF '${key}' "$HOME/.ssh/authorized_keys" 2>/dev/null || printf '%s\\n' '${key}' >> "$HOME/.ssh/authorized_keys"`,
         'chmod 600 "$HOME/.ssh/authorized_keys"',
+        // SSH StrictModes rejects keys when home dir is group/world-writable (Synology default: 777)
+        // Non-fatal: admin connecting to /root won't own it
+        'chmod go-w "$HOME" 2>/dev/null || true',
       ].join(' && ')
       conn.exec(cmd, (err, stream) => {
         if (err) { conn.end(); reject(err); return }
