@@ -120,11 +120,17 @@ export async function deployPublicKey(config: SSHConfig, publicKey: string): Pro
       ].join(' && ')
       conn.exec(cmd, (err, stream) => {
         if (err) { conn.end(); reject(err); return }
+        const timeout = setTimeout(() => {
+          conn.end()
+          reject(new Error('deploy-key timed out after 30s'))
+        }, 30_000)
         stream.on('close', (code: number) => {
+          clearTimeout(timeout)
           conn.end()
           if (code === 0) resolve()
           else reject(new Error(`Failed to deploy public key, exit code ${code}`))
         })
+        stream.on('data', () => { /* drain stdout */ })
         stream.stderr.on('data', (d: Buffer) => logger.warn(`deploy-key stderr: ${d.toString().trim()}`))
       })
     })
