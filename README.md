@@ -106,4 +106,4 @@ Full documentation is available in the [`docs/`](docs/README.md) folder in both 
 
 ## License
 
-MIT © 2024 HEL*Apps
+MIT © HEL*Apps
