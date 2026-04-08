@@ -46,7 +46,7 @@ export async function executeRsync(options: RsyncOptions): Promise<RsyncResult> 
       const portFlag = options.sshPort && options.sshPort !== 22 ? ` -p ${options.sshPort}` : ''
       // Prefer key auth over password — key takes priority if both are configured
       const sshCmd = options.sshKey
-        ? `ssh${portFlag} -v -i '${options.sshKey.replace(/'/g, "'\\''")}' -o StrictHostKeyChecking=no -o BatchMode=yes -o PasswordAuthentication=no -o KbdInteractiveAuthentication=no`
+        ? `ssh${portFlag} -i '${options.sshKey.replace(/'/g, "'\\''")}' -o StrictHostKeyChecking=no -o BatchMode=yes -o PasswordAuthentication=no -o KbdInteractiveAuthentication=no`
         : options.sshPassword
           ? `sshpass -e ssh${portFlag} -o StrictHostKeyChecking=no`
           : `ssh${portFlag} -o StrictHostKeyChecking=no`
