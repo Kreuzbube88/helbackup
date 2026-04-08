@@ -8,12 +8,20 @@ export interface WakeOptions {
   timeout?: number
 }
 
+function getBroadcastAddress(ip: string): string {
+  const parts = ip.split('.')
+  if (parts.length !== 4) return '255.255.255.255'
+  parts[3] = '255'
+  return parts.join('.')
+}
+
 export async function wakeNAS(options: WakeOptions): Promise<void> {
   const timeout = options.timeout ?? 300000
+  const broadcastAddress = options.ip ? getBroadcastAddress(options.ip) : '255.255.255.255'
 
   await new Promise<void>((resolve, reject) => {
-    logger.info(`Sending Wake-on-LAN magic packet to ${options.mac}`)
-    wol.wake(options.mac, (error: Error | null) => {
+    logger.info(`Sending Wake-on-LAN magic packet to ${options.mac} via ${broadcastAddress}`)
+    wol.wake(options.mac, { address: broadcastAddress }, (error: Error | null) => {
       if (error) {
         logger.error(`Wake-on-LAN failed: ${error.message}`)
         reject(error)
