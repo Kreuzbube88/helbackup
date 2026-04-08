@@ -169,6 +169,7 @@ export async function executeVMBackup(
               source: diskPath,
               destination: diskDestPath,
               onProgress: (() => { let last = -1; return (data: { percent: number; speed: string; transferred: string }) => {
+                if (data.percent < last) last = -1
                 if (Math.floor(data.percent / 10) > Math.floor(last / 10)) {
                   last = data.percent
                   engine.log('info', 'system', `Progress: ${data.percent}% - ${data.speed}`, undefined, {

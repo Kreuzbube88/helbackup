@@ -116,10 +116,17 @@ export async function createJobManifest(
   engine.log('info', 'system', 'Creating job manifest...')
 
   const allEntries: ManifestEntry[] = []
-  for (const { path: stepPath } of stepPaths) {
-    try {
-      await scanDir(stepPath, stepPath, allEntries)
-    } catch { /* path might not exist or not be local */ }
+  for (const { path: stepPath, checksums: precomputed } of stepPaths) {
+    if (precomputed) {
+      // NAS backup — local temp dir already deleted; derive entries from checksums (have path + size)
+      for (const c of precomputed) {
+        allEntries.push({ path: c.path, size: c.size })
+      }
+    } else {
+      try {
+        await scanDir(stepPath, stepPath, allEntries)
+      } catch { /* path might not exist or not be local */ }
+    }
   }
 
   let containerConfigs: unknown[] | undefined

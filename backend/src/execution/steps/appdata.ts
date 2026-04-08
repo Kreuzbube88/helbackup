@@ -194,9 +194,9 @@ export async function executeAppdataBackup(
       const result = await executeRsync({
         source: config.source,
         destination: workDir,
-        bwLimit: 51200,
         excludePatterns: ['*/logs/*', '*/cache/*', '*/*.log', '*.sock', '*.socket', ...containerExclusions],
         onProgress: (() => { let last = -1; return ({ percent, speed }: { percent: number; speed: string }) => {
+          if (percent < last) last = -1
           if (Math.floor(percent / 10) > Math.floor(last / 10)) { last = percent; engine.log('info', 'system', `Progress: ${percent}% — ${speed}`) }
         } })(),
       })
@@ -219,8 +219,8 @@ export async function executeAppdataBackup(
             await executeRsync({
               source: volumePath,
               destination: volumeDestPath,
-              bwLimit: 51200,
               onProgress: (() => { let last = -1; return ({ percent }: { percent: number }) => {
+                if (percent < last) last = -1
                 if (Math.floor(percent / 10) > Math.floor(last / 10)) { last = percent; engine.log('info', 'system', `External volume progress: ${percent}%`) }
               } })(),
             })

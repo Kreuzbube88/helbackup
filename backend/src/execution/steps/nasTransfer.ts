@@ -61,10 +61,10 @@ export async function transferAndCleanup(
     sshPassword: nasConfig.password,
     sshKey: nasConfig.privateKey,
     sshPort: nasConfig.port,
-    bwLimit: 51200,
     onProgress: (() => {
       let last = -1
       return ({ percent, speed }: { percent: number; speed: string }) => {
+        if (percent < last) last = -1  // new file started — reset throttle
         if (Math.floor(percent / 10) > Math.floor(last / 10)) {
           last = percent
           engine.log('info', 'system', `Transfer: ${percent}% — ${speed}`)
