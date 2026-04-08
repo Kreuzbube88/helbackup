@@ -3,7 +3,7 @@ import { execFile } from 'node:child_process'
 import { promisify } from 'node:util'
 import fs from 'fs/promises'
 import { wakeNAS } from '../nas/wol.js'
-import { deployPublicKey, type SSHConfig } from '../nas/ssh.js'
+import { testSSHConnection, deployPublicKey, type SSHConfig } from '../nas/ssh.js'
 
 const execFileAsync = promisify(execFile)
 
