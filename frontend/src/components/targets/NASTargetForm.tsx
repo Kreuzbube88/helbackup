@@ -88,10 +88,10 @@ export function NASTargetForm({ value, onChange, sshHost, sshUsername, sshPasswo
               />
             </div>
             <div className="flex items-center gap-3">
-              <Button variant="secondary" size="sm" onClick={handleTestWoL} loading={wolTesting}>
+              <Button type="button" variant="secondary" size="sm" onClick={handleTestWoL} loading={wolTesting}>
                 {t('nas.test_wol')}
               </Button>
-              <Button variant="secondary" size="sm" onClick={handleTestSSH} loading={sshTesting} disabled={!sshUsername}>
+              <Button type="button" variant="secondary" size="sm" onClick={handleTestSSH} loading={sshTesting} disabled={!sshUsername}>
                 {t('nas.test_ssh')}
               </Button>
               {wolResult !== null && (
