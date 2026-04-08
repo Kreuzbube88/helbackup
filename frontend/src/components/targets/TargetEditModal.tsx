@@ -17,7 +17,7 @@ interface Props {
   onSuccess: () => void
 }
 
-type TargetType = 'local' | 'nas' | 'rclone'
+type TargetType = 'local' | 'nas'
 
 export function TargetEditModal({ target, open, onClose, onSuccess }: Props) {
   const { t } = useTranslation('targets')
@@ -25,7 +25,6 @@ export function TargetEditModal({ target, open, onClose, onSuccess }: Props) {
   const TARGET_TYPES = [
     { value: 'local', label: t('type_local') },
     { value: 'nas',   label: t('type_nas') },
-    { value: 'rclone',label: t('type_rclone') },
   ]
   const { toast } = useToast()
   const [loading, setLoading] = useState(false)
@@ -47,9 +46,6 @@ export function TargetEditModal({ target, open, onClose, onSuccess }: Props) {
   const [nasPower, setNasPower] = useState<NASPowerConfig>({
     enabled: false, mac: '', ip: '', autoShutdown: false,
   })
-  const [remoteName, setRemoteName] = useState('')
-  const [remotePath, setRemotePath] = useState('')
-
   useEffect(() => {
     if (!target) return
     setName(target.name)
@@ -71,9 +67,6 @@ export function TargetEditModal({ target, open, onClose, onSuccess }: Props) {
       setNasPower((cfg.power as NASPowerConfig | undefined) ?? {
         enabled: false, mac: '', ip: '', autoShutdown: false,
       })
-    } else if (t2 === 'rclone') {
-      setRemoteName((cfg.remoteName as string) ?? '')
-      setRemotePath((cfg.remotePath as string) ?? '')
     }
   }, [target])
 
@@ -88,10 +81,6 @@ export function TargetEditModal({ target, open, onClose, onSuccess }: Props) {
       nasPass !== '' ||
       nasPath !== ((target.config.path as string) ?? '')
     )) ||
-    (type === 'rclone' && (
-      remoteName !== ((target.config.remoteName as string) ?? '') ||
-      remotePath !== ((target.config.remotePath as string) ?? '')
-    ))
   )
 
   async function handleSetupSshKey() {
@@ -116,7 +105,6 @@ export function TargetEditModal({ target, open, onClose, onSuccess }: Props) {
     switch (type) {
       case 'local':  return { path: localPath }
       case 'nas':    return { host: nasHost, port: nasPort, username: nasUser, ...(nasPass ? { password: nasPass } : {}), ...(nasPrivateKey ? { privateKey: nasPrivateKey } : {}), ...(nasType ? { nasType } : {}), path: nasPath, power: nasPower }
-      case 'rclone': return { remoteName, remotePath, provider: 'generic' }
     }
   }
 
@@ -205,12 +193,6 @@ export function TargetEditModal({ target, open, onClose, onSuccess }: Props) {
           </>
         )}
 
-        {type === 'rclone' && (
-          <>
-            <Input label={t('remote_name')} value={remoteName} onChange={e => setRemoteName(e.target.value)} required />
-            <Input label={t('remote_path')} value={remotePath} onChange={e => setRemotePath(e.target.value)} required />
-          </>
-        )}
 
         <label className="flex items-center gap-2 text-sm text-[var(--text-secondary)] cursor-pointer">
           <input

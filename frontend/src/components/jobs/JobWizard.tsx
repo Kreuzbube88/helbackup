@@ -30,7 +30,6 @@ const DEFAULT_STEPS: BackupStepsConfig = {
   vms: null,
   docker_images: null,
   system_config: null,
-  cloud: null,
   custom: null,
 }
 
@@ -38,7 +37,6 @@ const DEFAULT_TOOLS: ToolSelection = {
   flash: 'rsync',
   appdata: 'rsync',
   vms: 'rsync',
-  cloud: 'rclone',
 }
 
 const DEFAULT_ADVANCED: AdvancedSettingsValue = {
@@ -127,19 +125,6 @@ function buildSteps(backupSteps: BackupStepsConfig, advanced: AdvancedSettingsVa
     })
   }
 
-  if (backupSteps.cloud) {
-    steps.push({
-      id: cryptoUUID(), type: 'cloud',
-      config: {
-        source: backupSteps.cloud.sourcePath,
-        remote: backupSteps.cloud.targetId,
-        destination: 'cloud-backup',
-        useEncryption: advanced.useEncryption,
-      },
-      retry: { max_attempts: 3, backoff: 'exponential' },
-    })
-  }
-
   if (backupSteps.custom) {
     steps.push({
       id: cryptoUUID(), type: 'custom',
@@ -218,11 +203,6 @@ export function JobWizard({ job, open, onClose, onSuccess }: Props) {
           newBackupSteps.system_config = {
             targetId: (s.config.targetId as string) ?? '',
             includeItems: (s.config.includeItems as string[]) ?? [],
-          }
-        } else if (s.type === 'cloud') {
-          newBackupSteps.cloud = {
-            targetId: (s.config.remote as string) ?? '',
-            sourcePath: (s.config.source as string) ?? '',
           }
         } else if (s.type === 'custom') {
           newBackupSteps.custom = {

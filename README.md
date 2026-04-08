@@ -26,7 +26,7 @@ HELBACKUP is a self-hosted backup solution built specifically for [Unraid](https
 ## Features
 
 - **Automated Backup Jobs** — Flash Drive, Appdata, VMs, Docker Images, System Config
-- **Multiple Target Types** — Local filesystem, NAS via SSH+Rsync, 40+ cloud providers via Rclone
+- **Multiple Target Types** — Local filesystem, remote server or NAS via SSH+Rsync
 - **AES-256 Encryption** — Optional end-to-end encryption with recovery key
 - **GFS Retention** — Grandfather-Father-Son rotation saves up to 90% storage
 - **Disaster Recovery** — Granular file restore and full server restore wizard
@@ -98,7 +98,7 @@ Full documentation is available in the [`docs/`](docs/README.md) folder in both 
 
 - **Docker socket** `/var/run/docker.sock` — required for container stop/start during backups
 - **Host mounts** `/boot` and `/mnt/user` — required for Flash Drive and Appdata/VM restore
-- **Network access** — required for NAS targets (SSH/Rsync), cloud targets (Rclone), Wake-on-LAN
+- **Network access** — required for remote targets (SSH/Rsync), Wake-on-LAN
 - **VM backups (optional):** Libvirt socket `/var/run/libvirt/libvirt-sock` and config mount `/etc/libvirt` — required for VM stop/start and XML export
 - Community Apps plugin (only required for store installation)
 

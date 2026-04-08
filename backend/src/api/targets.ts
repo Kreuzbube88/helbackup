@@ -17,7 +17,7 @@ interface UpdateTargetBody {
   enabled?: boolean
 }
 
-const VALID_TYPES = ['nas', 'rclone', 'local']
+const VALID_TYPES = ['nas', 'local']
 const SENSITIVE_KEYS = new Set(['password', 'privateKey', 'ssh_key', 'api_key', 'token', 'client_secret', 'secret'])
 
 function sanitizeConfig(config: Record<string, unknown>): Record<string, unknown> {

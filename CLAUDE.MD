@@ -19,7 +19,7 @@ At the start of each session, check `C:\Users\hendr\claude-bridge\` for `.pendin
 | Auth | @fastify/jwt + bcryptjs (cost 12) |
 | DB | better-sqlite3 (SQLite, WAL, no ORM) |
 | Queue | node-schedule (cron-based) |
-| Tools | ssh2, node-wake-on-lan, rsync, rclone (child_process) |
+| Tools | ssh2, node-wake-on-lan, rsync (child_process) |
 | Registry | ghcr.io/kreuzbube88/helbackup |
 
 ## Architecture
@@ -29,7 +29,7 @@ At the start of each session, check `C:\Users\hendr\claude-bridge\` for `.pendin
 - Job orchestration: dependency graph → sequential execution → retry logic
 - NAS management: WOL → health check → backup → graceful shutdown
 - Backup types: Flash Drive, Appdata, VMs, Docker Images, System Config
-- Multi-target: Synology NAS (SSH+Rsync), Cloud (Rclone), Local filesystem
+- Multi-target: Remote server/NAS (SSH+Rsync), Local filesystem
 
 ## Unraid Integration
 
@@ -76,7 +76,7 @@ interface Job {
 
 interface JobStep {
   id: string
-  type: 'wake_nas' | 'shutdown_nas' | 'rsync' | 'rclone' | 'ssh_command' | 'docker_stop' | 'docker_start'
+  type: 'wake_nas' | 'shutdown_nas' | 'rsync' | 'ssh_command' | 'docker_stop' | 'docker_start'
   depends_on?: string[]  // Step IDs
   config: Record<string, unknown>
   retry: { max_attempts: number; backoff: 'linear' | 'exponential' }
@@ -101,7 +101,7 @@ interface JobStep {
 
 react-i18next, DE (default) + EN — always `useTranslation()`, never hardcode strings  
 Namespaces: common + jobs + targets + recovery + settings  
-Keep untranslated: Rsync, Rclone, SSH, Docker, Unraid, technical terms
+Keep untranslated: Rsync, SSH, Docker, Unraid, technical terms
 
 ## Critical Gotchas
 

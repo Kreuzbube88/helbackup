@@ -1,7 +1,6 @@
 import { FastifyInstance } from 'fastify'
 import { executeRsync } from '../tools/rsync.js'
 import { createTarArchive } from '../tools/tar.js'
-import { testRcloneRemote } from '../tools/rclone.js'
 
 interface RsyncTestBody {
   source: string
@@ -11,11 +10,6 @@ interface RsyncTestBody {
 interface TarTestBody {
   source: string
   destination: string
-}
-
-interface RcloneTestBody {
-  remote: string
-  configPath?: string
 }
 
 export async function toolsRoutes(app: FastifyInstance) {
@@ -56,17 +50,4 @@ export async function toolsRoutes(app: FastifyInstance) {
     }
   )
 
-  app.post<{ Body: RcloneTestBody }>(
-    '/api/tools/rclone/test',
-    { preHandler: [app.authenticate] },
-    async (request, reply) => {
-      try {
-        const success = await testRcloneRemote(request.body.remote, request.body.configPath)
-        return reply.send({ success })
-      } catch (error: unknown) {
-        const message = error instanceof Error ? error.message : String(error)
-        return reply.status(500).send({ error: message })
-      }
-    }
-  )
 }

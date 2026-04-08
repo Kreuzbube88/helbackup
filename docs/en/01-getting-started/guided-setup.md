@@ -36,7 +36,7 @@ The wizard guides you through creating a backup target and a backup job in a sin
 
 | Step | What happens |
 |------|--------------|
-| **1 — Target** | Choose target type (Local, NAS, Rclone) and enter connection details |
+| **1 — Target** | Choose target type (Local, Remote SSH/Rsync) and enter connection details |
 | **2 — Backup Types** | Select what to back up: Flash Drive, Appdata, VMs, Docker Images, System Config |
 | **3 — Schedule & Name** | Name the job and set a cron schedule |
 | **4 — Review** | Confirm all settings before saving |
@@ -45,8 +45,7 @@ The wizard guides you through creating a backup target and a backup job in a sin
 ### Target types
 
 - **Local** — path on the Unraid array (e.g. `/mnt/user/backups`)
-- **NAS** — SSH+Rsync to a Synology or QNAP NAS; supports Wake-on-LAN and auto-shutdown
-- **Rclone** — any of 40+ cloud providers via a pre-configured Rclone remote
+- **Remote (SSH/Rsync)** — SSH+Rsync to a Synology, QNAP, or Linux server; supports Wake-on-LAN and auto-shutdown
 
 ### Closing the wizard
 

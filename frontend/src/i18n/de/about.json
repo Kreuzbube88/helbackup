@@ -16,7 +16,7 @@
     "auth": "Auth",
     "auth_value": "JWT · bcrypt (Cost 12)",
     "backup": "Backup",
-    "backup_value": "Rsync · Rclone · SSH",
+    "backup_value": "Rsync · SSH",
     "container": "Container",
     "container_value": "Docker-Socket (undici)"
   },

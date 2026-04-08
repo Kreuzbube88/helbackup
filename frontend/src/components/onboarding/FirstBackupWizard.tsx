@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { HardDrive, Server, Cloud, CheckCircle2 } from 'lucide-react'
+import { HardDrive, Server, CheckCircle2 } from 'lucide-react'
 import { Modal } from '../common/Modal'
 import { Button } from '../common/Button'
 import { Input } from '../common/Input'
@@ -13,7 +13,7 @@ import { NASSetupHint } from '../targets/NASSetupHint'
 import { api } from '../../api'
 import { cryptoUUID } from '../../utils/format'
 
-type TargetType = 'local' | 'nas' | 'rclone'
+type TargetType = 'local' | 'nas'
 // Steps: 1=Target, 2=BackupTypes, 3=Schedule+Name, 4=Review, 5=Done
 type Step = 1 | 2 | 3 | 4 | 5
 type BackupType = 'flash' | 'appdata' | 'vms' | 'docker_images' | 'system_config'
@@ -50,8 +50,6 @@ export function FirstBackupWizard({ open, onClose, onSuccess }: Props) {
   const [nasType, setNasType] = useState('')
   const [nasPath, setNasPath] = useState('/backups')
   const [nasPower, setNasPower] = useState<NASPowerConfig>(DEFAULT_NAS_POWER)
-  const [remoteName, setRemoteName] = useState('')
-  const [remotePath, setRemotePath] = useState('backups')
 
   // Job fields
   const [jobName, setJobName] = useState('')
@@ -100,8 +98,6 @@ export function FirstBackupWizard({ open, onClose, onSuccess }: Props) {
     setNasType('')
     setNasPath('/backups')
     setNasPower(DEFAULT_NAS_POWER)
-    setRemoteName('')
-    setRemotePath('backups')
     setJobName('')
     setSchedule(null)
     setSelectedTypes(new Set(['appdata']))
@@ -111,7 +107,6 @@ export function FirstBackupWizard({ open, onClose, onSuccess }: Props) {
     switch (targetType) {
       case 'local': return { path: localPath }
       case 'nas': return { host: nasHost, port: nasPort, username: nasUser, password: nasPass, ...(nasPrivateKey ? { privateKey: nasPrivateKey } : {}), ...(nasType ? { nasType } : {}), path: nasPath, power: nasPower }
-      case 'rclone': return { remoteName, remotePath, provider: 'generic' }
     }
   }
 
@@ -119,7 +114,7 @@ export function FirstBackupWizard({ open, onClose, onSuccess }: Props) {
     if (!targetName.trim()) return false
     if (targetType === 'local') return localPath.trim().length > 0
     if (targetType === 'nas') return nasHost.trim().length > 0 && nasUser.trim().length > 0
-    return remoteName.trim().length > 0
+    return true
   }
 
   async function handleFinish(runNow: boolean) {
@@ -198,7 +193,6 @@ export function FirstBackupWizard({ open, onClose, onSuccess }: Props) {
   const targetTypeCards: { value: TargetType; icon: React.ReactNode; label: string; desc: string }[] = [
     { value: 'local', icon: <HardDrive size={20} />, label: t('guide.step_target_type_local'), desc: t('guide.step_target_type_local_desc') },
     { value: 'nas',   icon: <Server size={20} />,    label: t('guide.step_target_type_nas'),   desc: t('guide.step_target_type_nas_desc') },
-    { value: 'rclone',icon: <Cloud size={20} />,     label: t('guide.step_target_type_rclone'),desc: t('guide.step_target_type_rclone_desc') },
   ]
 
   return (
@@ -312,12 +306,6 @@ export function FirstBackupWizard({ open, onClose, onSuccess }: Props) {
                 </>
               )}
 
-              {targetType === 'rclone' && (
-                <>
-                  <Input label="Remote Name" value={remoteName} onChange={e => setRemoteName(e.target.value)} required />
-                  <Input label="Remote Path" value={remotePath} onChange={e => setRemotePath(e.target.value)} required />
-                </>
-              )}
             </div>
           )}
 

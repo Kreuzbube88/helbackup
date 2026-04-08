@@ -14,11 +14,10 @@ interface Props {
 export function StepAdvanced({ value, onChange, tools, onToolsChange, backupSteps }: Props) {
   const { t } = useTranslation('jobs')
 
-  const enabledTypes = new Set<'flash' | 'appdata' | 'vms' | 'cloud'>([
+  const enabledTypes = new Set<'flash' | 'appdata' | 'vms'>([
     ...(backupSteps.flash ? (['flash'] as const) : []),
     ...(backupSteps.appdata ? (['appdata'] as const) : []),
     ...(backupSteps.vms ? (['vms'] as const) : []),
-    ...(backupSteps.cloud ? (['cloud'] as const) : []),
   ])
 
   return (

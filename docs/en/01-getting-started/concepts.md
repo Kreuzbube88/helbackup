@@ -16,8 +16,7 @@ Unraid Server
 ### Backup Target
 Where backups are stored.
 - **Local:** Directly on Unraid disks
-- **NAS:** Synology/QNAP via SSH+Rsync
-- **Cloud:** 40+ providers via Rclone
+- **Remote:** Synology/QNAP/Linux server via SSH+Rsync
 
 ### Backup Job
 Defines what gets backed up and when.

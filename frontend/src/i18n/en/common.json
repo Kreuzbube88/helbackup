@@ -72,8 +72,6 @@
     "rsync_description": "Rsync (incremental, faster for subsequent backups)",
     "vm_backup": "VM Backup",
     "vm_description": "Large files efficiently with Rsync",
-    "cloud_backup": "Cloud Backup",
-    "cloud_description": "Multi-provider support with Rclone",
     "no_types_selected": "No backup types with configurable methods selected"
   },
   "nas": {
@@ -423,13 +421,11 @@
     "skip": "Skip for now",
     "first_backup_title": "Quick Setup Guide",
     "step_target": "Backup Target",
-    "step_target_desc": "Where do you want to store your backups? Choose a local path, a remote server or NAS over SSH, or a cloud provider via Rclone.",
+    "step_target_desc": "Where do you want to store your backups? Choose a local path, or a remote server or NAS over SSH.",
     "step_target_type_local": "Local Filesystem",
     "step_target_type_local_desc": "Store backups on a local disk or mounted path (e.g. /mnt/backups). Fast and simple.",
     "step_target_type_nas": "Remote (SSH/Rsync)",
     "step_target_type_nas_desc": "Store backups on a NAS or Linux server via SSH and Rsync. Supports Wake-on-LAN and auto-shutdown.",
-    "step_target_type_rclone": "Cloud (Rclone)",
-    "step_target_type_rclone_desc": "Store backups in a cloud provider (S3, Backblaze, Google Drive, etc.) via Rclone.",
     "step_target_name_label": "Target Name",
     "step_target_name_placeholder": "e.g. NAS Backup",
     "step_backup": "What to back up",

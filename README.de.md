@@ -26,7 +26,7 @@ HELBACKUP ist eine selbst gehostete Backup-Lösung, die speziell für [Unraid](h
 ## Features
 
 - **Automatisierte Backup-Jobs** — Flash Drive, Appdata, VMs, Docker Images, System-Konfiguration
-- **Mehrere Zieltypen** — Lokales Dateisystem, NAS via SSH+Rsync, 40+ Cloud-Anbieter via Rclone
+- **Mehrere Zieltypen** — Lokales Dateisystem, Remote-Server oder NAS via SSH+Rsync
 - **AES-256-Verschlüsselung** — Optionale Ende-zu-Ende-Verschlüsselung mit Recovery Key
 - **GFS-Aufbewahrung** — Grandfather-Father-Son-Rotation spart bis zu 90% Speicherplatz
 - **Disaster Recovery** — Granulare Dateiwiederherstellung und vollständiger Server-Restore-Assistent

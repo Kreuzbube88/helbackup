@@ -26,15 +26,6 @@ Remote Path: /volume1/helbackup
 **Pros:** Network-isolated, own hardware  
 **Cons:** Network dependency
 
-### Cloud (Rclone)
-40+ cloud providers (Backblaze B2, S3, Google Drive, etc.)
-```
-Type: Cloud
-Rclone Remote: myb2:helbackup-bucket
-```
-**Pros:** Off-site, cheap (B2: $0.006/GB/month)  
-**Cons:** Upload speed, internet dependency
-
 ## Retention Strategies
 
 ### Simple Retention

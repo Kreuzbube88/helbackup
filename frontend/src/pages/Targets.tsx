@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { HardDrive, Cloud, Server, Trash2, Pencil, Archive } from 'lucide-react'
+import { HardDrive, Server, Trash2, Pencil, Archive } from 'lucide-react'
 import { api, type Target } from '../api'
 import { Card } from '../components/common/Card'
 import { Button } from '../components/common/Button'
@@ -16,9 +16,8 @@ import { FirstBackupWizard } from '../components/onboarding/FirstBackupWizard'
 import { useKeyboardShortcut } from '../hooks/useKeyboardShortcut'
 
 const TYPE_ICONS: Record<string, React.ReactNode> = {
-  nas:    <Server size={16} />,
-  rclone: <Cloud size={16} />,
-  local:  <HardDrive size={16} />,
+  nas:   <Server size={16} />,
+  local: <HardDrive size={16} />,
 }
 
 export function Targets() {

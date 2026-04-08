@@ -17,7 +17,7 @@ interface Props {
   onSuccess: () => void
 }
 
-type TargetType = 'local' | 'nas' | 'rclone'
+type TargetType = 'local' | 'nas'
 
 export function TargetCreateModal({ open, onClose, onSuccess }: Props) {
   const { t } = useTranslation('targets')
@@ -25,7 +25,6 @@ export function TargetCreateModal({ open, onClose, onSuccess }: Props) {
   const TARGET_TYPES = [
     { value: 'local', label: t('type_local') },
     { value: 'nas', label: t('type_nas') },
-    { value: 'rclone', label: t('type_rclone') },
   ]
   const { toast } = useToast()
   const [loading, setLoading] = useState(false)
@@ -51,22 +50,16 @@ export function TargetCreateModal({ open, onClose, onSuccess }: Props) {
     enabled: false, mac: '', ip: '', autoShutdown: false,
   })
 
-  // rclone
-  const [remoteName, setRemoteName] = useState('')
-  const [remotePath, setRemotePath] = useState('backups')
-
   function buildConfig(): Record<string, unknown> {
     switch (type) {
       case 'local': return { path: localPath }
       case 'nas': return { host: nasHost, port: nasPort, username: nasUser, password: nasPass, ...(nasPrivateKey ? { privateKey: nasPrivateKey } : {}), ...(nasType ? { nasType } : {}), path: nasPath, power: nasPower }
-      case 'rclone': return { remoteName, remotePath, provider: 'generic' }
     }
   }
 
   const isDirty = name !== '' ||
     (type === 'local' && localPath !== '/mnt/backups') ||
-    (type === 'nas' && (nasHost !== '' || nasUser !== '')) ||
-    (type === 'rclone' && remoteName !== '')
+    (type === 'nas' && (nasHost !== '' || nasUser !== ''))
 
   const handleClose = () => {
     if (isDirty) setConfirmClose(true)
@@ -86,8 +79,6 @@ export function TargetCreateModal({ open, onClose, onSuccess }: Props) {
     setNasType('')
     setNasPath('/backups')
     setNasPower({ enabled: false, mac: '', ip: '', autoShutdown: false })
-    setRemoteName('')
-    setRemotePath('backups')
   }
 
   async function handleSetupSshKey() {
@@ -185,12 +176,6 @@ export function TargetCreateModal({ open, onClose, onSuccess }: Props) {
           </>
         )}
 
-        {type === 'rclone' && (
-          <>
-            <Input label={t('remote_name')} value={remoteName} onChange={e => setRemoteName(e.target.value)} required />
-            <Input label={t('remote_path')} value={remotePath} onChange={e => setRemotePath(e.target.value)} required />
-          </>
-        )}
 
         <label className="flex items-center gap-2 text-sm text-[var(--text-secondary)] cursor-pointer">
           <input

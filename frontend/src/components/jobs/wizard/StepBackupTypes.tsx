@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next'
-import { HardDrive, FolderOpen, Monitor, Container, Settings, Cloud, FolderCog, ChevronDown, ChevronUp } from 'lucide-react'
+import { HardDrive, FolderOpen, Monitor, Container, Settings, FolderCog, ChevronDown, ChevronUp } from 'lucide-react'
 import { HelpText } from '../../common/HelpText'
 import type { Target } from '../../../api'
 import { FlashConfig, type FlashStepConfig } from './config/FlashConfig'
@@ -7,10 +7,9 @@ import { AppdataConfig, type AppdataStepConfig } from './config/AppdataConfig'
 import { VMConfig, type VMStepConfig } from './config/VMConfig'
 import { DockerImagesConfig, type DockerImagesStepConfig } from './config/DockerImagesConfig'
 import { SystemConfigForm, type SystemConfigStepConfig } from './config/SystemConfigForm'
-import { CloudConfig, type CloudStepConfig } from './config/CloudConfig'
 import { CustomConfig, type CustomStepConfig } from './config/CustomConfig'
 
-export type StepType = 'flash' | 'appdata' | 'vms' | 'docker_images' | 'system_config' | 'cloud' | 'custom'
+export type StepType = 'flash' | 'appdata' | 'vms' | 'docker_images' | 'system_config' | 'custom'
 
 export interface BackupStepsConfig {
   flash: FlashStepConfig | null
@@ -18,7 +17,6 @@ export interface BackupStepsConfig {
   vms: VMStepConfig | null
   docker_images: DockerImagesStepConfig | null
   system_config: SystemConfigStepConfig | null
-  cloud: CloudStepConfig | null
   custom: CustomStepConfig | null
 }
 
@@ -34,7 +32,6 @@ const DEFAULT_CONFIGS = {
   vms: { targetId: '', vms: [], includeDisks: false },
   docker_images: { targetId: '', images: [] },
   system_config: { targetId: '', includeItems: ['boot_config', 'network', 'users', 'plugins'] },
-  cloud: { targetId: '', sourcePath: '' },
   custom: { sourcePath: '', targetId: '', excludePatterns: [] },
 }
 
@@ -51,7 +48,6 @@ const STEP_TYPES: StepTypeInfo[] = [
   { type: 'vms', icon: <Monitor size={16} />, labelKey: 'wizard_type_vms', descKey: 'wizard_type_vms_desc' },
   { type: 'docker_images', icon: <Container size={16} />, labelKey: 'wizard_type_docker', descKey: 'wizard_type_docker_desc' },
   { type: 'system_config', icon: <Settings size={16} />, labelKey: 'wizard_type_sysconfig', descKey: 'wizard_type_sysconfig_desc' },
-  { type: 'cloud', icon: <Cloud size={16} />, labelKey: 'wizard_type_cloud', descKey: 'wizard_type_cloud_desc' },
   { type: 'custom', icon: <FolderCog size={16} />, labelKey: 'wizard_type_custom', descKey: 'wizard_type_custom_desc' },
 ]
 
@@ -136,13 +132,6 @@ export function StepBackupTypes({ value, onChange, targets }: Props) {
                   <SystemConfigForm
                     value={value.system_config!}
                     onChange={cfg => onChange({ ...value, system_config: cfg })}
-                    targets={targets}
-                  />
-                )}
-                {type === 'cloud' && (
-                  <CloudConfig
-                    value={value.cloud!}
-                    onChange={cfg => onChange({ ...value, cloud: cfg })}
                     targets={targets}
                   />
                 )}

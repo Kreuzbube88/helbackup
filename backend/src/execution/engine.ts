@@ -278,11 +278,6 @@ export class JobExecutionEngine extends EventEmitter {
         await executeSystemConfigBackup(step.config as unknown as Parameters<typeof executeSystemConfigBackup>[0], this)
         break
       }
-      case 'cloud': {
-        const { executeCloudBackup } = await import('./steps/cloud.js')
-        await executeCloudBackup(step.config as unknown as Parameters<typeof executeCloudBackup>[0], this)
-        break
-      }
       case 'custom': {
         const { executeCustomBackup } = await import('./steps/custom.js')
         await executeCustomBackup(step.config as unknown as Parameters<typeof executeCustomBackup>[0], this)

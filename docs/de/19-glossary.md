@@ -70,8 +70,6 @@
 
 **Rate Limiting** — Anfragen-Begrenzung. HELBACKUP: 100 Requests/Minute.
 
-**Rclone** — Cloud-Sync Tool. HELBACKUP nutzt es für 40+ Cloud-Provider.
-
 **Recovery Key** — AES-256 Schlüssel für encrypted Backups. KRITISCH aufbewahren!
 
 **Retention** — Wie lange Backups aufbewahrt werden.

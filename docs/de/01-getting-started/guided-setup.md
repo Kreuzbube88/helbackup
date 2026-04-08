@@ -36,7 +36,7 @@ Der Wizard führt durch die Erstellung eines Backup-Targets und eines Backup-Job
 
 | Schritt | Was passiert |
 |---------|--------------|
-| **1 — Target** | Target-Typ wählen (Local, NAS, Rclone) und Verbindungsdaten eingeben |
+| **1 — Target** | Target-Typ wählen (Local, Remote SSH/Rsync) und Verbindungsdaten eingeben |
 | **2 — Backup-Typen** | Auswählen, was gesichert wird: Flash Drive, Appdata, VMs, Docker Images, System Config |
 | **3 — Schedule & Name** | Job benennen und Cron-Schedule festlegen |
 | **4 — Review** | Alle Einstellungen vor dem Speichern bestätigen |
@@ -45,8 +45,7 @@ Der Wizard führt durch die Erstellung eines Backup-Targets und eines Backup-Job
 ### Target-Typen
 
 - **Local** — Pfad auf dem Unraid-Array (z.B. `/mnt/user/backups`)
-- **NAS** — SSH+Rsync zu einem Synology- oder QNAP-NAS; unterstützt Wake-on-LAN und Auto-Shutdown
-- **Rclone** — beliebige der 40+ Cloud-Anbieter über ein vorkonfiguriertes Rclone-Remote
+- **Remote (SSH/Rsync)** — SSH+Rsync zu Synology, QNAP oder Linux-Server; unterstützt Wake-on-LAN und Auto-Shutdown
 
 ### Wizard schließen
 

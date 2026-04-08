@@ -5,13 +5,12 @@ export interface ToolSelection {
   flash: 'rsync'
   appdata: 'tar' | 'rsync'
   vms: 'rsync'
-  cloud: 'rclone'
 }
 
 interface Props {
   value: ToolSelection
   onChange: (value: ToolSelection) => void
-  enabledTypes: Set<'flash' | 'appdata' | 'vms' | 'cloud'>
+  enabledTypes: Set<'flash' | 'appdata' | 'vms'>
 }
 
 export default function ToolSelector({ value, onChange, enabledTypes }: Props) {
@@ -66,15 +65,6 @@ export default function ToolSelector({ value, onChange, enabledTypes }: Props) {
         </div>
       )}
 
-      {enabledTypes.has('cloud') && (
-        <div className="border-2 border-[var(--border-default)] rounded-none p-6">
-          <h3 className="text-lg font-bold mb-4">{t('tools.cloud_backup')}</h3>
-          <div className="flex items-center gap-4">
-            <Button variant="primary" disabled>Rclone</Button>
-            <p className="text-sm opacity-70">{t('tools.cloud_description')}</p>
-          </div>
-        </div>
-      )}
     </div>
   )
 }

@@ -27,7 +27,7 @@
 ## Features
 
 - **Automated Backups** — Flash, Appdata, VMs, Docker Images, Databases
-- **40+ Backup Targets** — Local, NAS, Cloud (via Rclone)
+- **Multiple Backup Targets** — Local filesystem, Remote server/NAS (SSH+Rsync)
 - **AES-256 Encryption** — Optional end-to-end encryption
 - **GFS Retention** — 80-90% storage savings
 - **Disaster Recovery** — Full server restore wizard
