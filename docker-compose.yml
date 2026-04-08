@@ -20,7 +20,7 @@ services:
       - /mnt/user/appdata/helbackup/logs:/app/logs
       - /var/run/docker.sock:/var/run/docker.sock
       - /boot:/unraid/boot
-      - /mnt/user:/mnt/host/user
+      - /mnt/user:/unraid/user
       # Optional — required for VM backups:
       # - /mnt/cache:/mnt/cache:ro
       # - /etc/libvirt:/unraid/libvirt:ro

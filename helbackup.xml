@@ -82,7 +82,7 @@ This container has write access to /boot and /mnt/user for automated restore cap
     Description="⚠️ Unraid USB flash drive (READ-WRITE for automated Flash restore). PROTECTED: Write operations only allowed during explicit restore sessions with multi-step confirmation!"
     Type="Path" Display="always" Required="true" Mask="false">/boot</Config>
   
-  <Config Name="Host System (Restore)" Target="/mnt/host/user" Default="/mnt/user" Mode="rw"
+  <Config Name="Host System (Restore)" Target="/unraid/user" Default="/mnt/user" Mode="rw"
     Description="⚠️ Unraid user array (READ-WRITE for automated restore). PROTECTED: Write operations only allowed during explicit restore sessions with multi-step confirmation!"
     Type="Path" Display="always" Required="true" Mask="false">/mnt/user</Config>
   

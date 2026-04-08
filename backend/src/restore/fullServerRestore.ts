@@ -81,7 +81,7 @@ async function restoreItem(item: RestoreItem, backupPath: string): Promise<void>
       logger.info(`[restore] flash: ${flashDir}/ → /boot`)
       await executeRsync({
         source: flashDir + '/',
-        destination: '/boot',
+        destination: '/unraid/boot',
         bwLimit: 51200,
         excludePatterns: ['previous/', 'System Volume Information/'],
         onLog: msg => { if (msg.trim()) logger.debug(`[rsync] ${msg.trim()}`) },
@@ -96,7 +96,7 @@ async function restoreItem(item: RestoreItem, backupPath: string): Promise<void>
       // Find the container subdirectory under backupPath/appdata/
       const appdataBase = path.join(backupPath, 'appdata')
       const sourceDir = await resolveContainerDir(appdataBase, containerName)
-      const targetDir = path.join('/mnt/user/appdata', containerName)
+      const targetDir = path.join('/unraid/user/appdata', containerName)
       await fs.mkdir(targetDir, { recursive: true })
       logger.info(`[restore] appdata: ${sourceDir}/ → ${targetDir}`)
       await executeRsync({

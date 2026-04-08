@@ -209,7 +209,7 @@ export class JobExecutionEngine extends EventEmitter {
 
       // Check disk space and notify if < 10% free
       try {
-        const { stdout } = await execFileAsync('df', ['-B1', '/mnt/user'])
+        const { stdout } = await execFileAsync('df', ['-B1', '/unraid/user'])
         const line = stdout.split('\n')[1] ?? ''
         const parts = line.split(/\s+/)
         const total = parseInt(parts[1] ?? '0', 10)

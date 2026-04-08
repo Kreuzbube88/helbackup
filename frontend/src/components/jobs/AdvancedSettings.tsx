@@ -155,7 +155,7 @@ export default function AdvancedSettings({ value, onChange }: Props) {
             type="text"
             value={value.preBackupScript ?? ''}
             onChange={(e) => onChange({ ...value, preBackupScript: e.target.value || undefined })}
-            placeholder="/mnt/user/scripts/pre-backup.sh"
+            placeholder="/unraid/user/scripts/pre-backup.sh"
             className="w-full border border-[var(--border-default)] bg-[var(--bg-secondary)] px-3 py-2 font-mono text-sm"
           />
         </div>
@@ -168,7 +168,7 @@ export default function AdvancedSettings({ value, onChange }: Props) {
             type="text"
             value={value.postBackupScript ?? ''}
             onChange={(e) => onChange({ ...value, postBackupScript: e.target.value || undefined })}
-            placeholder="/mnt/user/scripts/post-backup.sh"
+            placeholder="/unraid/user/scripts/post-backup.sh"
             className="w-full border border-[var(--border-default)] bg-[var(--bg-secondary)] px-3 py-2 font-mono text-sm"
           />
         </div>

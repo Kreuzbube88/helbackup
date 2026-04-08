@@ -41,7 +41,7 @@ export function FirstBackupWizard({ open, onClose, onSuccess }: Props) {
   // Target fields
   const [targetType, setTargetType] = useState<TargetType>('local')
   const [targetName, setTargetName] = useState('')
-  const [localPath, setLocalPath] = useState('/mnt/backups')
+  const [localPath, setLocalPath] = useState('/unraid/user/backups')
   const [nasHost, setNasHost] = useState('')
   const [nasPort, setNasPort] = useState(22)
   const [nasUser, setNasUser] = useState('')
@@ -90,7 +90,7 @@ export function FirstBackupWizard({ open, onClose, onSuccess }: Props) {
     setConfirmClose(false)
     setTargetType('local')
     setTargetName('')
-    setLocalPath('/mnt/backups')
+    setLocalPath('/unraid/user/backups')
     setNasHost('')
     setNasPort(22)
     setNasUser('')

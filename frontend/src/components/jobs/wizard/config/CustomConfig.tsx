@@ -34,7 +34,7 @@ export function CustomConfig({ value, onChange, targets }: Props) {
         label={t('custom_source_path')}
         value={value.sourcePath}
         onChange={e => onChange({ ...value, sourcePath: e.target.value })}
-        placeholder="/mnt/user/data/my-folder"
+        placeholder="/unraid/user/data/my-folder"
       />
       <p className="text-xs text-[var(--text-muted)]">{t('custom_source_hint')}</p>
 

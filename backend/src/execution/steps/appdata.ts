@@ -86,6 +86,13 @@ export async function executeAppdataBackup(
   const workDir = nasConfig ? await createNasTempDir('appdata') : destPath
   if (!nasConfig) await fs.mkdir(destPath, { recursive: true })
 
+  // Pre-flight: verify source path is accessible BEFORE stopping any containers
+  try {
+    await fs.access(config.source)
+  } catch {
+    throw new Error(`Appdata source path not accessible: ${config.source} — check that /mnt/user is mounted as /unraid/user in docker-compose`)
+  }
+
   // Database dumps BEFORE stopping containers
   if (config.useDatabaseDumps && config.databaseContainers && config.databaseContainers.length > 0) {
     await dumpDatabaseContainers(config.databaseContainers, workDir, engine)

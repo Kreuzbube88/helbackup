@@ -36,7 +36,7 @@ export function TargetCreateModal({ open, onClose, onSuccess }: Props) {
   const [enabled, setEnabled] = useState(true)
 
   // local
-  const [localPath, setLocalPath] = useState('/mnt/backups')
+  const [localPath, setLocalPath] = useState('/unraid/user/backups')
 
   // nas
   const [nasHost, setNasHost] = useState('')
@@ -58,7 +58,7 @@ export function TargetCreateModal({ open, onClose, onSuccess }: Props) {
   }
 
   const isDirty = name !== '' ||
-    (type === 'local' && localPath !== '/mnt/backups') ||
+    (type === 'local' && localPath !== '/unraid/user/backups') ||
     (type === 'nas' && (nasHost !== '' || nasUser !== ''))
 
   const handleClose = () => {
@@ -70,7 +70,7 @@ export function TargetCreateModal({ open, onClose, onSuccess }: Props) {
     setName('')
     setType('local')
     setEnabled(true)
-    setLocalPath('/mnt/backups')
+    setLocalPath('/unraid/user/backups')
     setNasHost('')
     setNasPort(22)
     setNasUser('')

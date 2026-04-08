@@ -45,21 +45,21 @@ interface Props {
 }
 
 const TYPE_DEST: Record<string, string> = {
-  flash: '/boot',
-  appdata: '/mnt/user/appdata',
-  vms: '/mnt/user/domains',
-  docker_images: '/mnt/user',
-  system_config: '/mnt/user',
-  custom: '/mnt/user',
+  flash: '/unraid/boot',
+  appdata: '/unraid/user/appdata',
+  vms: '/unraid/user/domains',
+  docker_images: '/unraid/user',
+  system_config: '/unraid/user',
+  custom: '/unraid/user',
 }
 
 function getDefaultDestination(entries: ManifestEntry[], stepType?: string): string {
   if (stepType && TYPE_DEST[stepType]) return TYPE_DEST[stepType]
   const paths = entries.map(e => e.path)
-  if (paths.some(p => p.includes('/boot') || p.startsWith('boot/'))) return '/boot'
-  if (paths.some(p => p.includes('appdata'))) return '/mnt/user/appdata'
-  if (paths.some(p => p.includes('domains'))) return '/mnt/user/domains'
-  return '/mnt/user'
+  if (paths.some(p => p.includes('/boot') || p.startsWith('boot/'))) return '/unraid/boot'
+  if (paths.some(p => p.includes('appdata'))) return '/unraid/user/appdata'
+  if (paths.some(p => p.includes('domains'))) return '/unraid/user/domains'
+  return '/unraid/user'
 }
 
 const STEP_LABELS = ['recovery.verify_backup', 'recovery.step_1_containers', 'recovery.step_2_files']

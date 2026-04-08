@@ -82,7 +82,7 @@
   "wizard_type_flash": "Flash Drive",
   "wizard_type_flash_desc": "Backup /boot to a target",
   "wizard_type_appdata": "Appdata",
-  "wizard_type_appdata_desc": "Docker container data from /mnt/user/appdata",
+  "wizard_type_appdata_desc": "Docker container data from /unraid/user/appdata",
   "wizard_type_vms": "Virtual Machines",
   "wizard_type_vms_desc": "VM disk images and configs",
   "wizard_type_docker": "Docker Images",
