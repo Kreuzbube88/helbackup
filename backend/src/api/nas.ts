@@ -1,6 +1,11 @@
 import { type FastifyInstance } from 'fastify'
+import { execFile } from 'node:child_process'
+import { promisify } from 'node:util'
+import fs from 'fs/promises'
 import { wakeNAS } from '../nas/wol.js'
-import { testSSHConnection, type SSHConfig } from '../nas/ssh.js'
+import { testSSHConnection, deployPublicKey, type SSHConfig } from '../nas/ssh.js'
+
+const execFileAsync = promisify(execFile)
 
 interface WakeTestBody {
   mac: string
@@ -13,6 +18,13 @@ interface SSHTestBody {
   username: string
   password?: string
   privateKey?: string
+}
+
+interface SetupSSHKeyBody {
+  host: string
+  port?: number
+  username: string
+  password: string
 }
 
 export async function nasRoutes(app: FastifyInstance): Promise<void> {
@@ -47,6 +59,31 @@ export async function nasRoutes(app: FastifyInstance): Promise<void> {
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : String(err)
         return reply.status(500).send({ error: msg })
+      }
+    }
+  )
+
+  app.post<{ Body: SetupSSHKeyBody }>(
+    '/api/nas/setup-ssh-key',
+    { preHandler: [app.authenticate] },
+    async (request, reply) => {
+      const { host, port, username, password } = request.body
+      if (!host || !username || !password)
+        return reply.status(400).send({ error: 'host, username and password are required' })
+      try {
+        const safeName = host.replace(/[^a-z0-9]/gi, '_')
+        const keyPath = `/app/config/ssh/nas_${safeName}`
+        await execFileAsync('ssh-keygen', ['-t', 'ed25519', '-f', keyPath, '-N', '', '-C', `helbackup@${host}`, '-q'])
+          .catch((err: unknown) => {
+            const msg = err instanceof Error ? err.message : String(err)
+            if (!msg.includes('already exists')) throw err
+          })
+        await fs.chmod(keyPath, 0o600)
+        const pubKey = await fs.readFile(`${keyPath}.pub`, 'utf-8')
+        await deployPublicKey({ host, port, username, password }, pubKey.trim())
+        return reply.send({ privateKeyPath: keyPath })
+      } catch (err: unknown) {
+        return reply.status(500).send({ error: err instanceof Error ? err.message : String(err) })
       }
     }
   )

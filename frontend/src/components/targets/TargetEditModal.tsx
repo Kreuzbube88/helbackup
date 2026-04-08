@@ -28,6 +28,7 @@ export function TargetEditModal({ target, open, onClose, onSuccess }: Props) {
   ]
   const { toast } = useToast()
   const [loading, setLoading] = useState(false)
+  const [sshKeyLoading, setSshKeyLoading] = useState(false)
   const [confirmClose, setConfirmClose] = useState(false)
   const [name, setName] = useState('')
   const [type, setType] = useState<TargetType>('local')
@@ -87,6 +88,19 @@ export function TargetEditModal({ target, open, onClose, onSuccess }: Props) {
       remotePath !== ((target.config.remotePath as string) ?? '')
     ))
   )
+
+  async function handleSetupSshKey() {
+    setSshKeyLoading(true)
+    try {
+      const result = await api.nas.setupSshKey(nasHost, nasPort, nasUser, nasPass)
+      setNasPrivateKey(result.privateKeyPath)
+      toast(t('common:nas.ssh_key_deployed'), 'success')
+    } catch (err) {
+      toast(err instanceof Error ? err.message : t('common:nas.ssh_key_error'), 'error')
+    } finally {
+      setSshKeyLoading(false)
+    }
+  }
 
   const handleClose = () => {
     if (isDirty) setConfirmClose(true)
@@ -154,6 +168,11 @@ export function TargetEditModal({ target, open, onClose, onSuccess }: Props) {
             <Input label={t('common:nas.username')} value={nasUser} onChange={e => setNasUser(e.target.value)} required />
             <Input label={t('common:nas.password')} type="password" value={nasPass} onChange={e => setNasPass(e.target.value)} placeholder={t('keep_current_hint')} />
             <Input label={t('common:nas.private_key')} value={nasPrivateKey} onChange={e => setNasPrivateKey(e.target.value)} placeholder={t('keep_current_hint')} helpText={t('common:nas.private_key_hint')} />
+            {nasHost && nasUser && nasPass && (
+              <Button type="button" variant="secondary" loading={sshKeyLoading} onClick={handleSetupSshKey}>
+                {t('common:nas.setup_ssh_key')}
+              </Button>
+            )}
             <Input label={t('path')} value={nasPath} onChange={e => setNasPath(e.target.value)} required />
             <div className="border border-[var(--border-default)] p-3">
               <NASTargetForm value={nasPower} onChange={setNasPower} sshHost={nasHost} sshUsername={nasUser} sshPassword={nasPass} />

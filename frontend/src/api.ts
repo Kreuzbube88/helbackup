@@ -204,6 +204,8 @@ export const api = {
       request<{ success: boolean }>('POST', '/nas/wake/test', { mac, ip }),
     testSSH: (host: string, port: number | undefined, username: string, password?: string, privateKey?: string) =>
       request<{ success: boolean }>('POST', '/nas/ssh/test', { host, port, username, password, privateKey }),
+    setupSshKey: (host: string, port: number | undefined, username: string, password: string) =>
+      request<{ privateKeyPath: string }>('POST', '/nas/setup-ssh-key', { host, port, username, password }),
   },
 
   history: {

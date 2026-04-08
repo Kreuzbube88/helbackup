@@ -32,6 +32,7 @@ export function FirstBackupWizard({ open, onClose, onSuccess }: Props) {
 
   const [step, setStep] = useState<Step>(1)
   const [saving, setSaving] = useState(false)
+  const [sshKeyLoading, setSshKeyLoading] = useState(false)
   const [confirmClose, setConfirmClose] = useState(false)
 
   // Target fields
@@ -54,6 +55,19 @@ export function FirstBackupWizard({ open, onClose, onSuccess }: Props) {
   const [selectedTypes, setSelectedTypes] = useState<Set<BackupType>>(new Set(['appdata']))
 
   const isDirty = step > 1 || targetName.trim() !== ''
+
+  async function handleSetupSshKey() {
+    setSshKeyLoading(true)
+    try {
+      const result = await api.nas.setupSshKey(nasHost, nasPort, nasUser, nasPass)
+      setNasPrivateKey(result.privateKeyPath)
+      toast(t('common:nas.ssh_key_deployed'), 'success')
+    } catch (err) {
+      toast(err instanceof Error ? err.message : t('common:nas.ssh_key_error'), 'error')
+    } finally {
+      setSshKeyLoading(false)
+    }
+  }
 
   function requestClose() {
     if (isDirty && step < 5) {
@@ -261,6 +275,11 @@ export function FirstBackupWizard({ open, onClose, onSuccess }: Props) {
                   <Input label={t('common:nas.username')} value={nasUser} onChange={e => setNasUser(e.target.value)} required />
                   <Input label={t('common:nas.password')} type="password" value={nasPass} onChange={e => setNasPass(e.target.value)} placeholder={t('common:nas.password_placeholder')} />
                   <Input label={t('common:nas.private_key')} value={nasPrivateKey} onChange={e => setNasPrivateKey(e.target.value)} placeholder={t('common:nas.private_key_placeholder')} helpText={t('common:nas.private_key_hint')} />
+                  {nasHost && nasUser && nasPass && (
+                    <Button type="button" variant="secondary" loading={sshKeyLoading} onClick={handleSetupSshKey}>
+                      {t('common:nas.setup_ssh_key')}
+                    </Button>
+                  )}
                   <Input label="Path" value={nasPath} onChange={e => setNasPath(e.target.value)} required />
                   <div className="border border-[var(--border-default)] p-3">
                     <NASTargetForm value={nasPower} onChange={setNasPower} sshHost={nasHost} sshUsername={nasUser} sshPassword={nasPass} />

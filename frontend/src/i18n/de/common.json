@@ -96,7 +96,10 @@
     "ssh_ok": "Verbunden",
     "ssh_failed": "Fehlgeschlagen",
     "auto_shutdown": "NAS nach Backup automatisch herunterfahren",
-    "supported_systems": "Kompatibel: Synology, QNAP, TrueNAS, OpenMediaVault, Unraid und andere Linux-basierte NAS-Systeme"
+    "supported_systems": "Kompatibel: Synology, QNAP, TrueNAS, OpenMediaVault, Unraid und andere Linux-basierte NAS-Systeme",
+    "setup_ssh_key": "SSH-Key automatisch einrichten",
+    "ssh_key_deployed": "SSH-Key erfolgreich eingerichtet und auf dem NAS hinterlegt",
+    "ssh_key_error": "SSH-Key konnte nicht eingerichtet werden"
   },
   "logs": {
     "title": "Backup Logs",
