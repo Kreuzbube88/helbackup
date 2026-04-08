@@ -82,6 +82,11 @@ export async function nasRoutes(app: FastifyInstance): Promise<void> {
         await fs.chmod(keyPath, 0o600)
         const pubKey = await fs.readFile(`${keyPath}.pub`, 'utf-8')
         await deployPublicKey({ host, port, username, password }, pubKey.trim())
+        // Verify key auth actually works — catches silent failures (wrong sshd_config, $HOME mismatch, etc.)
+        const keyWorks = await testSSHConnection({ host, port, username, privateKey: keyPath })
+        if (!keyWorks) {
+          return reply.status(500).send({ error: 'Key was deployed but SSH key authentication failed. Ensure PubkeyAuthentication is enabled in sshd_config on the NAS.' })
+        }
         return reply.send({ privateKeyPath: keyPath })
       } catch (err: unknown) {
         return reply.status(500).send({ error: err instanceof Error ? err.message : String(err) })
