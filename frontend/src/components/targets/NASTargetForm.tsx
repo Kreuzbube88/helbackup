@@ -8,20 +8,18 @@ export interface NASPowerConfig {
   enabled: boolean
   mac: string
   ip: string
-  ssh: {
-    username: string
-    password?: string
-    privateKey?: string
-  }
   autoShutdown: boolean
 }
 
 interface Props {
   value: NASPowerConfig
   onChange: (value: NASPowerConfig) => void
+  sshHost: string
+  sshUsername: string
+  sshPassword: string
 }
 
-export function NASTargetForm({ value, onChange }: Props) {
+export function NASTargetForm({ value, onChange, sshHost, sshUsername, sshPassword }: Props) {
   const { t } = useTranslation()
   const [wolTesting, setWolTesting] = useState(false)
   const [sshTesting, setSSHTesting] = useState(false)
@@ -45,13 +43,9 @@ export function NASTargetForm({ value, onChange }: Props) {
     setSSHTesting(true)
     setSSHResult(null)
     try {
-      const res = await api.nas.testSSH(
-        value.ip,
-        undefined,
-        value.ssh.username,
-        value.ssh.password,
-        value.ssh.privateKey
-      )
+      // Use power IP if set (WOL target), fall back to main SSH host
+      const host = value.ip || sshHost
+      const res = await api.nas.testSSH(host, undefined, sshUsername, sshPassword || undefined)
       setSSHResult(res.success)
     } catch {
       setSSHResult(false)
@@ -77,9 +71,9 @@ export function NASTargetForm({ value, onChange }: Props) {
 
       {value.enabled && (
         <>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="border border-[var(--border-default)] p-4 space-y-3">
-              <h4 className="font-bold text-sm">{t('nas.wake_on_lan')}</h4>
+          <div className="border border-[var(--border-default)] p-4 space-y-3">
+            <h4 className="font-bold text-sm">{t('nas.wake_on_lan')}</h4>
+            <div className="grid grid-cols-2 gap-4">
               <Input
                 label={t('nas.mac_address')}
                 value={value.mac}
@@ -92,45 +86,26 @@ export function NASTargetForm({ value, onChange }: Props) {
                 onChange={(e) => onChange({ ...value, ip: e.target.value })}
                 placeholder="192.168.1.100"
               />
-              <div className="flex items-center gap-3">
-                <Button variant="secondary" size="sm" onClick={handleTestWoL} loading={wolTesting}>
-                  {t('nas.test_wol')}
-                </Button>
-                {wolResult !== null && (
-                  <span className={wolResult ? 'text-green-400 text-xs' : 'text-red-400 text-xs'}>
-                    {wolResult ? t('nas.wol_sent') : t('nas.wol_failed')}
-                  </span>
-                )}
-              </div>
             </div>
-
-            <div className="border border-[var(--border-default)] p-4 space-y-3">
-              <h4 className="font-bold text-sm">{t('nas.ssh_config')}</h4>
-              <Input
-                label={t('nas.username')}
-                value={value.ssh.username}
-                onChange={(e) => onChange({ ...value, ssh: { ...value.ssh, username: e.target.value } })}
-                placeholder="admin"
-              />
-              <Input
-                label={t('nas.password')}
-                type="password"
-                value={value.ssh.password ?? ''}
-                onChange={(e) => onChange({ ...value, ssh: { ...value.ssh, password: e.target.value } })}
-                placeholder={t('nas.password_placeholder')}
-              />
-              <p className="text-xs text-[var(--text-muted)]">{t('nas.ssh_key_hint')}</p>
-              <div className="flex items-center gap-3">
-                <Button variant="secondary" size="sm" onClick={handleTestSSH} loading={sshTesting}>
-                  {t('nas.test_ssh')}
-                </Button>
-                {sshResult !== null && (
-                  <span className={sshResult ? 'text-green-400 text-xs' : 'text-red-400 text-xs'}>
-                    {sshResult ? t('nas.ssh_ok') : t('nas.ssh_failed')}
-                  </span>
-                )}
-              </div>
+            <div className="flex items-center gap-3">
+              <Button variant="secondary" size="sm" onClick={handleTestWoL} loading={wolTesting}>
+                {t('nas.test_wol')}
+              </Button>
+              <Button variant="secondary" size="sm" onClick={handleTestSSH} loading={sshTesting} disabled={!sshUsername}>
+                {t('nas.test_ssh')}
+              </Button>
+              {wolResult !== null && (
+                <span className={wolResult ? 'text-green-400 text-xs' : 'text-red-400 text-xs'}>
+                  {wolResult ? t('nas.wol_sent') : t('nas.wol_failed')}
+                </span>
+              )}
+              {sshResult !== null && (
+                <span className={sshResult ? 'text-green-400 text-xs' : 'text-red-400 text-xs'}>
+                  {sshResult ? t('nas.ssh_ok') : t('nas.ssh_failed')}
+                </span>
+              )}
             </div>
+            <p className="text-xs text-[var(--text-muted)]">{t('nas.ssh_uses_main_credentials')}</p>
           </div>
 
           <div className="flex items-center justify-between">

@@ -23,7 +23,7 @@ interface Props {
 }
 
 const DEFAULT_NAS_POWER: NASPowerConfig = {
-  enabled: false, mac: '', ip: '', ssh: { username: '' }, autoShutdown: false,
+  enabled: false, mac: '', ip: '', autoShutdown: false,
 }
 
 export function FirstBackupWizard({ open, onClose, onSuccess }: Props) {
@@ -261,7 +261,7 @@ export function FirstBackupWizard({ open, onClose, onSuccess }: Props) {
                   <Input label={t('common:nas.password')} type="password" value={nasPass} onChange={e => setNasPass(e.target.value)} />
                   <Input label="Path" value={nasPath} onChange={e => setNasPath(e.target.value)} required />
                   <div className="border border-[var(--border-default)] p-3">
-                    <NASTargetForm value={nasPower} onChange={setNasPower} />
+                    <NASTargetForm value={nasPower} onChange={setNasPower} sshHost={nasHost} sshUsername={nasUser} sshPassword={nasPass} />
                   </div>
                 </>
               )}

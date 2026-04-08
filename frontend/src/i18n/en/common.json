@@ -88,6 +88,7 @@
     "password": "Password",
     "password_placeholder": "Optional (or use SSH key)",
     "ssh_key_hint": "SSH key is stored in /app/config/ssh/",
+    "ssh_uses_main_credentials": "SSH test uses the credentials entered above",
     "test_ssh": "Test SSH",
     "ssh_ok": "Connected",
     "ssh_failed": "Failed",

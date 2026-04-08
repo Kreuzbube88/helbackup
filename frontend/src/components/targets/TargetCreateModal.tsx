@@ -43,7 +43,7 @@ export function TargetCreateModal({ open, onClose, onSuccess }: Props) {
   const [nasPass, setNasPass] = useState('')
   const [nasPath, setNasPath] = useState('/backups')
   const [nasPower, setNasPower] = useState<NASPowerConfig>({
-    enabled: false, mac: '', ip: '', ssh: { username: '' }, autoShutdown: false,
+    enabled: false, mac: '', ip: '', autoShutdown: false,
   })
 
   // rclone
@@ -78,7 +78,7 @@ export function TargetCreateModal({ open, onClose, onSuccess }: Props) {
     setNasUser('')
     setNasPass('')
     setNasPath('/backups')
-    setNasPower({ enabled: false, mac: '', ip: '', ssh: { username: '' }, autoShutdown: false })
+    setNasPower({ enabled: false, mac: '', ip: '', autoShutdown: false })
     setRemoteName('')
     setRemotePath('backups')
   }
@@ -134,7 +134,7 @@ export function TargetCreateModal({ open, onClose, onSuccess }: Props) {
             <Input label={t('common:nas.password')} type="password" value={nasPass} onChange={e => setNasPass(e.target.value)} />
             <Input label={t('path')} value={nasPath} onChange={e => setNasPath(e.target.value)} required />
             <div className="border border-[var(--border-default)] p-3">
-              <NASTargetForm value={nasPower} onChange={setNasPower} />
+              <NASTargetForm value={nasPower} onChange={setNasPower} sshHost={nasHost} sshUsername={nasUser} sshPassword={nasPass} />
             </div>
           </>
         )}

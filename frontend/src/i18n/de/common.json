@@ -88,6 +88,7 @@
     "password": "Passwort",
     "password_placeholder": "Optional (oder SSH-Key verwenden)",
     "ssh_key_hint": "SSH-Key wird in /app/config/ssh/ gespeichert",
+    "ssh_uses_main_credentials": "SSH-Verbindungstest verwendet die oben eingegebenen Zugangsdaten",
     "test_ssh": "SSH testen",
     "ssh_ok": "Verbunden",
     "ssh_failed": "Fehlgeschlagen",

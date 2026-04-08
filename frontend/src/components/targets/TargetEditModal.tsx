@@ -40,7 +40,7 @@ export function TargetEditModal({ target, open, onClose, onSuccess }: Props) {
   const [nasPass, setNasPass] = useState('')
   const [nasPath, setNasPath] = useState('')
   const [nasPower, setNasPower] = useState<NASPowerConfig>({
-    enabled: false, mac: '', ip: '', ssh: { username: '' }, autoShutdown: false,
+    enabled: false, mac: '', ip: '', autoShutdown: false,
   })
   const [remoteName, setRemoteName] = useState('')
   const [remotePath, setRemotePath] = useState('')
@@ -61,7 +61,7 @@ export function TargetEditModal({ target, open, onClose, onSuccess }: Props) {
       setNasPass('')
       setNasPath((cfg.path as string) ?? '')
       setNasPower((cfg.power as NASPowerConfig | undefined) ?? {
-        enabled: false, mac: '', ip: '', ssh: { username: '' }, autoShutdown: false,
+        enabled: false, mac: '', ip: '', autoShutdown: false,
       })
     } else if (t2 === 'rclone') {
       setRemoteName((cfg.remoteName as string) ?? '')
@@ -153,7 +153,7 @@ export function TargetEditModal({ target, open, onClose, onSuccess }: Props) {
             <Input label={t('common:nas.password')} type="password" value={nasPass} onChange={e => setNasPass(e.target.value)} placeholder={t('keep_current_hint')} />
             <Input label={t('path')} value={nasPath} onChange={e => setNasPath(e.target.value)} required />
             <div className="border border-[var(--border-default)] p-3">
-              <NASTargetForm value={nasPower} onChange={setNasPower} />
+              <NASTargetForm value={nasPower} onChange={setNasPower} sshHost={nasHost} sshUsername={nasUser} sshPassword={nasPass} />
             </div>
           </>
         )}
