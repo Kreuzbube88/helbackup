@@ -127,27 +127,33 @@ export default function RestoreWizard({ manifest, onClose, onComplete }: Props) 
           </Button>
         </div>
 
-        {/* Progress steps */}
+        {/* Progress steps — hide container step when backup has no containers */}
         <div className="flex items-center gap-0">
-          {STEP_LABELS.map((label, i) => (
-            <div key={i} className="flex items-center flex-1">
-              <div className={`flex items-center gap-2 flex-1 px-3 py-2 border text-xs font-mono transition-colors ${
-                step === i
-                  ? 'border-[var(--theme-glow)] text-[var(--theme-glow)] bg-[var(--bg-elevated)] shadow-[inset_0_0_12px_rgba(6,182,212,0.08)]'
-                  : step > i
-                  ? 'border-emerald-500/40 text-emerald-400 bg-[var(--bg-secondary)]'
-                  : 'border-[var(--border-default)] text-[var(--text-muted)] bg-[var(--bg-secondary)]'
-              }`}>
-                <span className={`w-4 h-4 flex items-center justify-center text-xs flex-shrink-0 ${step > i ? 'text-emerald-400' : ''}`}>
-                  {step > i ? '✓' : i + 1}
-                </span>
-                <span className="truncate">{t(label)}</span>
+          {STEP_LABELS.map((label, i) => {
+            if (i === 1 && containers.length === 0) return null;
+            return (
+              <div key={i} className="flex items-center flex-1">
+                <div className={`flex items-center gap-2 flex-1 px-3 py-2 border text-xs font-mono transition-colors ${
+                  step === i
+                    ? 'border-[var(--theme-glow)] text-[var(--theme-glow)] bg-[var(--bg-elevated)] shadow-[inset_0_0_12px_rgba(6,182,212,0.08)]'
+                    : step > i
+                    ? 'border-emerald-500/40 text-emerald-400 bg-[var(--bg-secondary)]'
+                    : 'border-[var(--border-default)] text-[var(--text-muted)] bg-[var(--bg-secondary)]'
+                }`}>
+                  <span className={`w-4 h-4 flex items-center justify-center text-xs flex-shrink-0 ${step > i ? 'text-emerald-400' : ''}`}>
+                    {step > i ? '✓' : i + 1}
+                  </span>
+                  <span className="truncate">{t(label)}</span>
+                </div>
+                {i < STEP_LABELS.length - 1 && containers.length > 0 && (
+                  <div className={`w-4 h-px flex-shrink-0 ${step > i ? 'bg-emerald-500/40' : 'bg-[var(--border-default)]'}`} />
+                )}
+                {i === 0 && containers.length === 0 && (
+                  <div className={`w-4 h-px flex-shrink-0 ${step > i ? 'bg-emerald-500/40' : 'bg-[var(--border-default)]'}`} />
+                )}
               </div>
-              {i < STEP_LABELS.length - 1 && (
-                <div className={`w-4 h-px flex-shrink-0 ${step > i ? 'bg-emerald-500/40' : 'bg-[var(--border-default)]'}`} />
-              )}
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         {/* Step 0: Verify */}

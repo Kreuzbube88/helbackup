@@ -252,7 +252,9 @@
     "backup_type_docker_images": "Docker Images",
     "backup_type_sysconfig": "System Config",
     "no_checksums_title": "No Checksums Available",
-    "no_checksums_body": "This backup was created without checksums (older format). Integrity cannot be verified automatically."
+    "no_checksums_body": "This backup was created without checksums (older format). Integrity cannot be verified automatically.",
+    "nas_verify_title": "NAS Backup — Verification Unavailable",
+    "nas_verify_body": "Backup files are on the remote NAS and cannot be accessed locally. Stored checksums cannot be verified."
   },
   "setup": {
     "welcome": "Welcome to HELBACKUP",

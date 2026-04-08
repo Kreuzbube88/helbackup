@@ -252,7 +252,9 @@
     "backup_type_docker_images": "Docker Images",
     "backup_type_sysconfig": "Systemkonfiguration",
     "no_checksums_title": "Keine Prüfsummen vorhanden",
-    "no_checksums_body": "Dieses Backup wurde ohne Prüfsummen erstellt (älteres Format). Integrität kann nicht automatisch geprüft werden."
+    "no_checksums_body": "Dieses Backup wurde ohne Prüfsummen erstellt (älteres Format). Integrität kann nicht automatisch geprüft werden.",
+    "nas_verify_title": "NAS-Backup — Verifizierung nicht möglich",
+    "nas_verify_body": "Die Backup-Dateien liegen auf dem entfernten NAS und sind lokal nicht erreichbar. Die gespeicherten Prüfsummen können nicht verifiziert werden."
   },
   "setup": {
     "welcome": "Willkommen bei HELBACKUP",

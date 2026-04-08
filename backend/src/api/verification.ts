@@ -59,6 +59,13 @@ export async function verificationRoutes(app: FastifyInstance) {
         return reply.send({ passed: 0, failed: 0, missing: 0, note: 'no-checksums' })
       }
 
+      // NAS backups have remote paths not accessible inside the container
+      try {
+        await fs.access(backupPath)
+      } catch {
+        return reply.send({ passed: 0, failed: 0, missing: 0, note: 'remote-not-accessible' })
+      }
+
       const result: VerifyResult = { passed: 0, failed: 0, missing: 0 }
 
       for (const entry of checksums) {
