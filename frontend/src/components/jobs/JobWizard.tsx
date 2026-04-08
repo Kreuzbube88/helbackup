@@ -275,7 +275,7 @@ export function JobWizard({ job, open, onClose, onSuccess }: Props) {
 
   return (
     <>
-    <Modal open={open} onClose={handleClose} title={title} className="max-w-4xl">
+    <Modal open={open} onClose={handleClose} title={title} className="max-w-4xl" disableBackdropClose>
       {/* Step indicator */}
       <div className="flex items-center gap-1 mb-6">
         {STEP_LABELS.map((label, i) => (

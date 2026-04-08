@@ -134,7 +134,7 @@ export function TargetEditModal({ target, open, onClose, onSuccess }: Props) {
 
   return (
     <>
-    <Modal open={open} onClose={handleClose} title={t('edit')} className="max-w-3xl">
+    <Modal open={open} onClose={handleClose} title={t('edit')} className="max-w-3xl" disableBackdropClose>
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <Input
           label={t('name')}

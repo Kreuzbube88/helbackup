@@ -202,6 +202,7 @@ export function FirstBackupWizard({ open, onClose, onSuccess }: Props) {
         onClose={requestClose}
         title={t('guide.first_backup_title')}
         className="max-w-2xl"
+        disableBackdropClose
       >
         {/* Step indicator */}
         {step < 5 && (

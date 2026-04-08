@@ -114,7 +114,7 @@ export function TargetCreateModal({ open, onClose, onSuccess }: Props) {
 
   return (
     <>
-    <Modal open={open} onClose={handleClose} title={t('create_new')} className="max-w-3xl">
+    <Modal open={open} onClose={handleClose} title={t('create_new')} className="max-w-3xl" disableBackdropClose>
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <Input
           label={t('name')}

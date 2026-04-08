@@ -8,9 +8,10 @@ interface ModalProps {
   title: string
   children: ReactNode
   className?: string
+  disableBackdropClose?: boolean
 }
 
-export function Modal({ open, onClose, title, children, className = '' }: ModalProps) {
+export function Modal({ open, onClose, title, children, className = '', disableBackdropClose = false }: ModalProps) {
   const { t } = useTranslation()
 
   useEffect(() => {
@@ -28,7 +29,7 @@ export function Modal({ open, onClose, title, children, className = '' }: ModalP
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-fade-in"
       style={{ backgroundColor: 'rgba(0, 0, 0, 0.7)', backdropFilter: 'blur(4px)' }}
-      onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
+      onClick={(e) => { if (!disableBackdropClose && e.target === e.currentTarget) onClose() }}
     >
       <div
         className={[
