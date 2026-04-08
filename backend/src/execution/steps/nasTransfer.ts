@@ -9,6 +9,7 @@ export interface NasConfig {
   port?: number
   username: string
   password?: string
+  privateKey?: string  // absolute path to SSH private key file inside container (e.g. /app/config/ssh/nas_key)
   path: string
 }
 
@@ -38,6 +39,7 @@ export async function transferAndCleanup(
     sshHost: nasConfig.host,
     sshUser: nasConfig.username,
     sshPassword: nasConfig.password,
+    sshKey: nasConfig.privateKey,
     sshPort: nasConfig.port,
     bwLimit: 51200,
     onProgress: (() => {

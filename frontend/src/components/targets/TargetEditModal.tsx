@@ -38,6 +38,7 @@ export function TargetEditModal({ target, open, onClose, onSuccess }: Props) {
   const [nasPort, setNasPort] = useState(22)
   const [nasUser, setNasUser] = useState('')
   const [nasPass, setNasPass] = useState('')
+  const [nasPrivateKey, setNasPrivateKey] = useState('')
   const [nasPath, setNasPath] = useState('')
   const [nasPower, setNasPower] = useState<NASPowerConfig>({
     enabled: false, mac: '', ip: '', autoShutdown: false,
@@ -59,6 +60,7 @@ export function TargetEditModal({ target, open, onClose, onSuccess }: Props) {
       setNasPort((cfg.port as number) ?? 22)
       setNasUser((cfg.username as string) ?? '')
       setNasPass('')
+      setNasPrivateKey('')
       setNasPath((cfg.path as string) ?? '')
       setNasPower((cfg.power as NASPowerConfig | undefined) ?? {
         enabled: false, mac: '', ip: '', autoShutdown: false,
@@ -94,7 +96,7 @@ export function TargetEditModal({ target, open, onClose, onSuccess }: Props) {
   function buildConfig(): Record<string, unknown> {
     switch (type) {
       case 'local':  return { path: localPath }
-      case 'nas':    return { host: nasHost, port: nasPort, username: nasUser, ...(nasPass ? { password: nasPass } : {}), path: nasPath, power: nasPower }
+      case 'nas':    return { host: nasHost, port: nasPort, username: nasUser, ...(nasPass ? { password: nasPass } : {}), ...(nasPrivateKey ? { privateKey: nasPrivateKey } : {}), path: nasPath, power: nasPower }
       case 'rclone': return { remoteName, remotePath, provider: 'generic' }
     }
   }
@@ -151,6 +153,7 @@ export function TargetEditModal({ target, open, onClose, onSuccess }: Props) {
             <Input label={t('port')} type="number" value={nasPort} onChange={e => setNasPort(Number(e.target.value))} />
             <Input label={t('common:nas.username')} value={nasUser} onChange={e => setNasUser(e.target.value)} required />
             <Input label={t('common:nas.password')} type="password" value={nasPass} onChange={e => setNasPass(e.target.value)} placeholder={t('keep_current_hint')} />
+            <Input label={t('common:nas.private_key')} value={nasPrivateKey} onChange={e => setNasPrivateKey(e.target.value)} placeholder={t('keep_current_hint')} helpText={t('common:nas.private_key_hint')} />
             <Input label={t('path')} value={nasPath} onChange={e => setNasPath(e.target.value)} required />
             <div className="border border-[var(--border-default)] p-3">
               <NASTargetForm value={nasPower} onChange={setNasPower} sshHost={nasHost} sshUsername={nasUser} sshPassword={nasPass} />

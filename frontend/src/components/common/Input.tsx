@@ -4,9 +4,10 @@ import { Eye, EyeOff } from 'lucide-react'
 interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   label?: string
   error?: string
+  helpText?: string
 }
 
-export function Input({ label, error, className = '', type, id: idProp, ...props }: InputProps) {
+export function Input({ label, error, helpText, className = '', type, id: idProp, ...props }: InputProps) {
   const generatedId = useId()
   const id = idProp ?? (label ? generatedId : undefined)
   const [showPassword, setShowPassword] = useState(false)
@@ -48,6 +49,9 @@ export function Input({ label, error, className = '', type, id: idProp, ...props
       </div>
       {error && (
         <span className="text-xs text-red-400">{error}</span>
+      )}
+      {helpText && !error && (
+        <span className="text-xs text-[var(--text-muted)]">{helpText}</span>
       )}
     </div>
   )
