@@ -80,7 +80,7 @@ export function TargetEditModal({ target, open, onClose, onSuccess }: Props) {
       nasUser !== ((target.config.username as string) ?? '') ||
       nasPass !== '' ||
       nasPath !== ((target.config.path as string) ?? '')
-    )) ||
+    ))
   )
 
   async function handleSetupSshKey() {
