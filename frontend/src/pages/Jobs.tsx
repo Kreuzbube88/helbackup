@@ -165,7 +165,7 @@ export function Jobs() {
                         <Trash2 size={12} />
                       </Button>
                     </Tooltip>
-                    <Tooltip content={recoveryMode ? t('recovery_mode_blocked') : undefined}>
+                    <Tooltip content={recoveryMode ? t('recovery_mode_blocked') : t('execute')}>
                       <Button
                         variant="primary"
                         size="sm"
