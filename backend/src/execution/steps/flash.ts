@@ -35,7 +35,7 @@ export async function executeFlashBackup(
     throw new Error(`Invalid target config JSON for target ${config.targetId}`)
   }
 
-  const nasConfig = parseNasConfig(target)
+  const nasConfig = await parseNasConfig(target)
   const destPath = path.join(targetConfig.path, 'flash', new Date().toISOString().split('T')[0])
   const workDir = nasConfig ? await createNasTempDir('flash') : destPath
   if (!nasConfig) await fs.mkdir(destPath, { recursive: true })

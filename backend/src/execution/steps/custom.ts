@@ -39,7 +39,7 @@ export async function executeCustomBackup(
     throw new Error(`Invalid target config JSON for target ${config.targetId}`)
   }
 
-  const nasConfig = parseNasConfig(target)
+  const nasConfig = await parseNasConfig(target)
   const folderName = path.basename(config.sourcePath) || 'custom'
   const destPath = path.join(targetConfig.path, 'custom', folderName, new Date().toISOString().split('T')[0])
   const workDir = nasConfig ? await createNasTempDir('custom') : destPath

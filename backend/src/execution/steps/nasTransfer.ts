@@ -13,13 +13,22 @@ export interface NasConfig {
   path: string
 }
 
-export function parseNasConfig(target: { type: string; config: string }): NasConfig | null {
+export async function parseNasConfig(target: { type: string; config: string }): Promise<NasConfig | null> {
   if (target.type !== 'nas') return null
+  let cfg: NasConfig
   try {
-    return JSON.parse(target.config) as NasConfig
+    cfg = JSON.parse(target.config) as NasConfig
   } catch {
     return null
   }
+  // Auto-discover key: if no privateKey in config but the default key file exists, use it
+  if (!cfg.privateKey) {
+    const safeName = cfg.host.replace(/[^a-z0-9]/gi, '_')
+    const defaultKey = `/app/config/ssh/nas_${safeName}`
+    const keyExists = await fs.access(defaultKey).then(() => true).catch(() => false)
+    if (keyExists) cfg = { ...cfg, privateKey: defaultKey }
+  }
+  return cfg
 }
 
 export async function createNasTempDir(prefix: string): Promise<string> {
