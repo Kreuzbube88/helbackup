@@ -16,7 +16,7 @@ export interface SSHResult {
   error?: string
 }
 
-export async function executeSSHCommand(config: SSHConfig, command: string): Promise<SSHResult> {
+export async function executeSSHCommand(config: SSHConfig, command: string, timeoutMs = 60_000): Promise<SSHResult> {
   let privateKey: Buffer | undefined
   if (config.privateKey) {
     try {
@@ -44,12 +44,12 @@ export async function executeSSHCommand(config: SSHConfig, command: string): Pro
         let output = ''
         let errorOutput = ''
 
-        // Timeout for command execution (60s) in addition to the connection timeout
+        // Timeout for command execution in addition to the connection timeout
         const execTimeout = setTimeout(() => {
           stream.destroy()
           conn.end()
-          reject(new Error(`SSH command timed out after 60s: ${command}`))
-        }, 60_000)
+          reject(new Error(`SSH command timed out after ${timeoutMs / 1000}s: ${command}`))
+        }, timeoutMs)
 
         stream.on('close', (code: number) => {
           clearTimeout(execTimeout)

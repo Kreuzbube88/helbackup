@@ -56,6 +56,30 @@ export default function VerifyBackup({ backupId, checksums, onComplete, onClose 
   }
 
   if (results) {
+    if (results.note === 'remote-ssh-failed') {
+      return (
+        <Card className="corner-cuts p-6 border-red-500/60">
+          <div className="flex items-start gap-3 mb-4">
+            <div className="p-2 border border-red-500/40 flex-shrink-0">
+              <Info size={16} className="text-red-400" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-[var(--text-primary)]">{t('recovery.nas_verify_title')}</p>
+              <p className="text-xs text-[var(--text-muted)] mt-1">{t('recovery.nas_verify_ssh_failed_body')}</p>
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <Button variant="primary" size="sm" onClick={onComplete}>
+              {t('recovery.proceed_with_restore')}
+            </Button>
+            <Button variant="ghost" size="sm" onClick={onClose ?? onComplete}>
+              {t('buttons.cancel')}
+            </Button>
+          </div>
+        </Card>
+      );
+    }
+
     if (results.note === 'remote-not-accessible') {
       return (
         <Card className="corner-cuts p-6 border-[var(--theme-primary)]/60">
