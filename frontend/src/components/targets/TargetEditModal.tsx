@@ -42,6 +42,7 @@ export function TargetEditModal({ target, open, onClose, onSuccess }: Props) {
   const [nasUser, setNasUser] = useState('')
   const [nasPass, setNasPass] = useState('')
   const [nasPrivateKey, setNasPrivateKey] = useState('')
+  const [nasType, setNasType] = useState('')
   const [nasPath, setNasPath] = useState('')
   const [nasPower, setNasPower] = useState<NASPowerConfig>({
     enabled: false, mac: '', ip: '', autoShutdown: false,
@@ -64,6 +65,7 @@ export function TargetEditModal({ target, open, onClose, onSuccess }: Props) {
       setNasUser((cfg.username as string) ?? '')
       setNasPass('')
       setNasPrivateKey('')
+      setNasType((cfg.nasType as string) ?? '')
       setAdvancedOpen(!!(cfg.privateKey as string | undefined))
       setNasPath((cfg.path as string) ?? '')
       setNasPower((cfg.power as NASPowerConfig | undefined) ?? {
@@ -113,7 +115,7 @@ export function TargetEditModal({ target, open, onClose, onSuccess }: Props) {
   function buildConfig(): Record<string, unknown> {
     switch (type) {
       case 'local':  return { path: localPath }
-      case 'nas':    return { host: nasHost, port: nasPort, username: nasUser, ...(nasPass ? { password: nasPass } : {}), ...(nasPrivateKey ? { privateKey: nasPrivateKey } : {}), path: nasPath, power: nasPower }
+      case 'nas':    return { host: nasHost, port: nasPort, username: nasUser, ...(nasPass ? { password: nasPass } : {}), ...(nasPrivateKey ? { privateKey: nasPrivateKey } : {}), ...(nasType ? { nasType } : {}), path: nasPath, power: nasPower }
       case 'rclone': return { remoteName, remotePath, provider: 'generic' }
     }
   }
@@ -170,12 +172,26 @@ export function TargetEditModal({ target, open, onClose, onSuccess }: Props) {
             <Input label={t('port')} type="number" value={nasPort} onChange={e => setNasPort(Number(e.target.value))} />
             <Input label={t('common:nas.username')} value={nasUser} onChange={e => setNasUser(e.target.value)} required />
             <Input label={t('common:nas.password')} type="password" value={nasPass} onChange={e => setNasPass(e.target.value)} placeholder={t('keep_current_hint')} />
+            <Select
+              label={t('common:nas.type_label')}
+              options={[
+                { value: '', label: t('common:nas.type_placeholder') },
+                { value: 'synology', label: t('common:nas.type_synology') },
+                { value: 'qnap', label: t('common:nas.type_qnap') },
+                { value: 'truenas', label: t('common:nas.type_truenas') },
+                { value: 'omv', label: t('common:nas.type_omv') },
+                { value: 'unraid', label: t('common:nas.type_unraid') },
+                { value: 'linux', label: t('common:nas.type_linux') },
+              ]}
+              value={nasType}
+              onChange={e => setNasType(e.target.value)}
+            />
             {nasHost && nasUser && nasPass && (
               <Button type="button" variant="secondary" loading={sshKeyLoading} onClick={handleSetupSshKey}>
                 {t('common:nas.setup_ssh_key')}
               </Button>
             )}
-            <NASSetupHint />
+            <NASSetupHint nasType={nasType} />
             <button type="button" onClick={() => setAdvancedOpen(v => !v)} className="text-xs text-[var(--text-muted)] hover:text-[var(--text-secondary)] text-left">
               {advancedOpen ? '▾' : '▸'} {t('common:advanced')}
             </button>
