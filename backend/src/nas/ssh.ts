@@ -118,8 +118,9 @@ export async function deployPublicKey(config: SSHConfig, publicKey: string): Pro
         'chmod 700 ~/.ssh',
         `grep -qxF '${key}' ~/.ssh/authorized_keys 2>/dev/null || printf '%s\\n' '${key}' >> ~/.ssh/authorized_keys`,
         'chmod 600 ~/.ssh/authorized_keys',
-        // SSH StrictModes rejects keys when home dir is group/world-writable (Synology default: 777)
-        'chmod go-w ~ 2>/dev/null || true',
+        // Fix home dir permissions for SSH StrictModes (Synology default: 777, owned by root)
+        // sudo -n is non-interactive: succeeds immediately if NOPASSWD (Synology admin), fails instantly otherwise — never hangs
+        'sudo -n chmod go-w ~ 2>/dev/null || chmod go-w ~ 2>/dev/null || true',
       ].join(' && ')
       conn.exec(cmd, (err, stream) => {
         if (err) { conn.end(); reject(err); return }
