@@ -108,8 +108,16 @@ export async function deployPublicKey(config: SSHConfig, publicKey: string): Pro
     const conn = new Client()
 
     conn.on('ready', () => {
-      // Append public key to authorized_keys — idempotent via grep check
-      const cmd = `mkdir -p ~/.ssh && chmod 700 ~/.ssh && grep -qF '${publicKey.trim()}' ~/.ssh/authorized_keys 2>/dev/null || echo '${publicKey.trim()}' >> ~/.ssh/authorized_keys && chmod 600 ~/.ssh/authorized_keys`
+      // Create home dir if missing (Synology: /var/services/homes/<user> not created until User Home service enabled)
+      // then append public key to authorized_keys idempotently
+      const key = publicKey.trim()
+      const cmd = [
+        '[ -d "$HOME" ] || sudo mkdir -p "$HOME" && sudo chown "$(id -u):$(id -g)" "$HOME" && sudo chmod 700 "$HOME"',
+        'mkdir -p "$HOME/.ssh"',
+        'chmod 700 "$HOME/.ssh"',
+        `grep -qF '${key}' "$HOME/.ssh/authorized_keys" 2>/dev/null || echo '${key}' >> "$HOME/.ssh/authorized_keys"`,
+        'chmod 600 "$HOME/.ssh/authorized_keys"',
+      ].join(' && ')
       conn.exec(cmd, (err, stream) => {
         if (err) { conn.end(); reject(err); return }
         stream.on('close', (code: number) => {
