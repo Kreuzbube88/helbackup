@@ -38,6 +38,7 @@ export async function transferAndCleanup(
     sshHost: nasConfig.host,
     sshUser: nasConfig.username,
     sshPassword: nasConfig.password,
+    sshPort: nasConfig.port,
     bwLimit: 51200,
     onProgress: (() => {
       let last = -1
@@ -48,6 +49,10 @@ export async function transferAndCleanup(
         }
       }
     })(),
+    onLog: msg => {
+      const line = msg.trim()
+      if (line) engine.log('error', 'system', `rsync: ${line}`)
+    },
   })
   await fs.rm(localDir, { recursive: true, force: true })
   engine.log('info', 'system', 'NAS transfer complete')

@@ -8,6 +8,7 @@ export interface RsyncOptions {
   sshHost?: string
   sshKey?: string
   sshPassword?: string
+  sshPort?: number
   excludePatterns?: string[]
   filesFrom?: string // path to a file containing newline-separated relative paths to include
   bwLimit?: number // KB/s
@@ -42,12 +43,13 @@ export async function executeRsync(options: RsyncOptions): Promise<RsyncResult> 
 
     if (options.sshHost && options.sshUser) {
       args.push('--mkpath') // create remote destination directory if it does not exist (rsync >= 3.2.3)
+      const portFlag = options.sshPort && options.sshPort !== 22 ? ` -p ${options.sshPort}` : ''
       // sshPassword uses sshpass -e (reads from SSHPASS env var) to avoid leaking in process args
       const sshCmd = options.sshPassword
-        ? `sshpass -e ssh -o StrictHostKeyChecking=no`
+        ? `sshpass -e ssh${portFlag} -o StrictHostKeyChecking=no`
         : options.sshKey
-          ? `ssh -i '${options.sshKey.replace(/'/g, "'\\''")}' -o StrictHostKeyChecking=no`
-          : `ssh -o StrictHostKeyChecking=no`
+          ? `ssh${portFlag} -i '${options.sshKey.replace(/'/g, "'\\''")}' -o StrictHostKeyChecking=no`
+          : `ssh${portFlag} -o StrictHostKeyChecking=no`
       args.push(`--rsh=${sshCmd}`)
       args.push(options.source, `${options.sshUser}@${options.sshHost}:${options.destination}`)
     } else {
