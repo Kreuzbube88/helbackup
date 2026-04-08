@@ -71,7 +71,7 @@ export async function transferAndCleanup(
     })(),
     onLog: msg => {
       const line = msg.trim()
-      if (line) engine.log('error', 'system', `rsync: ${line}`)
+      if (line.startsWith('ERROR:')) engine.log('error', 'system', line.replace(/^ERROR:\s*/, ''))
     },
   })
   await fs.rm(localDir, { recursive: true, force: true })

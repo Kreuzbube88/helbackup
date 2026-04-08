@@ -139,6 +139,8 @@ export async function createJobManifest(
   // Generate checksums across all step paths, storing absolute paths for multi-step support
   const allChecksums: ChecksumEntry[] = []
   for (const { path: stepPath } of stepPaths) {
+    const localExists = await fs.access(stepPath).then(() => true).catch(() => false)
+    if (!localExists) continue // remote NAS path — checksums not available locally
     try {
       const stepChecksums = await generateChecksums(stepPath, engine)
       for (const c of stepChecksums) {
