@@ -42,7 +42,6 @@ export async function executeRsync(options: RsyncOptions): Promise<RsyncResult> 
     }
 
     if (options.sshHost && options.sshUser) {
-      args.push('--mkpath') // create remote destination directory if it does not exist (rsync >= 3.2.3)
       const portFlag = options.sshPort && options.sshPort !== 22 ? ` -p ${options.sshPort}` : ''
       // Prefer key auth over password — key takes priority if both are configured
       const sshCmd = options.sshKey

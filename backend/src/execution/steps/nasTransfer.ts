@@ -2,6 +2,7 @@ import os from 'os'
 import path from 'path'
 import fs from 'fs/promises'
 import { executeRsync } from '../../tools/rsync.js'
+import { executeSSHCommand } from '../../nas/ssh.js'
 import type { JobExecutionEngine } from '../engine.js'
 
 export interface NasConfig {
@@ -42,6 +43,14 @@ export async function transferAndCleanup(
   engine: JobExecutionEngine
 ): Promise<void> {
   engine.log('info', 'system', `Transferring to NAS: ${nasConfig.host}:${remotePath}`)
+  // Pre-create remote directory via SSH (avoids --mkpath which requires rsync 3.2.3+, not available on Synology DSM)
+  const mkdirResult = await executeSSHCommand(
+    { host: nasConfig.host, port: nasConfig.port, username: nasConfig.username, password: nasConfig.password, privateKey: nasConfig.privateKey },
+    `mkdir -p '${remotePath.replace(/'/g, "'\\''")}'`
+  )
+  if (!mkdirResult.success) {
+    throw new Error(`Failed to create remote directory ${remotePath}: ${mkdirResult.error ?? 'unknown error'}`)
+  }
   await executeRsync({
     source: localDir + '/',
     destination: remotePath,
