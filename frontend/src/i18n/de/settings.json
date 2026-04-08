@@ -31,5 +31,16 @@
     "title": "Allgemein",
     "timezone": "Zeitzone",
     "log_level": "Log-Level"
+  },
+  "helbackup": {
+    "title": "HELBACKUP Wiederherstellen",
+    "restore_hint": "Lade eine helbackup-export.tar.gz (oder .gpg) aus einem HELBACKUP-Sicherungs-Job hoch, um alle Jobs, Ziele, Backup-Einträge und SSH-Schlüssel auf einer neuen Installation wiederherzustellen.",
+    "restore_warning": "Alle aktuellen Daten werden ersetzt und der Container neu gestartet. Nur auf einer frischen oder defekten Installation verwenden.",
+    "choose_file": "Backup-Datei auswählen…",
+    "encryption_password": "Verschlüsselungspasswort",
+    "encryption_password_hint": "Passwort, das beim Erstellen des Backups verwendet wurde",
+    "restore_btn": "Wiederherstellen & Neustart",
+    "restore_success": "Wiederherstellung abgeschlossen.",
+    "restore_restarting": "Container wird neu gestartet — du wirst in wenigen Sekunden zur Anmeldeseite weitergeleitet."
   }
 }

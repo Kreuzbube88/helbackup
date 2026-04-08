@@ -91,6 +91,8 @@
   "wizard_type_sysconfig_desc": "Network, users, plugins, boot config",
   "wizard_type_custom": "Custom",
   "wizard_type_custom_desc": "Back up any path not covered by the other backup types",
+  "wizard_type_helbackup": "HELBACKUP Sicherung",
+  "wizard_type_helbackup_desc": "Backs up HELBACKUP itself: all jobs, targets, backup records and SSH keys",
   "custom_source_path": "Source Path",
   "custom_source_hint": "Path inside the container, e.g. /unraid/user/data/my-folder. Do not use for Appdata, VMs, or Flash — use the dedicated types instead.",
   "custom_exclude_patterns": "Exclude Patterns",

@@ -22,6 +22,7 @@ import { nasRoutes } from './api/nas.js'
 import { initScheduler, stopScheduler } from './scheduler/index.js'
 import { executionRoutes } from './api/execution.js'
 import recoveryRoutes from './api/recovery.js'
+import helbackupRoutes from './api/helbackup.js'
 import { encryptionRoutes } from './api/encryption.js'
 import { decryptionRoutes } from './api/decryption.js'
 import { notificationRoutes } from './api/notifications.js'
@@ -135,6 +136,7 @@ await app.register(toolsRoutes)
 await app.register(nasRoutes)
 await app.register(executionRoutes)
 await app.register(recoveryRoutes)
+await app.register(helbackupRoutes)
 await app.register(encryptionRoutes)
 await app.register(decryptionRoutes)
 await app.register(notificationRoutes)

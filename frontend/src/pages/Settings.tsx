@@ -10,6 +10,7 @@ import { ConfirmModal } from '../components/common/ConfirmModal'
 import { useUnsavedChanges } from '../hooks/useUnsavedChanges'
 import { api } from '../api'
 import { NotificationSettings } from '../components/notifications/NotificationSettings'
+import { HELBACKUPRestore } from '../components/settings/HELBACKUPRestore'
 
 const LANG_OPTIONS = [
   { value: 'de', label: 'Deutsch' },
@@ -139,6 +140,12 @@ export function Settings() {
             {t('settings:notifications.title', 'Notifications')}
           </h2>
           <NotificationSettings />
+        </Card>
+        <Card>
+          <h2 className="text-sm font-semibold text-[var(--text-secondary)] mb-4 uppercase tracking-wider">
+            {t('helbackup.title')}
+          </h2>
+          <HELBACKUPRestore />
         </Card>
       </div>
 

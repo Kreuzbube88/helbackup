@@ -20,7 +20,7 @@ export interface JobHooks {
 
 export interface JobStep {
   id: string
-  type: 'flash' | 'appdata' | 'vms' | 'docker_images' | 'system_config' | 'cloud' | 'custom'
+  type: 'flash' | 'appdata' | 'vms' | 'docker_images' | 'system_config' | 'cloud' | 'custom' | 'helbackup_self'
   config: Record<string, unknown>
   retry?: { max_attempts: number; backoff: 'linear' | 'exponential' }
 }
@@ -282,6 +282,11 @@ export class JobExecutionEngine extends EventEmitter {
       case 'custom': {
         const { executeCustomBackup } = await import('./steps/custom.js')
         await executeCustomBackup(step.config as unknown as Parameters<typeof executeCustomBackup>[0], this)
+        break
+      }
+      case 'helbackup_self': {
+        const { executeHELBACKUPSelfBackup } = await import('./steps/helbackup-self.js')
+        await executeHELBACKUPSelfBackup(step.config as unknown as Parameters<typeof executeHELBACKUPSelfBackup>[0], this)
         break
       }
       default:

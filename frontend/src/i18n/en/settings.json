@@ -31,5 +31,16 @@
     "title": "General",
     "timezone": "Timezone",
     "log_level": "Log Level"
+  },
+  "helbackup": {
+    "title": "HELBACKUP Restore",
+    "restore_hint": "Upload a helbackup-export.tar.gz (or .gpg) from a HELBACKUP Sicherung job to restore all jobs, targets, backup records and SSH keys on a fresh installation.",
+    "restore_warning": "This will replace all current data and restart the container. Only use on a fresh or broken installation.",
+    "choose_file": "Choose backup file…",
+    "encryption_password": "Encryption Password",
+    "encryption_password_hint": "Password used when the backup was created",
+    "restore_btn": "Restore & Restart",
+    "restore_success": "Restore complete.",
+    "restore_restarting": "Container is restarting — you will be redirected to the login page in a few seconds."
   }
 }

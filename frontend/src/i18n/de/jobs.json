@@ -91,6 +91,8 @@
   "wizard_type_sysconfig_desc": "Netzwerk, Benutzer, Plugins, Boot-Konfiguration",
   "wizard_type_custom": "Benutzerdefiniert",
   "wizard_type_custom_desc": "Beliebigen Pfad sichern, der nicht von anderen Typen abgedeckt wird",
+  "wizard_type_helbackup": "HELBACKUP Sicherung",
+  "wizard_type_helbackup_desc": "Sichert HELBACKUP selbst: alle Jobs, Ziele, Backup-Einträge und SSH-Schlüssel",
   "custom_source_path": "Quell-Pfad",
   "custom_source_hint": "Pfad innerhalb des Containers, z.B. /unraid/user/data/mein-ordner. Nicht für Appdata, VMs oder Flash — dafür die dedizierten Typen verwenden.",
   "custom_exclude_patterns": "Ausschluss-Muster",

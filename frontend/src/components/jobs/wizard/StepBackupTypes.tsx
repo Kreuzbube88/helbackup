@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next'
-import { HardDrive, FolderOpen, Monitor, Container, Settings, FolderCog, ChevronDown, ChevronUp } from 'lucide-react'
+import { HardDrive, FolderOpen, Monitor, Container, Settings, FolderCog, ChevronDown, ChevronUp, Shield } from 'lucide-react'
 import { HelpText } from '../../common/HelpText'
 import type { Target } from '../../../api'
 import { FlashConfig, type FlashStepConfig } from './config/FlashConfig'
@@ -8,8 +8,9 @@ import { VMConfig, type VMStepConfig } from './config/VMConfig'
 import { DockerImagesConfig, type DockerImagesStepConfig } from './config/DockerImagesConfig'
 import { SystemConfigForm, type SystemConfigStepConfig } from './config/SystemConfigForm'
 import { CustomConfig, type CustomStepConfig } from './config/CustomConfig'
+import { HELBACKUPSelfConfig, type HELBACKUPSelfStepConfig } from './config/HELBACKUPSelfConfig'
 
-export type StepType = 'flash' | 'appdata' | 'vms' | 'docker_images' | 'system_config' | 'custom'
+export type StepType = 'flash' | 'appdata' | 'vms' | 'docker_images' | 'system_config' | 'custom' | 'helbackup_self'
 
 export interface BackupStepsConfig {
   flash: FlashStepConfig | null
@@ -18,6 +19,7 @@ export interface BackupStepsConfig {
   docker_images: DockerImagesStepConfig | null
   system_config: SystemConfigStepConfig | null
   custom: CustomStepConfig | null
+  helbackup_self: HELBACKUPSelfStepConfig | null
 }
 
 interface Props {
@@ -33,6 +35,7 @@ const DEFAULT_CONFIGS = {
   docker_images: { targetId: '', images: [] },
   system_config: { targetId: '', includeItems: ['boot_config', 'network', 'users', 'plugins'] },
   custom: { sourcePath: '', targetId: '', excludePatterns: [] },
+  helbackup_self: { targetId: '', useEncryption: false },
 }
 
 interface StepTypeInfo {
@@ -49,6 +52,7 @@ const STEP_TYPES: StepTypeInfo[] = [
   { type: 'docker_images', icon: <Container size={16} />, labelKey: 'wizard_type_docker', descKey: 'wizard_type_docker_desc' },
   { type: 'system_config', icon: <Settings size={16} />, labelKey: 'wizard_type_sysconfig', descKey: 'wizard_type_sysconfig_desc' },
   { type: 'custom', icon: <FolderCog size={16} />, labelKey: 'wizard_type_custom', descKey: 'wizard_type_custom_desc' },
+  { type: 'helbackup_self', icon: <Shield size={16} />, labelKey: 'wizard_type_helbackup', descKey: 'wizard_type_helbackup_desc' },
 ]
 
 export function StepBackupTypes({ value, onChange, targets }: Props) {
@@ -139,6 +143,13 @@ export function StepBackupTypes({ value, onChange, targets }: Props) {
                   <CustomConfig
                     value={value.custom!}
                     onChange={cfg => onChange({ ...value, custom: cfg })}
+                    targets={targets}
+                  />
+                )}
+                {type === 'helbackup_self' && (
+                  <HELBACKUPSelfConfig
+                    value={value.helbackup_self!}
+                    onChange={cfg => onChange({ ...value, helbackup_self: cfg })}
                     targets={targets}
                   />
                 )}

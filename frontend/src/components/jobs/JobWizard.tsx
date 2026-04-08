@@ -31,6 +31,7 @@ const DEFAULT_STEPS: BackupStepsConfig = {
   docker_images: null,
   system_config: null,
   custom: null,
+  helbackup_self: null,
 }
 
 const DEFAULT_TOOLS: ToolSelection = {
@@ -133,6 +134,17 @@ function buildSteps(backupSteps: BackupStepsConfig, advanced: AdvancedSettingsVa
         targetId: backupSteps.custom.targetId,
         excludePatterns: backupSteps.custom.excludePatterns,
         useEncryption: advanced.useEncryption,
+      },
+      retry: { max_attempts: 2, backoff: 'linear' },
+    })
+  }
+
+  if (backupSteps.helbackup_self) {
+    steps.push({
+      id: cryptoUUID(), type: 'helbackup_self',
+      config: {
+        targetId: backupSteps.helbackup_self.targetId,
+        useEncryption: backupSteps.helbackup_self.useEncryption,
       },
       retry: { max_attempts: 2, backoff: 'linear' },
     })

@@ -266,6 +266,11 @@ export const api = {
       request<{ success: boolean; data: CreateTokenResult }>('POST', '/tokens', data),
     revoke: (id: number) => request<{ success: boolean; data: unknown }>('DELETE', `/tokens/${id}`),
   },
+
+  helbackup: {
+    restore: (fileData: string, encryptionPassword?: string) =>
+      request<{ ok: boolean; message: string }>('POST', '/helbackup/restore', { fileData, ...(encryptionPassword ? { encryptionPassword } : {}) }),
+  },
 }
 
 export interface DashboardData {
