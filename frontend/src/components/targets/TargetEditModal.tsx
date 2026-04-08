@@ -60,7 +60,7 @@ export function TargetEditModal({ target, open, onClose, onSuccess }: Props) {
       setNasPort((cfg.port as number) ?? 22)
       setNasUser((cfg.username as string) ?? '')
       setNasPass('')
-      setNasPrivateKey('')
+      setNasPrivateKey((cfg.privateKey as string) ?? '')
       setNasType((cfg.nasType as string) ?? '')
       setAdvancedOpen(!!(cfg.privateKey as string | undefined))
       setNasPath((cfg.path as string) ?? '')
