@@ -78,11 +78,11 @@ export async function executeDockerImageExport(
       const entries = await fs.readdir(workDir)
 
       for (const file of entries) {
-        if (!file.endsWith('.tar')) continue
-        const tarPath = path.join(workDir, file)
-        const encryptedPath = `${tarPath}.gpg`
-        await encryptFileGPG(tarPath, encryptedPath, encryptionPassword)
-        await fs.unlink(tarPath)
+        if (file.endsWith('.gpg')) continue
+        const filePath = path.join(workDir, file)
+        const encryptedPath = `${filePath}.gpg`
+        await encryptFileGPG(filePath, encryptedPath, encryptionPassword)
+        await fs.unlink(filePath)
         engine.log('info', 'system', `Encrypted: ${file}`)
       }
 

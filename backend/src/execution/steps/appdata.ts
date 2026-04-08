@@ -280,6 +280,14 @@ export async function executeAppdataBackup(
         await fs.unlink(tarFile)
       }
 
+      // Remove unencrypted source files — keep only .gpg
+      const cleanEntries = await fs.readdir(workDir)
+      for (const entry of cleanEntries) {
+        if (!entry.endsWith('.gpg')) {
+          await fs.rm(path.join(workDir, entry), { recursive: true, force: true })
+        }
+      }
+
       engine.log('info', 'system', 'Appdata backup encrypted')
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err)
