@@ -113,6 +113,7 @@ export async function deployPublicKey(config: SSHConfig, publicKey: string): Pro
       const key = publicKey.trim()
       const cmd = [
         '[ -d "$HOME" ] || sudo mkdir -p "$HOME" && sudo chown "$(id -u):$(id -g)" "$HOME" && sudo chmod 700 "$HOME"',
+        'chmod g-w,o-w "$HOME"', // SSH StrictModes rejects keys if home is group/world-writable (Synology default: 777)
         'mkdir -p "$HOME/.ssh"',
         'chmod 700 "$HOME/.ssh"',
         `grep -qF '${key}' "$HOME/.ssh/authorized_keys" 2>/dev/null || echo '${key}' >> "$HOME/.ssh/authorized_keys"`,

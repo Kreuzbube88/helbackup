@@ -8,6 +8,7 @@ import { Button } from '../common/Button'
 import { useToast } from '../common/Toast'
 import { api, type Target } from '../../api'
 import { NASTargetForm, type NASPowerConfig } from './NASTargetForm'
+import { NASSetupHint } from './NASSetupHint'
 
 interface Props {
   target: Target | null
@@ -174,6 +175,7 @@ export function TargetEditModal({ target, open, onClose, onSuccess }: Props) {
                 {t('common:nas.setup_ssh_key')}
               </Button>
             )}
+            <NASSetupHint />
             <button type="button" onClick={() => setAdvancedOpen(v => !v)} className="text-xs text-[var(--text-muted)] hover:text-[var(--text-secondary)] text-left">
               {advancedOpen ? '▾' : '▸'} {t('common:advanced')}
             </button>

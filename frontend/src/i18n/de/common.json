@@ -100,7 +100,14 @@
     "supported_systems": "Kompatibel: Synology, QNAP, TrueNAS, OpenMediaVault, Unraid und andere Linux-basierte NAS-Systeme",
     "setup_ssh_key": "SSH-Key automatisch einrichten",
     "ssh_key_deployed": "SSH-Key erfolgreich eingerichtet und auf dem NAS hinterlegt",
-    "ssh_key_error": "SSH-Key konnte nicht eingerichtet werden"
+    "ssh_key_error": "SSH-Key konnte nicht eingerichtet werden",
+    "setup_hint_title": "Voraussetzungen für SSH-Key-Authentifizierung",
+    "setup_hint_synology": "Synology DSM: SSH aktivieren (Systemsteuerung → Terminal & SNMP). User Home Service aktivieren (Systemsteuerung → Benutzer → Erweitert → Benutzer-Home-Dienst). Benutzer muss Mitglied der administrators-Gruppe sein.",
+    "setup_hint_qnap": "QNAP QTS: SSH aktivieren (Systemeinstellungen → Netzwerk & Dateiübertragung → Telnet/SSH). Kein weiterer Schritt nötig.",
+    "setup_hint_truenas": "TrueNAS SCALE/CORE: SSH-Dienst starten und auf 'Automatisch starten' setzen (System → Dienste → SSH). Das Dataset des Benutzer-Home-Verzeichnisses muss Unix-Berechtigungen verwenden (kein reines NFSv4).",
+    "setup_hint_omv": "OpenMediaVault: SSH aktivieren (Dienste → SSH). Benutzer muss der Gruppe _ssh zugewiesen sein (Benutzer → Gruppen).",
+    "setup_hint_unraid": "Unraid: SSH aktivieren (Einstellungen → Sicherheit). ⚠️ SSH-Keys überleben keinen Neustart. Für dauerhafte Einrichtung: Key manuell nach /boot/config/ kopieren und per go-Skript beim Start laden.",
+    "setup_hint_linux": "Linux (allgemein): PubkeyAuthentication yes in /etc/ssh/sshd_config sicherstellen, dann sudo systemctl restart sshd."
   },
   "logs": {
     "title": "Backup Logs",

@@ -8,6 +8,7 @@ import { ConfirmModal } from '../common/ConfirmModal'
 import { useToast } from '../common/Toast'
 import { CronBuilder } from '../jobs/wizard/CronBuilder'
 import { NASTargetForm, type NASPowerConfig } from '../targets/NASTargetForm'
+import { NASSetupHint } from '../targets/NASSetupHint'
 import { api } from '../../api'
 import { cryptoUUID } from '../../utils/format'
 
@@ -280,6 +281,7 @@ export function FirstBackupWizard({ open, onClose, onSuccess }: Props) {
                       {t('common:nas.setup_ssh_key')}
                     </Button>
                   )}
+                  <NASSetupHint />
                   <button type="button" onClick={() => setAdvancedOpen(v => !v)} className="text-xs text-[var(--text-muted)] hover:text-[var(--text-secondary)] text-left">
                     {advancedOpen ? '▾' : '▸'} {t('common:advanced')}
                   </button>
