@@ -96,3 +96,40 @@ export async function shutdownNAS(config: SSHConfig): Promise<SSHResult> {
   // Works with Synology, QNAP, TrueNAS, OpenMediaVault, Unraid, etc.
   return executeSSHCommand(config, 'sudo shutdown -h now')
 }
+
+/** Deploy a public key to the NAS authorized_keys via password SSH, then key auth can be used. */
+export async function deployPublicKey(config: SSHConfig, publicKey: string): Promise<void> {
+  let privateKey: Buffer | undefined
+  if (config.privateKey) {
+    privateKey = await fs.readFile(config.privateKey)
+  }
+
+  return new Promise((resolve, reject) => {
+    const conn = new Client()
+
+    conn.on('ready', () => {
+      // Append public key to authorized_keys — idempotent via grep check
+      const cmd = `mkdir -p ~/.ssh && chmod 700 ~/.ssh && grep -qF '${publicKey.trim()}' ~/.ssh/authorized_keys 2>/dev/null || echo '${publicKey.trim()}' >> ~/.ssh/authorized_keys && chmod 600 ~/.ssh/authorized_keys`
+      conn.exec(cmd, (err, stream) => {
+        if (err) { conn.end(); reject(err); return }
+        stream.on('close', (code: number) => {
+          conn.end()
+          if (code === 0) resolve()
+          else reject(new Error(`Failed to deploy public key, exit code ${code}`))
+        })
+        stream.stderr.on('data', (d: Buffer) => logger.warn(`deploy-key stderr: ${d.toString().trim()}`))
+      })
+    })
+
+    conn.on('error', reject)
+
+    conn.connect({
+      host: config.host,
+      port: config.port ?? 22,
+      username: config.username,
+      privateKey,
+      password: config.password,
+      readyTimeout: 30000,
+    })
+  })
+}
