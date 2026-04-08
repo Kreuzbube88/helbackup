@@ -29,6 +29,7 @@ export function TargetCreateModal({ open, onClose, onSuccess }: Props) {
   const { toast } = useToast()
   const [loading, setLoading] = useState(false)
   const [sshKeyLoading, setSshKeyLoading] = useState(false)
+  const [advancedOpen, setAdvancedOpen] = useState(false)
   const [confirmClose, setConfirmClose] = useState(false)
   const [name, setName] = useState('')
   const [type, setType] = useState<TargetType>('local')
@@ -148,11 +149,16 @@ export function TargetCreateModal({ open, onClose, onSuccess }: Props) {
             <Input label={t('port')} type="number" value={nasPort} onChange={e => setNasPort(Number(e.target.value))} />
             <Input label={t('common:nas.username')} value={nasUser} onChange={e => setNasUser(e.target.value)} required />
             <Input label={t('common:nas.password')} type="password" value={nasPass} onChange={e => setNasPass(e.target.value)} placeholder={t('common:nas.password_placeholder')} />
-            <Input label={t('common:nas.private_key')} value={nasPrivateKey} onChange={e => setNasPrivateKey(e.target.value)} placeholder={t('common:nas.private_key_placeholder')} helpText={t('common:nas.private_key_hint')} />
             {nasHost && nasUser && nasPass && (
               <Button type="button" variant="secondary" loading={sshKeyLoading} onClick={handleSetupSshKey}>
                 {t('common:nas.setup_ssh_key')}
               </Button>
+            )}
+            <button type="button" onClick={() => setAdvancedOpen(v => !v)} className="text-xs text-[var(--text-muted)] hover:text-[var(--text-secondary)] text-left">
+              {advancedOpen ? '▾' : '▸'} {t('common:advanced')}
+            </button>
+            {advancedOpen && (
+              <Input label={t('common:nas.private_key')} value={nasPrivateKey} onChange={e => setNasPrivateKey(e.target.value)} placeholder={t('common:nas.private_key_placeholder')} helpText={t('common:nas.private_key_hint')} />
             )}
             <Input label={t('path')} value={nasPath} onChange={e => setNasPath(e.target.value)} required />
             <div className="border border-[var(--border-default)] p-3">

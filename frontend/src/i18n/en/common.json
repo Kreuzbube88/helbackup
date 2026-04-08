@@ -3,6 +3,7 @@
   "unexpected_error": "Unexpected Error",
   "unknown_error": "An unknown error occurred",
   "try_again": "Try again",
+  "advanced": "Advanced",
   "buttons": {
     "save": "Save",
     "cancel": "Cancel",
