@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Lock, Search, RefreshCw, HardDrive, Server, Cpu, Package, Settings } from 'lucide-react';
+import { Lock, Search, RefreshCw, HardDrive, Server, Cpu, Package, Settings, Trash2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '../common/Button';
 import { Card } from '../common/Card';
@@ -75,6 +75,9 @@ export default function ManifestBrowser({ manifests, onSelect, onFullServerResto
   const [scanPath, setScanPath] = useState('');
   const [scanning, setScanning] = useState(false);
   const [scanError, setScanError] = useState<string | null>(null);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const [deleteConfirmStep, setDeleteConfirmStep] = useState<1 | 2>(1);
+  const [deleting, setDeleting] = useState(false);
 
   const handleScan = async () => {
     if (!scanPath.trim()) return;
@@ -91,6 +94,22 @@ export default function ManifestBrowser({ manifests, onSelect, onFullServerResto
       setScanError(err instanceof Error ? err.message : String(err));
     } finally {
       setScanning(false);
+    }
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!deleteConfirmId) return;
+    if (deleteConfirmStep === 1) { setDeleteConfirmStep(2); return; }
+    setDeleting(true);
+    try {
+      await recoveryApi.deleteBackup(deleteConfirmId);
+      setDeleteConfirmId(null);
+      setDeleteConfirmStep(1);
+      onRefresh();
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : String(err));
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -275,6 +294,15 @@ export default function ManifestBrowser({ manifests, onSelect, onFullServerResto
                         {t('recovery.restore_database')}
                       </Button>
                     )}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="border-red-500/40 text-red-400 hover:border-red-400"
+                      onClick={() => { setDeleteConfirmId(backupId); setDeleteConfirmStep(1); }}
+                    >
+                      <Trash2 size={12} />
+                      {t('recovery.delete_backup')}
+                    </Button>
                   </div>
                 </div>
               </Card>
@@ -289,6 +317,35 @@ export default function ManifestBrowser({ manifests, onSelect, onFullServerResto
           onUnlock={(sessionId) => handleUnlocked(sessionId, pendingEncrypted)}
           onCancel={() => setPendingEncrypted(null)}
         />
+      )}
+
+      {deleteConfirmId && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50" onClick={() => { setDeleteConfirmId(null); setDeleteConfirmStep(1); }}>
+          <div className="bg-[var(--bg-elevated)] border border-red-500/60 p-6 max-w-md w-full mx-4 shadow-xl" onClick={e => e.stopPropagation()}>
+            <h3 className="text-base font-semibold text-[var(--text-primary)] mb-2">
+              {deleteConfirmStep === 1 ? t('recovery.delete_backup') : t('recovery.delete_backup_confirm_title')}
+            </h3>
+            <p className="text-sm text-[var(--text-muted)] mb-4">
+              {deleteConfirmStep === 1
+                ? t('recovery.delete_backup_body')
+                : t('recovery.delete_backup_confirm_body')}
+            </p>
+            <div className="flex gap-2">
+              <Button variant="ghost" size="sm" onClick={() => { setDeleteConfirmId(null); setDeleteConfirmStep(1); }}>
+                {t('buttons.cancel')}
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="border-red-500/60 text-red-400 hover:border-red-400"
+                disabled={deleting}
+                onClick={() => void handleDeleteConfirm()}
+              >
+                {deleteConfirmStep === 1 ? t('recovery.delete_backup') : t('recovery.delete_backup_confirm_action')}
+              </Button>
+            </div>
+          </div>
+        </div>
       )}
 
       {dbRestoreManifest && (() => {

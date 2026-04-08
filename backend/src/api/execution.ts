@@ -29,6 +29,11 @@ export async function executionRoutes(app: FastifyInstance): Promise<void> {
       const job = db.prepare('SELECT * FROM jobs WHERE id = ?').get(request.params.id) as JobRow | undefined
       if (!job) return reply.status(404).send({ error: 'Job not found' })
 
+      const rm = db.prepare("SELECT value FROM settings WHERE key = 'recovery_mode'").get() as { value: string } | undefined
+      if (rm?.value === '1') {
+        return reply.status(503).send({ error: 'recovery_mode_active' })
+      }
+
       // Prevent concurrent execution of the same job
       for (const [, engine] of activeExecutions) {
         if (engine.getJobId() === job.id) {

@@ -4,10 +4,30 @@
       "Bash(gh repo:*)",
       "Bash(git init:*)",
       "Bash(git remote:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git stash:*)",
+      "Bash(git fetch:*)",
+      "Bash(git push:*)",
+      "Bash(git commit:*)",
+      "Bash(git reset:*)",
+      "Bash(git checkout:*)",
+      "Bash(npm install:*)",
+      "Bash(npm run:*)",
+      "Bash(npm audit:*)",
+      "Bash(npm info:*)",
+      "Bash(npm test:*)",
+      "Bash(npx tsc:*)",
+      "Bash(grep:*)",
+      "Bash(find:*)",
+      "Bash(wc:*)",
+      "Bash(xargs wc:*)",
+      "Bash(xargs grep:*)",
+      "Bash(xargs ls:*)",
+      "Read(//tmp/**)",
+      "WebSearch",
+      "Bash(git rm:*)",
+      "Bash(git pull:*)",
+      "Bash(python3:*)"
     ]
-  },
-  "disabledMcpjsonServers": [
-    "claude-flow"
-  ]
+  }
 }

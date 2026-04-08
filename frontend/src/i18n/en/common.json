@@ -253,6 +253,11 @@
     "backup_type_sysconfig": "System Config",
     "no_checksums_title": "No Checksums Available",
     "no_checksums_body": "This backup was created without checksums (older format). Integrity cannot be verified automatically.",
+    "delete_backup": "Delete Backup",
+    "delete_backup_body": "All files of this backup will be permanently deleted. Are you sure?",
+    "delete_backup_confirm_title": "Permanently Delete Backup?",
+    "delete_backup_confirm_body": "All files of this backup will be permanently deleted. This cannot be undone.",
+    "delete_backup_confirm_action": "Delete permanently",
     "nas_verify_title": "NAS Backup — Verification Unavailable",
     "nas_verify_body": "Backup files are on the remote NAS and cannot be accessed locally. Stored checksums cannot be verified.",
     "nas_verify_ssh_failed_body": "SSH connection to NAS failed. Checksums could not be verified."

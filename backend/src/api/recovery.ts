@@ -305,6 +305,8 @@ export default async function recoveryRoutes(app: FastifyInstance) {
 
         interface StoredManifestBasic {
           backupPath?: string
+          targetId?: string
+          stepPaths?: Array<{ type: string; path: string; targetId?: string }>
         }
 
         const manifest = safeJsonParseOrThrow<StoredManifestBasic>(
@@ -324,18 +326,43 @@ export default async function recoveryRoutes(app: FastifyInstance) {
 
         await fs.mkdir(destination, { recursive: true });
 
+        // Determine if source is on NAS (not locally accessible)
+        const isLocalPath = await fs.access(backupPath).then(() => true).catch(() => false);
+        const targetId = manifest.targetId ?? manifest.stepPaths?.[0]?.targetId;
+
+        let nasRsyncOptions: { sshUser: string; sshHost: string; sshKey?: string; sshPassword?: string; sshPort?: number } | undefined;
+        if (!isLocalPath && targetId) {
+          const targetRow = db.prepare('SELECT type, config FROM targets WHERE id = ?')
+            .get(targetId) as { type: string; config: string } | undefined;
+          if (targetRow?.type === 'nas') {
+            const { parseNasConfig } = await import('../execution/steps/nasTransfer.js');
+            const nasConfig = await parseNasConfig(targetRow);
+            if (nasConfig) {
+              nasRsyncOptions = {
+                sshUser: nasConfig.username,
+                sshHost: nasConfig.host,
+                sshKey: nasConfig.privateKey,
+                sshPassword: nasConfig.password,
+                sshPort: nasConfig.port,
+              };
+            }
+          }
+        }
+
         // Write file list to temp file for rsync --files-from
         const tmpFile = path.join(os.tmpdir(), `helbackup-restore-${randomUUID()}.txt`);
         try {
           await fs.writeFile(tmpFile, files.join('\n'), 'utf-8');
 
-          logger.info(`[restore/files] rsync --files-from from ${backupPath} → ${destination} (${files.length} files)`);
+          logger.info(`[restore/files] rsync --files-from from ${backupPath} → ${destination} (${files.length} files, NAS: ${!!nasRsyncOptions})`);
 
           await executeRsync({
             source: backupPath + '/',
             destination,
             bwLimit: 51200,
             filesFrom: tmpFile,
+            sshPull: !!nasRsyncOptions,
+            ...nasRsyncOptions,
             onLog: msg => { if (msg.trim()) logger.debug(`[rsync] ${msg.trim()}`) },
           });
         } finally {
@@ -349,6 +376,76 @@ export default async function recoveryRoutes(app: FastifyInstance) {
         });
       } catch (error: unknown) {
         logger.error(`[restore/files] error: ${error instanceof Error ? error.message : String(error)}`);
+        return reply.status(500).send({ error: error instanceof Error ? error.message : String(error) });
+      }
+    }
+  );
+
+  // Delete a backup (DB record + files)
+  app.delete<{ Params: { backupId: string }; Body: { confirm: boolean } }>(
+    '/api/recovery/backup/:backupId',
+    { preHandler: [app.authenticate] },
+    async (request, reply) => {
+      try {
+        if (!request.body?.confirm) {
+          return reply.status(400).send({ error: 'confirm required' });
+        }
+
+        const manifestRecord = db.prepare(
+          'SELECT * FROM manifest WHERE backup_id = ?'
+        ).get(request.params.backupId) as Record<string, unknown> | undefined;
+
+        if (!manifestRecord) {
+          return reply.status(404).send({ error: 'Manifest not found' });
+        }
+
+        interface DeleteManifest {
+          backupPath?: string
+          targetId?: string
+          stepPaths?: Array<{ targetId?: string }>
+        }
+
+        const manifest = safeJsonParseOrThrow<DeleteManifest>(
+          manifestRecord.manifest as string,
+          'delete manifest'
+        );
+
+        const backupPath = manifest.backupPath;
+        const targetId = manifest.targetId ?? manifest.stepPaths?.[0]?.targetId;
+
+        // Delete files
+        if (backupPath) {
+          const isLocal = await fs.access(backupPath).then(() => true).catch(() => false);
+          if (isLocal) {
+            await fs.rm(backupPath, { recursive: true, force: true });
+            logger.info(`[delete-backup] Deleted local path: ${backupPath}`);
+          } else if (targetId) {
+            // NAS path — delete via SSH
+            const targetRow = db.prepare('SELECT type, config FROM targets WHERE id = ?')
+              .get(targetId) as { type: string; config: string } | undefined;
+            if (targetRow?.type === 'nas') {
+              const { parseNasConfig } = await import('../execution/steps/nasTransfer.js');
+              const nasConfig = await parseNasConfig(targetRow);
+              if (nasConfig) {
+                const { executeSSHCommand } = await import('../nas/ssh.js');
+                const safeBackupPath = backupPath.replace(/'/g, "'\\''");
+                await executeSSHCommand(
+                  { host: nasConfig.host, port: nasConfig.port, username: nasConfig.username,
+                    password: nasConfig.password, privateKey: nasConfig.privateKey },
+                  `rm -rf '${safeBackupPath}'`
+                );
+                logger.info(`[delete-backup] Deleted NAS path: ${backupPath}`);
+              }
+            }
+          }
+        }
+
+        // Delete DB record
+        db.prepare('DELETE FROM manifest WHERE backup_id = ?').run(request.params.backupId);
+
+        return reply.send({ ok: true });
+      } catch (error: unknown) {
+        logger.error(`[delete-backup] error: ${error instanceof Error ? error.message : String(error)}`);
         return reply.status(500).send({ error: error instanceof Error ? error.message : String(error) });
       }
     }

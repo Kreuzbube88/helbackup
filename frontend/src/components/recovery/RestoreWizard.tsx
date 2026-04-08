@@ -44,7 +44,17 @@ interface Props {
   onComplete: () => void;
 }
 
-function getDefaultDestination(entries: ManifestEntry[]): string {
+const TYPE_DEST: Record<string, string> = {
+  flash: '/boot',
+  appdata: '/mnt/user/appdata',
+  vms: '/mnt/user/domains',
+  docker_images: '/mnt/user',
+  system_config: '/mnt/user',
+  custom: '/mnt/user',
+}
+
+function getDefaultDestination(entries: ManifestEntry[], stepType?: string): string {
+  if (stepType && TYPE_DEST[stepType]) return TYPE_DEST[stepType]
   const paths = entries.map(e => e.path)
   if (paths.some(p => p.includes('/boot') || p.startsWith('boot/'))) return '/boot'
   if (paths.some(p => p.includes('appdata'))) return '/mnt/user/appdata'
@@ -73,11 +83,12 @@ export default function RestoreWizard({ manifest, onClose, onComplete }: Props) 
 
   const containers = parsed.containerConfigs ?? [];
   const allFiles = parsed.entries ?? [];
+  const primaryStepType = (parsed as { stepPaths?: Array<{ type: string }> }).stepPaths?.[0]?.type ?? '';
 
   const [step, setStep] = useState(0);
   const [selectedContainers, setSelectedContainers] = useState<string[]>([]);
   const [selectedFiles, setSelectedFiles] = useState<string[]>([]);
-  const [restoreDestination, setRestoreDestination] = useState(() => getDefaultDestination(allFiles));
+  const [restoreDestination, setRestoreDestination] = useState(() => getDefaultDestination(allFiles, primaryStepType));
 
   const handleFileToggle = (filePath: string) => {
     setSelectedFiles(prev =>

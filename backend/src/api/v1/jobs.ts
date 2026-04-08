@@ -46,6 +46,11 @@ export async function jobsRoutesV1(app: FastifyInstance): Promise<void> {
           return errorResponse(reply, ErrorCodes.NOT_FOUND, 'Job not found', 404)
         }
 
+        const rm = db.prepare("SELECT value FROM settings WHERE key = 'recovery_mode'").get() as { value: string } | undefined
+        if (rm?.value === '1') {
+          return errorResponse(reply, ErrorCodes.FORBIDDEN, 'Recovery mode is active — job execution disabled', 503)
+        }
+
         let steps: JobStep[]
         try {
           steps = JSON.parse(job.steps) as JobStep[]

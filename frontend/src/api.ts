@@ -361,4 +361,6 @@ export const recovery = {
     request<{ success: boolean; message: string }>('POST', '/restore-wizard/execute', { backupId, plan }),
   verifyBackup: (backupId: string) =>
     request<{ passed: number; failed: number; missing: number }>('POST', '/verification/verify', { backupId }),
+  deleteBackup: (backupId: string) =>
+    request<{ ok: boolean }>('DELETE', `/recovery/backup/${backupId}`, { confirm: true }),
 }

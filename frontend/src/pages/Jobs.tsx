@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { Briefcase, Calendar, Zap, Play, Trash2, Pencil } from 'lucide-react'
-import { api, type Job } from '../api'
+import { api, recovery as recoveryApi, type Job } from '../api'
 import { Card } from '../components/common/Card'
 import { Button } from '../components/common/Button'
 import { ConfirmModal } from '../components/common/ConfirmModal'
@@ -26,6 +26,7 @@ export function Jobs() {
   const [editJob, setEditJob] = useState<Job | null>(null)
   const [deleteJobId, setDeleteJobId] = useState<string | null>(null)
   const [showGuide, setShowGuide] = useState(false)
+  const [recoveryMode, setRecoveryMode] = useState(false)
 
   useKeyboardShortcut({ key: 'n', ctrl: true }, () => setShowCreateModal(true))
 
@@ -40,6 +41,7 @@ export function Jobs() {
 
   useEffect(() => {
     loadJobs()
+    recoveryApi.getStatus().then(s => setRecoveryMode(s.enabled)).catch(() => undefined)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -163,15 +165,17 @@ export function Jobs() {
                         <Trash2 size={12} />
                       </Button>
                     </Tooltip>
-                    <Button
-                      variant="primary"
-                      size="sm"
-                      disabled={executing.has(job.id)}
-                      onClick={() => setExecuteConfirmId(job.id)}
-                    >
-                      <Play size={12} />
-                      {executing.has(job.id) ? t('executing') : t('execute')}
-                    </Button>
+                    <Tooltip content={recoveryMode ? t('recovery_mode_blocked') : undefined}>
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        disabled={executing.has(job.id) || recoveryMode}
+                        onClick={() => setExecuteConfirmId(job.id)}
+                      >
+                        <Play size={12} />
+                        {executing.has(job.id) ? t('executing') : t('execute')}
+                      </Button>
+                    </Tooltip>
                   </div>
                 </div>
               </Card>

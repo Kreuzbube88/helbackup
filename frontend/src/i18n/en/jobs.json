@@ -50,6 +50,7 @@
   "encrypt_backup": "Encrypt backup",
   "appdata_helbackup_excluded": "The HELBACKUP container is automatically excluded and will not be backed up.",
   "encryption_hint": "AES-256 encryption (GPG)",
+  "recovery_mode_blocked": "Recovery mode active — backups disabled",
   "execute_confirm_title": "Run Backup Now",
   "execute_confirm_message": "This will start the backup job immediately. Continue?",
   "create_new": "Create New Job",

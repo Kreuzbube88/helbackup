@@ -12,6 +12,7 @@ export interface RsyncOptions {
   excludePatterns?: string[]
   filesFrom?: string // path to a file containing newline-separated relative paths to include
   bwLimit?: number // KB/s
+  sshPull?: boolean // when true, SSH prefix goes on SOURCE (pull from remote) instead of destination (push to remote)
   onProgress?: (data: { percent: number; transferred: string; speed: string }) => void
   onLog?: (message: string) => void
 }
@@ -50,7 +51,13 @@ export async function executeRsync(options: RsyncOptions): Promise<RsyncResult> 
           ? `sshpass -e ssh${portFlag} -o StrictHostKeyChecking=no`
           : `ssh${portFlag} -o StrictHostKeyChecking=no`
       args.push(`--rsh=${sshCmd}`)
-      args.push(options.source, `${options.sshUser}@${options.sshHost}:${options.destination}`)
+      if (options.sshPull) {
+        // Pull from remote: rsync user@host:/source /local/dest
+        args.push(`${options.sshUser}@${options.sshHost}:${options.source}`, options.destination)
+      } else {
+        // Push to remote: rsync /local/source user@host:/dest
+        args.push(options.source, `${options.sshUser}@${options.sshHost}:${options.destination}`)
+      }
     } else {
       args.push(options.source, options.destination)
     }

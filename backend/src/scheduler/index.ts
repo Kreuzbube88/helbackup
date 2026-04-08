@@ -28,6 +28,13 @@ export function scheduleJob(job: JobRow): void {
   const scheduled = schedule.scheduleJob(job.schedule, () => {
     logger.info({ jobId: job.id, jobName: job.name }, 'Executing scheduled job')
 
+    // Skip if recovery mode is active
+    const rm = db.prepare("SELECT value FROM settings WHERE key = 'recovery_mode'").get() as { value: string } | undefined
+    if (rm?.value === '1') {
+      logger.warn({ jobId: job.id }, 'Scheduled job skipped — recovery mode active')
+      return
+    }
+
     // Skip if this job is already running
     for (const [, engine] of activeExecutions) {
       if (engine.getJobId() === job.id) {
