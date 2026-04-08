@@ -111,14 +111,15 @@ export async function deployPublicKey(config: SSHConfig, publicKey: string): Pro
       // Create home dir if missing (Synology: /var/services/homes/<user> not created until User Home service enabled)
       // then append public key to authorized_keys idempotently
       const key = publicKey.trim()
+      // Use ~ (expands from /etc/passwd) not $HOME — on Synology these can differ,
+      // and sshd resolves AuthorizedKeysFile using the passwd entry, not $HOME
       const cmd = [
-        'mkdir -p "$HOME/.ssh"',
-        'chmod 700 "$HOME/.ssh"',
-        `grep -qxF '${key}' "$HOME/.ssh/authorized_keys" 2>/dev/null || printf '%s\\n' '${key}' >> "$HOME/.ssh/authorized_keys"`,
-        'chmod 600 "$HOME/.ssh/authorized_keys"',
+        'mkdir -p ~/.ssh',
+        'chmod 700 ~/.ssh',
+        `grep -qxF '${key}' ~/.ssh/authorized_keys 2>/dev/null || printf '%s\\n' '${key}' >> ~/.ssh/authorized_keys`,
+        'chmod 600 ~/.ssh/authorized_keys',
         // SSH StrictModes rejects keys when home dir is group/world-writable (Synology default: 777)
-        // Non-fatal: admin connecting to /root won't own it
-        'chmod go-w "$HOME" 2>/dev/null || true',
+        'chmod go-w ~ 2>/dev/null || true',
       ].join(' && ')
       conn.exec(cmd, (err, stream) => {
         if (err) { conn.end(); reject(err); return }
