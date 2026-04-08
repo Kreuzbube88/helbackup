@@ -89,6 +89,6 @@ export async function executeCustomBackup(
     }
   }
 
-  if (nasConfig) await transferAndCleanup(workDir, destPath, nasConfig, engine)
-  engine.recordBackupPath('custom', destPath, config.targetId)
+  const nasChecksums = nasConfig ? await transferAndCleanup(workDir, destPath, nasConfig, engine) : undefined
+  engine.recordBackupPath('custom', destPath, config.targetId, nasChecksums)
 }

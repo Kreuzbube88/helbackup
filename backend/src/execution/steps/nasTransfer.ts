@@ -3,6 +3,8 @@ import path from 'path'
 import fs from 'fs/promises'
 import { executeRsync } from '../../tools/rsync.js'
 import { executeSSHCommand } from '../../nas/ssh.js'
+import { generateChecksums } from '../verification.js'
+import type { ChecksumEntry } from '../verification.js'
 import type { JobExecutionEngine } from '../engine.js'
 
 export interface NasConfig {
@@ -41,7 +43,7 @@ export async function transferAndCleanup(
   remotePath: string,
   nasConfig: NasConfig,
   engine: JobExecutionEngine
-): Promise<void> {
+): Promise<ChecksumEntry[]> {
   engine.log('info', 'system', `Transferring to NAS: ${nasConfig.host}:${remotePath}`)
   // Pre-create remote directory via SSH (avoids --mkpath which requires rsync 3.2.3+, not available on Synology DSM)
   const mkdirResult = await executeSSHCommand(
@@ -71,9 +73,15 @@ export async function transferAndCleanup(
     })(),
     onLog: msg => {
       const line = msg.trim()
-      if (line.startsWith('ERROR:')) engine.log('error', 'system', line.replace(/^ERROR:\s*/, ''))
+      if (!line.startsWith('ERROR:')) return
+      const content = line.replace(/^ERROR:\s*/, '')
+      // SSH informational warnings — not actual errors
+      if (content.startsWith('Warning:') || content.startsWith('** WARNING:')) return
+      engine.log('error', 'system', content)
     },
   })
+  const checksums = await generateChecksums(localDir, engine)
   await fs.rm(localDir, { recursive: true, force: true })
   engine.log('info', 'system', 'NAS transfer complete')
+  return checksums
 }

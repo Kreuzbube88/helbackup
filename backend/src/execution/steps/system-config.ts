@@ -135,7 +135,7 @@ export async function executeSystemConfigBackup(
     }
   }
 
-  if (nasConfig) await transferAndCleanup(workDir, destPath, nasConfig, engine)
-  engine.recordBackupPath('system_config', destPath, config.targetId)
+  const nasChecksums = nasConfig ? await transferAndCleanup(workDir, destPath, nasConfig, engine) : undefined
+  engine.recordBackupPath('system_config', destPath, config.targetId, nasChecksums)
   engine.log('info', 'system', 'System config backup completed')
 }

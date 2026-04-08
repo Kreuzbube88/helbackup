@@ -94,7 +94,7 @@ export async function executeDockerImageExport(
     }
   }
 
-  if (nasConfig) await transferAndCleanup(workDir, destPath, nasConfig, engine)
-  engine.recordBackupPath('docker_images', destPath, config.targetId)
+  const nasChecksums = nasConfig ? await transferAndCleanup(workDir, destPath, nasConfig, engine) : undefined
+  engine.recordBackupPath('docker_images', destPath, config.targetId, nasChecksums)
   engine.log('info', 'system', 'Docker image export completed')
 }

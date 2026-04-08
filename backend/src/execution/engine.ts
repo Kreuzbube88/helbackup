@@ -8,6 +8,7 @@ import { executeHook } from './hooks.js'
 import { notificationManager } from '../notifications/notificationManager.js'
 import { backupDurationHistogram } from '../metrics/prometheus.js'
 import { createJobManifest } from './manifest.js'
+import type { ChecksumEntry } from './verification.js'
 import type { JobRow } from '../types/rows.js'
 
 const execFileAsync = promisify(execFile)
@@ -86,7 +87,7 @@ export class JobExecutionEngine extends EventEmitter {
   private readonly jobName: string
   private readonly startedAt: string
   private sequence = 0
-  private backupPaths: Array<{ type: string; path: string; targetId?: string }> = []
+  private backupPaths: Array<{ type: string; path: string; targetId?: string; checksums?: ChecksumEntry[] }> = []
   private summary: Summary = {
     filesCopied: 0,
     filesSkipped: 0,
@@ -341,8 +342,8 @@ export class JobExecutionEngine extends EventEmitter {
     this.summary.bytesTransferred += bytes
   }
 
-  recordBackupPath(type: string, backupPath: string, targetId?: string): void {
-    this.backupPaths.push({ type, path: backupPath, targetId })
+  recordBackupPath(type: string, backupPath: string, targetId?: string, checksums?: ChecksumEntry[]): void {
+    this.backupPaths.push({ type, path: backupPath, targetId, checksums })
   }
 
   getRunId(): string {

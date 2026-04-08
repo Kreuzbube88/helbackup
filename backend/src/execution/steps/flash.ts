@@ -83,6 +83,6 @@ export async function executeFlashBackup(
     }
   }
 
-  if (nasConfig) await transferAndCleanup(workDir, destPath, nasConfig, engine)
-  engine.recordBackupPath('flash', destPath, config.targetId)
+  const nasChecksums = nasConfig ? await transferAndCleanup(workDir, destPath, nasConfig, engine) : undefined
+  engine.recordBackupPath('flash', destPath, config.targetId, nasChecksums)
 }

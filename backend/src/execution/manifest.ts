@@ -110,7 +110,7 @@ export async function createManifest(
 export async function createJobManifest(
   jobId: string,
   runId: string,
-  stepPaths: Array<{ type: string; path: string; targetId?: string }>,
+  stepPaths: Array<{ type: string; path: string; targetId?: string; checksums?: ChecksumEntry[] }>,
   engine: JobExecutionEngine
 ): Promise<void> {
   engine.log('info', 'system', 'Creating job manifest...')
@@ -136,11 +136,15 @@ export async function createJobManifest(
     return
   }
 
-  // Generate checksums across all step paths, storing absolute paths for multi-step support
   const allChecksums: ChecksumEntry[] = []
-  for (const { path: stepPath } of stepPaths) {
+  for (const { path: stepPath, checksums: precomputed } of stepPaths) {
+    if (precomputed) {
+      // NAS path — checksums were generated from local temp dir before transfer
+      allChecksums.push(...precomputed)
+      continue
+    }
     const localExists = await fs.access(stepPath).then(() => true).catch(() => false)
-    if (!localExists) continue // remote NAS path — checksums not available locally
+    if (!localExists) continue
     try {
       const stepChecksums = await generateChecksums(stepPath, engine)
       for (const c of stepChecksums) {

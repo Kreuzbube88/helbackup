@@ -281,7 +281,7 @@ export async function executeAppdataBackup(
     }
   }
 
-  if (nasConfig) await transferAndCleanup(workDir, destPath, nasConfig, engine)
-  engine.recordBackupPath('appdata', destPath, config.targetId)
+  const nasChecksums = nasConfig ? await transferAndCleanup(workDir, destPath, nasConfig, engine) : undefined
+  engine.recordBackupPath('appdata', destPath, config.targetId, nasChecksums)
   engine.log('info', 'system', 'Appdata backup completed')
 }

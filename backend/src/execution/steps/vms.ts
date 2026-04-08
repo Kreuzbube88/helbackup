@@ -259,7 +259,7 @@ export async function executeVMBackup(
     }
   }
 
-  if (nasConfig) await transferAndCleanup(workDir, destPath, nasConfig, engine)
-  engine.recordBackupPath('vms', destPath, config.targetId)
+  const nasChecksums = nasConfig ? await transferAndCleanup(workDir, destPath, nasConfig, engine) : undefined
+  engine.recordBackupPath('vms', destPath, config.targetId, nasChecksums)
   engine.log('info', 'system', 'VM backup completed')
 }
