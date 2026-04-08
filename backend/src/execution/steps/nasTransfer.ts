@@ -41,7 +41,7 @@ export async function transferAndCleanup(
   nasConfig: NasConfig,
   engine: JobExecutionEngine
 ): Promise<void> {
-  engine.log('info', 'system', `Transferring to NAS: ${nasConfig.host}:${remotePath}`)
+  engine.log('info', 'system', `Transferring to NAS: ${nasConfig.host}:${remotePath} [auth: ${nasConfig.privateKey ? `key:${nasConfig.privateKey}` : 'password'}]`)
   await executeRsync({
     source: localDir + '/',
     destination: remotePath,
