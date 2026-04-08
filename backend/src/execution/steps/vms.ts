@@ -1,6 +1,7 @@
 import { spawn } from 'child_process'
 import { createWriteStream } from 'fs'
 import { executeRsync } from '../../tools/rsync.js'
+import { parseNasConfig, createNasTempDir, transferAndCleanup } from './nasTransfer.js'
 import type { JobExecutionEngine } from '../engine.js'
 import { getEncryptionPassword } from '../../utils/encryptionKey.js'
 import { encryptFileGPG } from '../../utils/gpgEncrypt.js'
@@ -100,7 +101,7 @@ export async function executeVMBackup(
   engine.log('info', 'system', 'Starting VM backup')
 
   const { db } = await import('../../db/database.js')
-  const target = db.prepare('SELECT * FROM targets WHERE id = ?').get(config.targetId) as { config: string } | undefined
+  const target = db.prepare('SELECT * FROM targets WHERE id = ?').get(config.targetId) as { type: string; config: string } | undefined
   if (!target) throw new Error(`Target not found: ${config.targetId}`)
 
   let targetConfig: { path: string }
@@ -110,8 +111,10 @@ export async function executeVMBackup(
     throw new Error(`Invalid target config JSON for target ${config.targetId}`)
   }
 
+  const nasConfig = parseNasConfig(target)
   const destPath = path.join(targetConfig.path, 'vms', new Date().toISOString().split('T')[0])
-  await fs.mkdir(destPath, { recursive: true })
+  const workDir = nasConfig ? await createNasTempDir('vms') : destPath
+  if (!nasConfig) await fs.mkdir(destPath, { recursive: true })
 
   engine.log('info', 'system', `Backing up ${config.vms.length} VMs to ${destPath}`)
 
@@ -140,7 +143,7 @@ export async function executeVMBackup(
         },
       })
 
-      const xmlDestPath = path.join(destPath, `${vmName}.xml`)
+      const xmlDestPath = path.join(workDir, `${vmName}.xml`)
       await exportVMXML(vmName, xmlDestPath)
 
       engine.log('info', 'file', `VM config exported: ${vmName}.xml`, undefined, {
@@ -157,7 +160,7 @@ export async function executeVMBackup(
         for (const diskPath of vmInfo.diskPaths) {
           try {
             const diskName = path.basename(diskPath)
-            const diskDestPath = path.join(destPath, vmName, diskName)
+            const diskDestPath = path.join(workDir, vmName, diskName)
 
             engine.log('info', 'system', `Backing up disk: ${diskName}`)
             await fs.mkdir(path.dirname(diskDestPath), { recursive: true })
@@ -219,10 +222,10 @@ export async function executeVMBackup(
     engine.log('info', 'system', 'Encrypting VM backups...')
     try {
       const encryptionPassword = getEncryptionPassword()
-      const entries = await fs.readdir(destPath)
+      const entries = await fs.readdir(workDir)
 
       for (const entry of entries) {
-        const entryPath = path.join(destPath, entry)
+        const entryPath = path.join(workDir, entry)
         const stat = await fs.stat(entryPath)
 
         if (stat.isFile()) {
@@ -236,7 +239,7 @@ export async function executeVMBackup(
           const { spawn: spawnProc } = await import('child_process')
           const tarFile = `${entryPath}.tar.gz`
           await new Promise<void>((resolve, reject) => {
-            const tar = spawnProc('tar', ['-czf', tarFile, '-C', destPath, entry])
+            const tar = spawnProc('tar', ['-czf', tarFile, '-C', workDir, entry])
             tar.on('close', code => code === 0 ? resolve() : reject(new Error(`tar failed with code ${code}`)))
             tar.on('error', reject)
           })
@@ -256,6 +259,7 @@ export async function executeVMBackup(
     }
   }
 
+  if (nasConfig) await transferAndCleanup(workDir, destPath, nasConfig, engine)
   engine.recordBackupPath('vms', destPath, config.targetId)
   engine.log('info', 'system', 'VM backup completed')
 }

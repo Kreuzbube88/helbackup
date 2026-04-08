@@ -8,6 +8,7 @@ import { createTarArchive } from '../../tools/tar.js'
 import { dumpDatabaseContainers } from './database-dump.js'
 import { getEncryptionPassword } from '../../utils/encryptionKey.js'
 import { encryptFileGPG } from '../../utils/gpgEncrypt.js'
+import { parseNasConfig, createNasTempDir, transferAndCleanup } from './nasTransfer.js'
 import type { JobExecutionEngine } from '../engine.js'
 import type { TargetRow } from '../../types/rows.js'
 
@@ -79,12 +80,15 @@ export async function executeAppdataBackup(
   } catch {
     throw new Error(`Invalid target config JSON for target ${config.targetId}`)
   }
+
+  const nasConfig = parseNasConfig(target)
   const destPath = path.join(targetConfig.path, 'appdata', new Date().toISOString().split('T')[0])
-  await fs.mkdir(destPath, { recursive: true })
+  const workDir = nasConfig ? await createNasTempDir('appdata') : destPath
+  if (!nasConfig) await fs.mkdir(destPath, { recursive: true })
 
   // Database dumps BEFORE stopping containers
   if (config.useDatabaseDumps && config.databaseContainers && config.databaseContainers.length > 0) {
-    await dumpDatabaseContainers(config.databaseContainers, destPath, engine)
+    await dumpDatabaseContainers(config.databaseContainers, workDir, engine)
   }
 
   // Export container configs BEFORE stopping
@@ -114,7 +118,7 @@ export async function executeAppdataBackup(
     }
   }
 
-  await fs.writeFile(path.join(destPath, 'containers.json'), JSON.stringify(containerConfigs, null, 2))
+  await fs.writeFile(path.join(workDir, 'containers.json'), JSON.stringify(containerConfigs, null, 2))
 
   // Determine which containers to stop (respect per-container skipStopping)
   const stopOrderFiltered = stopOrder.filter(id =>
@@ -154,7 +158,7 @@ export async function executeAppdataBackup(
       engine.log('info', 'system', 'Creating tar archive...')
       const tarResult = await createTarArchive({
         source: config.source,
-        destination: path.join(destPath, 'appdata.tar.gz'),
+        destination: path.join(workDir, 'appdata.tar.gz'),
         compress: true,
         onProgress: ({ currentFile }) => engine.log('info', 'file', `Archiving: ${currentFile}`),
       })
@@ -182,7 +186,7 @@ export async function executeAppdataBackup(
 
       const result = await executeRsync({
         source: config.source,
-        destination: destPath,
+        destination: workDir,
         bwLimit: 51200,
         excludePatterns: ['*/logs/*', '*/cache/*', '*/*.log', '*.sock', '*.socket', ...containerExclusions],
         onProgress: (() => { let last = -1; return ({ percent, speed }: { percent: number; speed: string }) => {
@@ -201,7 +205,7 @@ export async function executeAppdataBackup(
         for (const volumePath of volConfig.volumes) {
           try {
             const volumeName = path.basename(volumePath)
-            const volumeDestPath = path.join(destPath, 'external-volumes', volConfig.containerName, volumeName)
+            const volumeDestPath = path.join(workDir, 'external-volumes', volConfig.containerName, volumeName)
             await fs.mkdir(path.dirname(volumeDestPath), { recursive: true })
 
             engine.log('info', 'system', `Backing up external volume: ${volumePath}`)
@@ -252,15 +256,15 @@ export async function executeAppdataBackup(
       const encryptionPassword = getEncryptionPassword()
 
       if (config.method === 'tar') {
-        const tarFile = path.join(destPath, 'appdata.tar.gz')
+        const tarFile = path.join(workDir, 'appdata.tar.gz')
         const encryptedFile = `${tarFile}.gpg`
         await encryptFileGPG(tarFile, encryptedFile, encryptionPassword)
         await fs.unlink(tarFile)
       } else {
         // rsync method: tar the destination directory, then encrypt
-        const tarFile = path.join(destPath, 'appdata-rsync.tar.gz')
+        const tarFile = path.join(workDir, 'appdata-rsync.tar.gz')
         await new Promise<void>((resolve, reject) => {
-          const tar = spawn('tar', ['-czf', tarFile, '--exclude=appdata-rsync.tar.gz', '--exclude=*.gpg', '-C', destPath, '.'])
+          const tar = spawn('tar', ['-czf', tarFile, '--exclude=appdata-rsync.tar.gz', '--exclude=*.gpg', '-C', workDir, '.'])
           tar.on('close', (code) => code === 0 ? resolve() : reject(new Error(`tar failed with code ${code}`)))
           tar.on('error', reject)
         })
@@ -277,6 +281,7 @@ export async function executeAppdataBackup(
     }
   }
 
+  if (nasConfig) await transferAndCleanup(workDir, destPath, nasConfig, engine)
   engine.recordBackupPath('appdata', destPath, config.targetId)
   engine.log('info', 'system', 'Appdata backup completed')
 }

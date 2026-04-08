@@ -4,6 +4,7 @@ import { db } from '../../db/database.js'
 import { executeRsync } from '../../tools/rsync.js'
 import { getEncryptionPassword } from '../../utils/encryptionKey.js'
 import { encryptFileGPG } from '../../utils/gpgEncrypt.js'
+import { parseNasConfig, createNasTempDir, transferAndCleanup } from './nasTransfer.js'
 import { spawn } from 'node:child_process'
 import type { JobExecutionEngine } from '../engine.js'
 import type { TargetRow } from '../../types/rows.js'
@@ -38,16 +39,18 @@ export async function executeCustomBackup(
     throw new Error(`Invalid target config JSON for target ${config.targetId}`)
   }
 
+  const nasConfig = parseNasConfig(target)
   const folderName = path.basename(config.sourcePath) || 'custom'
   const destPath = path.join(targetConfig.path, 'custom', folderName, new Date().toISOString().split('T')[0])
-  await fs.mkdir(destPath, { recursive: true })
+  const workDir = nasConfig ? await createNasTempDir('custom') : destPath
+  if (!nasConfig) await fs.mkdir(destPath, { recursive: true })
 
   engine.log('info', 'system', `Source: ${config.sourcePath}`)
   engine.log('info', 'system', `Destination: ${destPath}`)
 
   const result = await executeRsync({
     source: config.sourcePath,
-    destination: destPath,
+    destination: workDir,
     bwLimit: 51200,
     excludePatterns: config.excludePatterns ?? [],
     onProgress: (() => { let last = -1; return ({ percent, speed }: { percent: number; speed: string }) => {
@@ -60,17 +63,16 @@ export async function executeCustomBackup(
   })
 
   engine.addTransferred(result.filesTransferred, result.bytesTransferred)
-  engine.recordBackupPath('custom', destPath, config.targetId)
   engine.log('info', 'system', `Custom backup done: ${result.filesTransferred} files, ${result.bytesTransferred} bytes transferred`)
 
   if (config.useEncryption) {
     engine.log('info', 'system', 'Encrypting custom backup...')
     try {
       const encryptionPassword = getEncryptionPassword()
-      const tarFile = path.join(destPath, 'custom-backup.tar.gz')
+      const tarFile = path.join(workDir, 'custom-backup.tar.gz')
 
       await new Promise<void>((resolve, reject) => {
-        const tar = spawn('tar', ['-czf', tarFile, '--exclude=custom-backup.tar.gz', '--exclude=*.gpg', '-C', destPath, '.'])
+        const tar = spawn('tar', ['-czf', tarFile, '--exclude=custom-backup.tar.gz', '--exclude=*.gpg', '-C', workDir, '.'])
         tar.on('close', (code) => code === 0 ? resolve() : reject(new Error(`tar failed with code ${code}`)))
         tar.on('error', reject)
       })
@@ -86,4 +88,7 @@ export async function executeCustomBackup(
       throw err
     }
   }
+
+  if (nasConfig) await transferAndCleanup(workDir, destPath, nasConfig, engine)
+  engine.recordBackupPath('custom', destPath, config.targetId)
 }

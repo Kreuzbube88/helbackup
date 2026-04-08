@@ -2,6 +2,7 @@ import type { JobExecutionEngine } from '../engine.js'
 import { getEncryptionPassword } from '../../utils/encryptionKey.js'
 import { encryptFileGPG } from '../../utils/gpgEncrypt.js'
 import { saveImage } from '../../docker/client.js'
+import { parseNasConfig, createNasTempDir, transferAndCleanup } from './nasTransfer.js'
 import path from 'path'
 import fs from 'fs/promises'
 
@@ -33,7 +34,7 @@ export async function executeDockerImageExport(
   engine.log('info', 'system', 'Starting Docker image export')
 
   const { db } = await import('../../db/database.js')
-  const target = db.prepare('SELECT * FROM targets WHERE id = ?').get(config.targetId) as { config: string } | undefined
+  const target = db.prepare('SELECT * FROM targets WHERE id = ?').get(config.targetId) as { type: string; config: string } | undefined
   if (!target) throw new Error(`Target not found: ${config.targetId}`)
 
   let targetConfig: { path: string }
@@ -42,14 +43,17 @@ export async function executeDockerImageExport(
   } catch {
     throw new Error(`Invalid target config JSON for target ${config.targetId}`)
   }
+
+  const nasConfig = parseNasConfig(target)
   const destPath = path.join(targetConfig.path, 'docker-images', new Date().toISOString().split('T')[0])
-  await fs.mkdir(destPath, { recursive: true })
+  const workDir = nasConfig ? await createNasTempDir('docker-images') : destPath
+  if (!nasConfig) await fs.mkdir(destPath, { recursive: true })
 
   engine.log('info', 'system', `Exporting ${config.images.length} Docker images to ${destPath}`)
 
   for (const imageName of config.images) {
     try {
-      await exportDockerImage(imageName, destPath, engine)
+      await exportDockerImage(imageName, workDir, engine)
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err)
       const stack = err instanceof Error ? err.stack : undefined
@@ -65,17 +69,17 @@ export async function executeDockerImageExport(
     destination: destPath,
   }
 
-  await fs.writeFile(path.join(destPath, 'manifest.json'), JSON.stringify(manifest, null, 2))
+  await fs.writeFile(path.join(workDir, 'manifest.json'), JSON.stringify(manifest, null, 2))
 
   if (config.useEncryption) {
     engine.log('info', 'system', 'Encrypting Docker images...')
     try {
       const encryptionPassword = getEncryptionPassword()
-      const entries = await fs.readdir(destPath)
+      const entries = await fs.readdir(workDir)
 
       for (const file of entries) {
         if (!file.endsWith('.tar')) continue
-        const tarPath = path.join(destPath, file)
+        const tarPath = path.join(workDir, file)
         const encryptedPath = `${tarPath}.gpg`
         await encryptFileGPG(tarPath, encryptedPath, encryptionPassword)
         await fs.unlink(tarPath)
@@ -90,6 +94,7 @@ export async function executeDockerImageExport(
     }
   }
 
+  if (nasConfig) await transferAndCleanup(workDir, destPath, nasConfig, engine)
   engine.recordBackupPath('docker_images', destPath, config.targetId)
   engine.log('info', 'system', 'Docker image export completed')
 }

@@ -1,5 +1,6 @@
 import { spawn } from 'node:child_process'
 import { executeRsync } from '../../tools/rsync.js'
+import { parseNasConfig, createNasTempDir, transferAndCleanup } from './nasTransfer.js'
 import type { JobExecutionEngine } from '../engine.js'
 import { getEncryptionPassword } from '../../utils/encryptionKey.js'
 import { encryptFileGPG } from '../../utils/gpgEncrypt.js'
@@ -27,7 +28,7 @@ export async function executeSystemConfigBackup(
   engine.log('info', 'system', 'Starting system config backup')
 
   const { db } = await import('../../db/database.js')
-  const target = db.prepare('SELECT * FROM targets WHERE id = ?').get(config.targetId) as { config: string } | undefined
+  const target = db.prepare('SELECT * FROM targets WHERE id = ?').get(config.targetId) as { type: string; config: string } | undefined
   if (!target) throw new Error(`Target not found: ${config.targetId}`)
 
   let targetConfig: { path: string }
@@ -36,8 +37,11 @@ export async function executeSystemConfigBackup(
   } catch {
     throw new Error(`Invalid target config JSON for target ${config.targetId}`)
   }
+
+  const nasConfig = parseNasConfig(target)
   const destPath = path.join(targetConfig.path, 'system-config', new Date().toISOString().split('T')[0])
-  await fs.mkdir(destPath, { recursive: true })
+  const workDir = nasConfig ? await createNasTempDir('system-config') : destPath
+  if (!nasConfig) await fs.mkdir(destPath, { recursive: true })
 
   engine.log('info', 'system', `Backing up system config to ${destPath}`)
 
@@ -62,7 +66,7 @@ export async function executeSystemConfigBackup(
             continue
           }
 
-          const itemDestPath = path.join(destPath, item)
+          const itemDestPath = path.join(workDir, item)
           await fs.mkdir(itemDestPath, { recursive: true })
 
           const stats = await fs.stat(sourcePath)
@@ -105,16 +109,16 @@ export async function executeSystemConfigBackup(
     destination: destPath,
   }
 
-  await fs.writeFile(path.join(destPath, 'manifest.json'), JSON.stringify(manifest, null, 2))
+  await fs.writeFile(path.join(workDir, 'manifest.json'), JSON.stringify(manifest, null, 2))
 
   if (config.useEncryption) {
     engine.log('info', 'system', 'Encrypting system config...')
     try {
       const encryptionPassword = getEncryptionPassword()
-      const tarFile = path.join(destPath, 'system-config.tar.gz')
+      const tarFile = path.join(workDir, 'system-config.tar.gz')
 
       await new Promise<void>((resolve, reject) => {
-        const tar = spawn('tar', ['-czf', tarFile, '-C', destPath, '.', '--exclude=system-config.tar.gz'])
+        const tar = spawn('tar', ['-czf', tarFile, '-C', workDir, '.', '--exclude=system-config.tar.gz'])
         tar.on('close', (code) => code === 0 ? resolve() : reject(new Error(`tar failed with code ${code}`)))
         tar.on('error', reject)
       })
@@ -131,6 +135,7 @@ export async function executeSystemConfigBackup(
     }
   }
 
+  if (nasConfig) await transferAndCleanup(workDir, destPath, nasConfig, engine)
   engine.recordBackupPath('system_config', destPath, config.targetId)
   engine.log('info', 'system', 'System config backup completed')
 }

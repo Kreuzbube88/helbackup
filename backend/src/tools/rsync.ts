@@ -7,6 +7,7 @@ export interface RsyncOptions {
   sshUser?: string
   sshHost?: string
   sshKey?: string
+  sshPassword?: string
   excludePatterns?: string[]
   filesFrom?: string // path to a file containing newline-separated relative paths to include
   bwLimit?: number // KB/s
@@ -40,11 +41,13 @@ export async function executeRsync(options: RsyncOptions): Promise<RsyncResult> 
     }
 
     if (options.sshHost && options.sshUser) {
-      // Quote the key path to handle spaces; single-quote escaping is safe here
-      // because key paths are filesystem paths validated before reaching this point
-      const sshCmd = options.sshKey
-        ? `ssh -i '${options.sshKey.replace(/'/g, "'\\''")}' -o StrictHostKeyChecking=no`
-        : `ssh -o StrictHostKeyChecking=no`
+      args.push('--mkpath') // create remote destination directory if it does not exist (rsync >= 3.2.3)
+      // sshPassword uses sshpass -e (reads from SSHPASS env var) to avoid leaking in process args
+      const sshCmd = options.sshPassword
+        ? `sshpass -e ssh -o StrictHostKeyChecking=no`
+        : options.sshKey
+          ? `ssh -i '${options.sshKey.replace(/'/g, "'\\''")}' -o StrictHostKeyChecking=no`
+          : `ssh -o StrictHostKeyChecking=no`
       args.push(`--rsh=${sshCmd}`)
       args.push(options.source, `${options.sshUser}@${options.sshHost}:${options.destination}`)
     } else {
@@ -55,7 +58,8 @@ export async function executeRsync(options: RsyncOptions): Promise<RsyncResult> 
     const sanitizedArgs = args.map(a => a.replace(/-i '[^']*'/, "-i '***'"))
     logger.info(`Executing rsync: rsync ${sanitizedArgs.join(' ')}`)
 
-    const rsync = spawn('rsync', args)
+    const spawnEnv = options.sshPassword ? { ...process.env, SSHPASS: options.sshPassword } : process.env
+    const rsync = spawn('rsync', args, { env: spawnEnv })
     let bytesTransferred = 0
     let lastOutput = ''
 
