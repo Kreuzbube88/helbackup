@@ -73,6 +73,7 @@ export async function nasRoutes(app: FastifyInstance): Promise<void> {
       try {
         const safeName = host.replace(/[^a-z0-9]/gi, '_')
         const keyPath = `/app/config/ssh/nas_${safeName}`
+        await fs.mkdir('/app/config/ssh', { recursive: true })
         await execFileAsync('ssh-keygen', ['-t', 'ed25519', '-f', keyPath, '-N', '', '-C', `helbackup@${host}`, '-q'])
           .catch((err: unknown) => {
             const msg = err instanceof Error ? err.message : String(err)
