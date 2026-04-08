@@ -44,11 +44,11 @@ export async function executeRsync(options: RsyncOptions): Promise<RsyncResult> 
     if (options.sshHost && options.sshUser) {
       args.push('--mkpath') // create remote destination directory if it does not exist (rsync >= 3.2.3)
       const portFlag = options.sshPort && options.sshPort !== 22 ? ` -p ${options.sshPort}` : ''
-      // sshPassword uses sshpass -e (reads from SSHPASS env var) to avoid leaking in process args
-      const sshCmd = options.sshPassword
-        ? `sshpass -e ssh${portFlag} -o StrictHostKeyChecking=no`
-        : options.sshKey
-          ? `ssh${portFlag} -i '${options.sshKey.replace(/'/g, "'\\''")}' -o StrictHostKeyChecking=no`
+      // Prefer key auth over password — key takes priority if both are configured
+      const sshCmd = options.sshKey
+        ? `ssh${portFlag} -i '${options.sshKey.replace(/'/g, "'\\''")}' -o StrictHostKeyChecking=no`
+        : options.sshPassword
+          ? `sshpass -e ssh${portFlag} -o StrictHostKeyChecking=no`
           : `ssh${portFlag} -o StrictHostKeyChecking=no`
       args.push(`--rsh=${sshCmd}`)
       args.push(options.source, `${options.sshUser}@${options.sshHost}:${options.destination}`)
