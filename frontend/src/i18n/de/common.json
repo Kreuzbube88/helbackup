@@ -254,6 +254,8 @@
     "backup_type_vms": "Virtuelle Maschinen",
     "backup_type_docker_images": "Docker Images",
     "backup_type_sysconfig": "Systemkonfiguration",
+    "backup_type_helbackup_self": "HELBACKUP Self-Backup",
+    "self_backup_restore_hint": "Über Einstellungen → HELBACKUP wiederherstellen",
     "no_checksums_title": "Keine Prüfsummen vorhanden",
     "no_checksums_body": "Dieses Backup wurde ohne Prüfsummen erstellt (älteres Format). Integrität kann nicht automatisch geprüft werden.",
     "delete_backup": "Backup löschen",

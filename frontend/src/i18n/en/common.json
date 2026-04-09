@@ -254,6 +254,8 @@
     "backup_type_vms": "Virtual Machines",
     "backup_type_docker_images": "Docker Images",
     "backup_type_sysconfig": "System Config",
+    "backup_type_helbackup_self": "HELBACKUP Self-Backup",
+    "self_backup_restore_hint": "Restore via Settings → HELBACKUP",
     "no_checksums_title": "No Checksums Available",
     "no_checksums_body": "This backup was created without checksums (older format). Integrity cannot be verified automatically.",
     "delete_backup": "Delete Backup",

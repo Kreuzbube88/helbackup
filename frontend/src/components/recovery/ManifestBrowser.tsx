@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Lock, Search, RefreshCw, HardDrive, Server, Cpu, Package, Settings, Trash2 } from 'lucide-react';
+import { Lock, Search, RefreshCw, HardDrive, Server, Cpu, Package, Settings, Trash2, Shield } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '../common/Button';
 import { Card } from '../common/Card';
@@ -53,6 +53,7 @@ const BACKUP_TYPE_ICONS: Record<string, React.ReactNode> = {
   vms: <Cpu size={10} />,
   docker_images: <Server size={10} />,
   sysconfig: <Settings size={10} />,
+  helbackup_self: <Shield size={10} />,
 }
 
 function detectBackupTypes(entries: ManifestEntry[], stepPaths?: Array<{ type: string }>): string[] {
@@ -207,12 +208,14 @@ export default function ManifestBrowser({ manifests, onSelect, onFullServerResto
             const verified = parsed.verified ?? false;
             const lastVerified = parsed.lastVerified;
             const backupTypes = detectBackupTypes(parsed.entries ?? [], parsed.stepPaths);
+            const restorableTypes = backupTypes.filter(t => t !== 'helbackup_self');
+            const hasSelfBackup = backupTypes.includes('helbackup_self');
 
             return (
               <Card
                 key={backupId}
-                hover
-                onClick={() => handleSelect(manifest)}
+                hover={restorableTypes.length > 0}
+                onClick={() => restorableTypes.length > 0 ? handleSelect(manifest) : undefined}
                 className="corner-cuts p-5"
               >
                 <div className="flex items-start justify-between gap-4">
@@ -278,17 +281,24 @@ export default function ManifestBrowser({ manifests, onSelect, onFullServerResto
 
                   {/* Action buttons */}
                   <div className="flex flex-col gap-2 flex-shrink-0" onClick={e => e.stopPropagation()}>
-                    <Button variant="primary" size="sm" onClick={() => handleSelect(manifest)}>
-                      {encrypted && !unlocked ? t('decryption.unlock') : t('recovery.restore')}
-                    </Button>
-                    {(!encrypted || unlocked) && backupTypes.length > 1 && (
+                    {restorableTypes.length > 0 && (
+                      <Button variant="primary" size="sm" onClick={() => handleSelect(manifest)}>
+                        {encrypted && !unlocked ? t('decryption.unlock') : t('recovery.restore')}
+                      </Button>
+                    )}
+                    {(!encrypted || unlocked) && restorableTypes.length > 1 && (
                       <Button
                         variant="secondary"
                         size="sm"
-                        onClick={() => onFullServerRestore(manifest, backupTypes)}
+                        onClick={() => onFullServerRestore(manifest, restorableTypes)}
                       >
                         {t('recovery.full_server_restore_btn')}
                       </Button>
+                    )}
+                    {hasSelfBackup && restorableTypes.length === 0 && (
+                      <span className="text-xs font-mono text-[var(--text-muted)] border border-[var(--border-default)] px-2 py-1 text-center leading-tight">
+                        {t('recovery.self_backup_restore_hint')}
+                      </span>
                     )}
                     {(!encrypted || unlocked) && containerCount > 0 && (
                       <Button
