@@ -81,6 +81,8 @@ async function initDb(): Promise<Database.Database> {
       retry_count INTEGER DEFAULT 0,
       FOREIGN KEY (webhook_id) REFERENCES webhooks(id)
     )`,
+    // Resilience: catch-up on scheduler init after container downtime
+    "ALTER TABLE jobs ADD COLUMN catch_up_on_start INTEGER NOT NULL DEFAULT 0",
   ]) {
     try { db.exec(sql) } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err)

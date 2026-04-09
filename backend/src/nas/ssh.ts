@@ -35,10 +35,20 @@ export async function executeSSHCommand(
   let privateKey: Buffer | undefined
   if (config.privateKey) {
     try {
+      // Validate permissions before reading — must be 0600 (owner read/write only)
+      const stats = await fs.stat(config.privateKey)
+      const mode = stats.mode & 0o777
+      if (mode & 0o077) {
+        throw new Error(
+          `SSH key ${config.privateKey} has insecure permissions (${(mode).toString(8).padStart(4, '0')}). ` +
+          'Run: chmod 600 ' + config.privateKey
+        )
+      }
       privateKey = await fs.readFile(config.privateKey)
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err)
       logger.error(`Failed to read SSH key: ${msg}`)
+      if (msg.includes('insecure permissions')) throw new Error(msg)
       throw new Error(`SSH key not found: ${config.privateKey}`)
     }
   }

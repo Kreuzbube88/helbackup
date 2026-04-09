@@ -35,6 +35,20 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
   app.post<{ Body: LoginBody }>(
     '/api/auth/login',
     {
+      config: {
+        // Stricter rate limit for login: 5 attempts per 15 minutes per IP+username
+        rateLimit: {
+          max: 5,
+          timeWindow: 15 * 60 * 1000,
+          keyGenerator: (request: FastifyRequest<{ Body: LoginBody }>) => {
+            const username = (request.body as Partial<LoginBody>)?.username ?? ''
+            return `${request.ip}:${username}`
+          },
+          errorResponseBuilder: () => ({
+            error: 'Too many login attempts. Please try again in 15 minutes.',
+          }),
+        },
+      },
       schema: {
         body: {
           type: 'object',

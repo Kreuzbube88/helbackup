@@ -18,6 +18,7 @@ export interface JobRow {
   pre_backup_script: string | null
   post_backup_script: string | null
   use_encryption: number
+  catch_up_on_start: number
 }
 
 export interface TargetRow {

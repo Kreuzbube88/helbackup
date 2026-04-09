@@ -2,6 +2,8 @@ import path from 'path'
 import fs from 'fs/promises'
 import { db } from '../../db/database.js'
 import { createTarArchive } from '../../tools/tar.js'
+import { getEncryptionPassword } from '../../utils/encryptionKey.js'
+import { encryptFileGPG } from '../../utils/gpgEncrypt.js'
 import type { JobExecutionEngine } from '../engine.js'
 
 const DB_PATH = process.env.DB_PATH ?? '/app/data/helbackup.db'
@@ -18,20 +20,47 @@ export async function exportHELBACKUP(destPath: string, engine: JobExecutionEngi
   db.prepare(`VACUUM INTO ?`).run(backupDbPath)
   engine.log('info', 'system', 'Database snapshot created')
 
-  // Copy SSH keys if present
+  // Copy + GPG-encrypt SSH keys (always, regardless of job-level encryption)
   const sshSrc = '/app/config/ssh'
+  let sshKeysEntry: string
   try {
     await fs.access(sshSrc)
-    await fs.cp(sshSrc, path.join(exportDir, 'ssh'), { recursive: true })
-    engine.log('info', 'system', 'SSH keys exported')
-  } catch {
-    engine.log('info', 'system', 'No SSH keys to export')
+    const sshStage = path.join(exportDir, 'ssh')
+    await fs.cp(sshSrc, sshStage, { recursive: true })
+
+    // Wrap ssh/ into a tar, then GPG-encrypt it with the master password
+    const sshTar = path.join(exportDir, 'ssh.tar.gz')
+    await createTarArchive({ source: sshStage, destination: sshTar, compress: true })
+    const sshEncrypted = `${sshTar}.gpg`
+    const masterPassword = getEncryptionPassword()
+    await encryptFileGPG(sshTar, sshEncrypted, masterPassword)
+
+    // Remove plaintext artefacts
+    await fs.rm(sshStage, { recursive: true, force: true })
+    await fs.unlink(sshTar)
+
+    sshKeysEntry = 'ssh.tar.gz.gpg'
+    engine.log('info', 'system', 'SSH keys exported and encrypted')
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err)
+    if (msg.includes('ENOENT') || msg.includes('no such file')) {
+      sshKeysEntry = 'none'
+      engine.log('info', 'system', 'No SSH keys to export')
+    } else {
+      throw err
+    }
   }
 
   // Metadata
   await fs.writeFile(
     path.join(exportDir, 'metadata.json'),
-    JSON.stringify({ version: 'v1.0', exportDate: new Date().toISOString(), database: 'helbackup.db', sshKeys: 'ssh/' }, null, 2)
+    JSON.stringify({
+      version: 'v1.0',
+      exportDate: new Date().toISOString(),
+      database: 'helbackup.db',
+      sshKeys: sshKeysEntry,
+      sshKeyEncryption: 'gpg-aes256',
+    }, null, 2)
   )
 
   const tarPath = path.join(destPath, 'helbackup-export.tar.gz')

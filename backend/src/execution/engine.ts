@@ -10,6 +10,7 @@ import { backupDurationHistogram } from '../metrics/prometheus.js'
 import { createJobManifest } from './manifest.js'
 import { applyRetentionPolicy } from './retention.js'
 import { ensureNASOnline, shutdownNASIfEnabled, type NASPowerConfig } from '../nas/power.js'
+import { runPreflight } from './preflight.js'
 import type { ChecksumEntry } from './verification.js'
 import type { JobRow, TargetRow } from '../types/rows.js'
 
@@ -25,6 +26,8 @@ export interface JobStep {
   type: 'flash' | 'appdata' | 'vms' | 'docker_images' | 'system_config' | 'cloud' | 'custom' | 'helbackup_self'
   config: Record<string, unknown>
   retry?: { max_attempts: number; backoff: 'linear' | 'exponential' }
+  /** When true (default), a step failure aborts the remaining steps. Set false to continue on error. */
+  stop_on_error?: boolean
 }
 
 export type LogLevel = 'debug' | 'info' | 'warn' | 'error'
@@ -147,6 +150,17 @@ export class JobExecutionEngine extends EventEmitter {
   async execute(steps: JobStep[], hooks?: JobHooks): Promise<void> {
     void notificationManager.notify({ event: 'backup_started', jobName: this.jobName, timestamp: new Date().toISOString() })
 
+    // Pre-flight: verify array state, parity, mover before touching any NAS
+    const preflight = await runPreflight()
+    for (const w of preflight.warnings) {
+      this.log('warn', 'system', `Pre-flight: ${w}`)
+    }
+    if (!preflight.passed) {
+      const msg = `Pre-flight check failed: ${preflight.errors.join('; ')}`
+      this.log('error', 'system', msg)
+      throw new Error(msg)
+    }
+
     const nasPowerConfigs = this.collectNASPowerConfigs(steps)
     const powerLog = (level: 'info' | 'warn' | 'error', message: string): void => {
       this.log(level, 'system', message)
@@ -205,7 +219,15 @@ export class JobExecutionEngine extends EventEmitter {
             }
           }
         }
-        if (lastErr !== undefined) throw lastErr
+        if (lastErr !== undefined) {
+          // Default: stop on error. Opt-out by setting stop_on_error: false.
+          if (step.stop_on_error !== false) throw lastErr
+          this.log('warn', 'system',
+            `Step failed but stop_on_error=false — continuing: ${lastErr instanceof Error ? lastErr.message : String(lastErr)}`,
+            step.id
+          )
+          this.summary.errors++
+        }
       }
 
       const duration = this.elapsedSeconds()

@@ -51,7 +51,8 @@ EXPOSE 3000
 ENV NODE_ENV=production
 ENV PORT=3000
 ENV DB_PATH=/app/data/helbackup.db
-ENV LOG_FORMAT=pretty
+# LOG_FORMAT defaults to JSON (structured) in production.
+# Add LOG_FORMAT=pretty to docker-compose.yml for human-readable console output.
 
 # Liveness probe — Docker / Unraid will mark the container unhealthy if /api/health
 # stops returning 200. The endpoint runs a `SELECT 1` against SQLite, so this also

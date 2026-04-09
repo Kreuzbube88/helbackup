@@ -57,6 +57,31 @@ if (!JWT_SECRET) {
   process.exit(1)
 }
 
+// Entropy check: require at least 32 chars and a minimum Shannon entropy of 3.5 bits/char
+if (JWT_SECRET.length < 32) {
+  logger.fatal(
+    `JWT_SECRET is too short (${JWT_SECRET.length} chars, minimum 32). ` +
+    'Generate a strong secret with: openssl rand -hex 32'
+  )
+  process.exit(1)
+}
+
+{
+  const freq = new Map<string, number>()
+  for (const ch of JWT_SECRET) freq.set(ch, (freq.get(ch) ?? 0) + 1)
+  const entropy = [...freq.values()].reduce((sum, count) => {
+    const p = count / JWT_SECRET.length
+    return sum - p * Math.log2(p)
+  }, 0)
+  if (entropy < 3.5) {
+    logger.fatal(
+      `JWT_SECRET has low entropy (${entropy.toFixed(2)} bits/char, minimum 3.5). ` +
+      'Use a randomly generated secret: openssl rand -hex 32'
+    )
+    process.exit(1)
+  }
+}
+
 const app = Fastify({ logger: false, bodyLimit: 100 * 1024 * 1024 })
 
 await app.register(fastifyCors, {
