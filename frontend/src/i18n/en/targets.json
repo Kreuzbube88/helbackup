@@ -57,6 +57,8 @@
     "review_section_connection": "Connection",
     "review_section_auth": "Authentication & path",
     "review_section_destination": "Destination",
-    "review_section_power": "Power management"
+    "review_section_power": "Power management",
+    "known_hosts_file": "Known hosts file",
+    "known_hosts_file_hint": "Path to a known_hosts file for strict host key verification. Leave empty to skip host key checking."
   }
 }

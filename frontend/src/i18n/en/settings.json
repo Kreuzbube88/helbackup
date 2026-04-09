@@ -32,6 +32,13 @@
     "timezone": "Timezone",
     "log_level": "Log Level"
   },
+  "system": {
+    "title": "System",
+    "log_retention_label": "Log retention (days)",
+    "log_retention_hint": "Logs older than this number of days are automatically deleted at 04:00.",
+    "save": "Save",
+    "saved": "Settings saved"
+  },
   "helbackup": {
     "title": "HELBACKUP Restore",
     "restore_hint": "Upload a helbackup-export.tar.gz (or .gpg) from a HELBACKUP Sicherung job to restore all jobs, targets, backup records and SSH keys on a fresh installation.",

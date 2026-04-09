@@ -142,5 +142,9 @@
   "stop_delay_hint": "Extra buffer after stopping each container. docker stop already waits for graceful shutdown — this gives containers time to fully flush file buffers. Recommended: 5–10 s for database containers, 0–2 s for stateless apps.",
   "restart_delay_label": "Wait after restart (s)",
   "restart_delay_hint": "Wait time after restarting each container, to allow full initialization. Set to 0 if containers need no startup time.",
-  "retention_per_type_hint": "Tip: For different retention per backup type, use separate targets — targets support their own retention policies including GFS (daily / weekly / monthly)."
+  "retention_per_type_hint": "Tip: For different retention per backup type, use separate targets — targets support their own retention policies including GFS (daily / weekly / monthly).",
+  "catch_up_on_start": "Run missed jobs on startup",
+  "help_catch_up_on_start": "If the container restarts after a missed scheduled run, execute it immediately on next startup.",
+  "step_stop_on_error": "Stop job on step failure",
+  "step_stop_on_error_hint": "If unchecked, the job continues even if this step fails. Useful for non-critical optional steps."
 }

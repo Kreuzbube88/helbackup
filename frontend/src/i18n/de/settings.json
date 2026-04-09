@@ -32,6 +32,13 @@
     "timezone": "Zeitzone",
     "log_level": "Log-Level"
   },
+  "system": {
+    "title": "System",
+    "log_retention_label": "Log-Aufbewahrung (Tage)",
+    "log_retention_hint": "Logs älter als diese Anzahl Tage werden täglich um 04:00 Uhr automatisch gelöscht.",
+    "save": "Speichern",
+    "saved": "Einstellungen gespeichert"
+  },
   "helbackup": {
     "title": "HELBACKUP Wiederherstellen",
     "restore_hint": "Lade eine helbackup-export.tar.gz (oder .gpg) aus einem HELBACKUP-Sicherungs-Job hoch, um alle Jobs, Ziele, Backup-Einträge und SSH-Schlüssel auf einer neuen Installation wiederherzustellen.",

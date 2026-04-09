@@ -13,6 +13,7 @@ export interface DockerImagesStepConfig {
   useEncryption: boolean
   retentionDays?: number
   retentionMinimum: number
+  stopOnError?: boolean
 }
 
 interface Props {
@@ -127,6 +128,19 @@ export function DockerImagesConfig({ value, onChange, targets }: Props) {
       />
 
       <p className="text-[11px] text-[var(--text-muted)] italic">{t('checksums_always_on_note')}</p>
+
+      <label className="flex items-start gap-2 cursor-pointer pt-3 border-t border-[var(--border-default)]">
+        <input
+          type="checkbox"
+          checked={value.stopOnError !== false}
+          onChange={e => onChange({ ...value, stopOnError: e.target.checked })}
+          className="mt-0.5 accent-[var(--theme-primary)]"
+        />
+        <div>
+          <p className="text-sm text-[var(--text-secondary)]">{t('step_stop_on_error')}</p>
+          <p className="text-xs text-[var(--text-muted)]">{t('step_stop_on_error_hint')}</p>
+        </div>
+      </label>
     </div>
   )
 }

@@ -142,5 +142,9 @@
   "stop_delay_hint": "Zusätzlicher Puffer nach dem Stoppen jedes Containers. docker stop wartet bereits auf das graceful Shutdown — diese Zeit gibt Containern Zeit, Datei-Puffer vollständig zu leeren. Empfehlung: 5–10 s für Datenbank-Container, 0–2 s für stateless Apps.",
   "restart_delay_label": "Wartezeit nach Start (s)",
   "restart_delay_hint": "Wartezeit nach dem Neustart jedes Containers. Gibt Zeit zum vollständigen Hochfahren. Auf 0 setzen, wenn die Container keine Initialisierungszeit benötigen.",
-  "retention_per_type_hint": "Tipp: Für unterschiedliche Aufbewahrungszeiten pro Backup-Typ verschiedene Ziele verwenden — Ziele unterstützen eigene Aufbewahrungsrichtlinien inklusive GFS (täglich / wöchentlich / monatlich)."
+  "retention_per_type_hint": "Tipp: Für unterschiedliche Aufbewahrungszeiten pro Backup-Typ verschiedene Ziele verwenden — Ziele unterstützen eigene Aufbewahrungsrichtlinien inklusive GFS (täglich / wöchentlich / monatlich).",
+  "catch_up_on_start": "Verpasste Jobs beim Start nachholen",
+  "help_catch_up_on_start": "Wenn der Container nach einem verpassten Ausführungszeitpunkt neu startet, wird der Job sofort ausgeführt.",
+  "step_stop_on_error": "Job bei Schrittfehler abbrechen",
+  "step_stop_on_error_hint": "Wenn deaktiviert, wird der Job auch bei einem Fehler in diesem Schritt fortgesetzt. Nützlich für optionale, nicht kritische Schritte."
 }
