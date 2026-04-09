@@ -414,7 +414,20 @@
     "chart_start": "Vor 30 Tagen",
     "chart_end": "Heute",
     "storage_free": "frei",
-    "storage_percent_used": "{{value}}% genutzt"
+    "storage_percent_used": "{{value}}% genutzt",
+    "status_healthy": "Alle Systeme betriebsbereit",
+    "status_no_backups_run": "Noch keine Backups ausgeführt",
+    "status_last_failed": "Letztes Backup fehlgeschlagen",
+    "status_no_backup_7d": "Kein erfolgreiches Backup seit über 7 Tagen",
+    "status_no_backup_48h": "Kein Backup seit über 48 Stunden",
+    "warning_current_failures": "{{count}} Job(s) aktuell im Fehlerzustand",
+    "warning_no_backup_7d": "Kein erfolgreiches Backup seit über 7 Tagen",
+    "warning_no_backup_48h": "Kein Backup seit über 48 Stunden",
+    "warning_no_backups_yet": "Noch keine Backups abgeschlossen",
+    "action_view_logs": "Logs anzeigen",
+    "action_run_now": "Jetzt ausführen",
+    "action_check_schedule": "Zeitplan prüfen",
+    "action_setup_job": "Job einrichten"
   },
   "status": {
     "running": "Läuft",

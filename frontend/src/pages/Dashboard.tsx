@@ -134,9 +134,9 @@ export function Dashboard() {
               className={`flex items-start gap-2 px-4 py-3 border text-sm ${warningBorder[w.type]}`}
             >
               {warningIcon[w.type]}
-              <span className="text-[var(--text-primary)] flex-1">{w.message}</span>
-              {w.action && (
-                <span className="text-xs text-[var(--text-muted)] shrink-0">{w.action}</span>
+              <span className="text-[var(--text-primary)] flex-1">{t(`dashboard.warning_${w.code}`, { count: w.count })}</span>
+              {w.actionCode && (
+                <span className="text-xs text-[var(--text-muted)] shrink-0">{t(`dashboard.action_${w.actionCode}`)}</span>
               )}
             </div>
           ))}
@@ -153,7 +153,7 @@ export function Dashboard() {
             </h2>
           </div>
           <p className={`text-sm font-medium ${statusConfig.color} mb-4`}>
-            {data.systemStatus.message}
+            {t(`dashboard.status_${data.systemStatus.code}`)}
           </p>
           {data.systemStatus.lastBackup && (
             <div className="text-xs text-[var(--text-muted)] space-y-1">

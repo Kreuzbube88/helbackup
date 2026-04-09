@@ -283,7 +283,7 @@ export const api = {
 export interface DashboardData {
   systemStatus: {
     status: 'healthy' | 'warning' | 'critical'
-    message: string
+    code: string
     lastBackup: { timestamp: string; jobName: string; status: string; duration: number } | null
     nextScheduled: { timestamp: string; jobName: string } | null
   }
@@ -306,7 +306,7 @@ export interface DashboardData {
     duration: number
     size: number
   }[]
-  warnings: { type: 'error' | 'warning' | 'info'; message: string; action?: string }[]
+  warnings: { type: 'error' | 'warning' | 'info'; code: string; count?: number; actionCode?: string }[]
 }
 
 export const dashboard = {

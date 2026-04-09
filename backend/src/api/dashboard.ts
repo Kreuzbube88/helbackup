@@ -72,28 +72,28 @@ async function getSystemStatus() {
   `).get() as { name: string; schedule: string } | undefined
 
   let status: 'healthy' | 'warning' | 'critical' = 'healthy'
-  let message = 'All systems operational'
+  let code = 'healthy'
 
   if (!lastJob) {
     status = 'warning'
-    message = 'No backups have been run yet'
+    code = 'no_backups_run'
   } else if (lastJob.status === 'failed') {
     status = 'critical'
-    message = 'Last backup failed'
+    code = 'last_failed'
   } else if (lastJob.ended_at) {
     const hoursSince = (Date.now() - new Date(lastJob.ended_at).getTime()) / (1000 * 60 * 60)
     if (hoursSince > 168) {
       status = 'critical'
-      message = 'No successful backup in over 7 days'
+      code = 'no_backup_7d'
     } else if (hoursSince > 48) {
       status = 'warning'
-      message = 'No recent backup (>48h)'
+      code = 'no_backup_48h'
     }
   }
 
   return {
     status,
-    message,
+    code,
     lastBackup: lastJob && lastJob.ended_at ? {
       timestamp: lastJob.ended_at,
       jobName: lastJob.name,
@@ -240,19 +240,24 @@ async function getRecentJobs() {
 }
 
 async function getWarnings() {
-  const warnings: { type: 'error' | 'warning' | 'info'; message: string; action?: string }[] = []
+  const warnings: { type: 'error' | 'warning' | 'info'; code: string; count?: number; actionCode?: string }[] = []
 
-  const recentFailures = (db.prepare(`
-    SELECT COUNT(*) as count FROM job_history
-    WHERE status = 'failed' AND started_at >= datetime('now', '-24 hours')
+  // Count jobs where the most recent run overall is still failed
+  const currentlyFailing = (db.prepare(`
+    SELECT COUNT(*) as count FROM (
+      SELECT h.job_id
+      FROM job_history h
+      INNER JOIN (
+        SELECT job_id, MAX(started_at) as max_started
+        FROM job_history
+        GROUP BY job_id
+      ) latest ON h.job_id = latest.job_id AND h.started_at = latest.max_started
+      WHERE h.status = 'failed'
+    )
   `).get() as { count: number }).count
 
-  if (recentFailures > 0) {
-    warnings.push({
-      type: 'error',
-      message: `${recentFailures} backup(s) failed in the last 24 hours`,
-      action: 'View logs',
-    })
+  if (currentlyFailing > 0) {
+    warnings.push({ type: 'error', code: 'current_failures', count: currentlyFailing, actionCode: 'view_logs' })
   }
 
   const lastSuccess = (db.prepare(`
@@ -262,12 +267,12 @@ async function getWarnings() {
   if (lastSuccess) {
     const hoursSince = (Date.now() - new Date(lastSuccess).getTime()) / (1000 * 60 * 60)
     if (hoursSince > 168) {
-      warnings.push({ type: 'error', message: 'No successful backup in over 7 days', action: 'Run backup now' })
+      warnings.push({ type: 'error', code: 'no_backup_7d', actionCode: 'run_now' })
     } else if (hoursSince > 48) {
-      warnings.push({ type: 'warning', message: 'No backup in over 48 hours', action: 'Check schedule' })
+      warnings.push({ type: 'warning', code: 'no_backup_48h', actionCode: 'check_schedule' })
     }
   } else {
-    warnings.push({ type: 'info', message: 'No backups completed yet', action: 'Set up a job' })
+    warnings.push({ type: 'info', code: 'no_backups_yet', actionCode: 'setup_job' })
   }
 
   return warnings
