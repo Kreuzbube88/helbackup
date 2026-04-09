@@ -28,6 +28,7 @@ interface ParsedManifest {
   verified?: boolean;
   lastVerified?: string;
   encrypted?: boolean;
+  stepPaths?: Array<{ type: string; path: string }>;
 }
 
 interface Manifest {
@@ -54,7 +55,11 @@ const BACKUP_TYPE_ICONS: Record<string, React.ReactNode> = {
   sysconfig: <Settings size={10} />,
 }
 
-function detectBackupTypes(entries: ManifestEntry[]): string[] {
+function detectBackupTypes(entries: ManifestEntry[], stepPaths?: Array<{ type: string }>): string[] {
+  if (stepPaths && stepPaths.length > 0) {
+    return [...new Set(stepPaths.map(s => s.type))]
+  }
+  // legacy fallback for manifests without stepPaths
   const types = new Set<string>()
   for (const e of entries) {
     const p = e.path ?? ''
@@ -201,7 +206,7 @@ export default function ManifestBrowser({ manifests, onSelect, onFullServerResto
             const containerCount = parsed.containerConfigs?.length ?? 0;
             const verified = parsed.verified ?? false;
             const lastVerified = parsed.lastVerified;
-            const backupTypes = detectBackupTypes(parsed.entries ?? []);
+            const backupTypes = detectBackupTypes(parsed.entries ?? [], parsed.stepPaths);
 
             return (
               <Card
