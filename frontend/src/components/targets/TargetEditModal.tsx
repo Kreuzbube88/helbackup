@@ -32,14 +32,16 @@ export function TargetEditModal({ target, open, onClose, onSuccess }: Props) {
 
   return (
     <>
-      <Modal open={open} onClose={handleClose} title={t('edit')} className="max-w-3xl" disableBackdropClose>
-        <TargetWizard
-          mode="edit"
-          initialTarget={target}
-          onCancel={handleClose}
-          onSuccess={handleSuccess}
-          onDirtyChange={setDirty}
-        />
+      <Modal open={open} onClose={handleClose} title={t('edit')} className="max-w-[96rem]" disableBackdropClose>
+        <div className="mx-auto w-full max-w-3xl">
+          <TargetWizard
+            mode="edit"
+            initialTarget={target}
+            onCancel={handleClose}
+            onSuccess={handleSuccess}
+            onDirtyChange={setDirty}
+          />
+        </div>
       </Modal>
 
       <ConfirmModal
