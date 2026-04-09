@@ -28,6 +28,28 @@ function sanitizeConfig(config: Record<string, unknown>): Record<string, unknown
   return result
 }
 
+/**
+ * Preserve sensitive values from the existing DB row when the incoming PUT
+ * payload either omits them or sends the `'***'` placeholder. Without this,
+ * the frontend edit flow silently drops the stored password on every update
+ * (the form re-builds config without it), breaking downstream code that
+ * depends on it — e.g. sudo -S during NAS auto-shutdown.
+ */
+function mergeSensitiveKeys(
+  incoming: Record<string, unknown>,
+  existing: Record<string, unknown>,
+): Record<string, unknown> {
+  const merged: Record<string, unknown> = { ...incoming }
+  for (const key of SENSITIVE_KEYS) {
+    const inVal = merged[key]
+    if (inVal === undefined || inVal === '***') {
+      if (existing[key] !== undefined) merged[key] = existing[key]
+      else delete merged[key]
+    }
+  }
+  return merged
+}
+
 function parseTarget(row: TargetRow) {
   let rawConfig: Record<string, unknown> = {}
   try { rawConfig = JSON.parse(row.config) as Record<string, unknown> } catch { /* default empty */ }
@@ -97,7 +119,12 @@ export async function targetsRoutes(app: FastifyInstance): Promise<void> {
         }
         updates.push('type = ?'); values.push(type)
       }
-      if (config !== undefined) { updates.push('config = ?'); values.push(JSON.stringify(config)) }
+      if (config !== undefined) {
+        let existingConfig: Record<string, unknown> = {}
+        try { existingConfig = JSON.parse(existing.config) as Record<string, unknown> } catch { /* default empty */ }
+        const merged = mergeSensitiveKeys(config, existingConfig)
+        updates.push('config = ?'); values.push(JSON.stringify(merged))
+      }
       if (enabled !== undefined) { updates.push('enabled = ?'); values.push(enabled ? 1 : 0) }
       updates.push("updated_at = datetime('now')")
       values.push(request.params.id)
