@@ -18,6 +18,7 @@ interface CreateJobBody {
   schedule?: string
   steps: unknown[]
   enabled?: boolean
+  catchUpOnStart?: boolean
   preBackupScript?: string
   postBackupScript?: string
 }
@@ -27,6 +28,7 @@ interface UpdateJobBody {
   schedule?: string | null
   steps?: unknown[]
   enabled?: boolean
+  catchUpOnStart?: boolean
   preBackupScript?: string | null
   postBackupScript?: string | null
 }
@@ -81,6 +83,7 @@ function parseJob(row: JobRow) {
   return {
     ...row,
     enabled: row.enabled === 1,
+    catch_up_on_start: row.catch_up_on_start === 1,
     steps: (() => {
       try { return JSON.parse(row.steps) as unknown[] }
       catch { return [] }
@@ -114,7 +117,7 @@ export async function jobsRoutes(app: FastifyInstance): Promise<void> {
     '/api/jobs',
     { preHandler: [app.authenticate] },
     async (request: FastifyRequest<{ Body: CreateJobBody }>, reply: FastifyReply) => {
-      const { name, schedule, steps, enabled = true, preBackupScript, postBackupScript } = request.body
+      const { name, schedule, steps, enabled = true, catchUpOnStart, preBackupScript, postBackupScript } = request.body
       if (!name || !steps) return reply.status(400).send({ error: 'Missing required fields' })
 
       const validationError = validateJobSteps(steps)
@@ -122,8 +125,8 @@ export async function jobsRoutes(app: FastifyInstance): Promise<void> {
 
       const id = uuidv4()
       db.prepare(
-        'INSERT INTO jobs (id, name, schedule, steps, enabled, pre_backup_script, post_backup_script) VALUES (?, ?, ?, ?, ?, ?, ?)'
-      ).run(id, name, schedule ?? null, JSON.stringify(steps), enabled ? 1 : 0, preBackupScript ?? null, postBackupScript ?? null)
+        'INSERT INTO jobs (id, name, schedule, steps, enabled, catch_up_on_start, pre_backup_script, post_backup_script) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
+      ).run(id, name, schedule ?? null, JSON.stringify(steps), enabled ? 1 : 0, catchUpOnStart ? 1 : 0, preBackupScript ?? null, postBackupScript ?? null)
 
       const row = db.prepare('SELECT * FROM jobs WHERE id = ?').get(id) as JobRow
       if (enabled && schedule) scheduleJob({ ...row, schedule })
@@ -138,7 +141,7 @@ export async function jobsRoutes(app: FastifyInstance): Promise<void> {
       const existing = db.prepare('SELECT * FROM jobs WHERE id = ?').get(request.params.id) as JobRow | undefined
       if (!existing) return reply.status(404).send({ error: 'Job not found' })
 
-      const { name, schedule, steps, enabled, preBackupScript, postBackupScript } = request.body
+      const { name, schedule, steps, enabled, catchUpOnStart, preBackupScript, postBackupScript } = request.body
 
       if (steps !== undefined) {
         const validationError = validateJobSteps(steps)
@@ -152,6 +155,7 @@ export async function jobsRoutes(app: FastifyInstance): Promise<void> {
       if (schedule !== undefined) { updates.push('schedule = ?'); values.push(schedule ?? null) }
       if (steps !== undefined) { updates.push('steps = ?'); values.push(JSON.stringify(steps)) }
       if (enabled !== undefined) { updates.push('enabled = ?'); values.push(enabled ? 1 : 0) }
+      if (catchUpOnStart !== undefined) { updates.push('catch_up_on_start = ?'); values.push(catchUpOnStart ? 1 : 0) }
       if (preBackupScript !== undefined) { updates.push('pre_backup_script = ?'); values.push(preBackupScript ?? null) }
       if (postBackupScript !== undefined) { updates.push('post_backup_script = ?'); values.push(postBackupScript ?? null) }
       updates.push("updated_at = datetime('now')")
