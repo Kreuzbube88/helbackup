@@ -181,15 +181,38 @@ app.addHook('onError', async (_request, _reply, error) => {
 })
 
 // Graceful shutdown
-const shutdown = async (signal: string): Promise<void> => {
+let shuttingDown = false
+const shutdown = async (signal: string, exitCode = 0): Promise<void> => {
+  if (shuttingDown) return
+  shuttingDown = true
   logger.info(`${signal} received, shutting down gracefully`)
-  stopScheduler()
-  await app.close()
-  process.exit(0)
+  try {
+    stopScheduler()
+    await app.close()
+  } catch (err) {
+    logger.error({ err }, 'Error during graceful shutdown')
+  } finally {
+    process.exit(exitCode)
+  }
 }
 
 process.on('SIGTERM', () => { void shutdown('SIGTERM') })
 process.on('SIGINT', () => { void shutdown('SIGINT') })
+
+// Catch fire-and-forget rejections from job execution paths so they don't crash silently.
+// Logged but NOT fatal: backup steps run inside `void (async ...)` blocks and a single
+// step failure should not take the whole orchestrator down.
+process.on('unhandledRejection', (reason) => {
+  logger.error({ reason }, 'Unhandled promise rejection')
+})
+
+// An uncaught exception leaves Node in an undefined state — log it then exit non-zero.
+// Docker / Unraid will restart us. The HEALTHCHECK would catch the hang otherwise, but
+// failing fast is better.
+process.on('uncaughtException', (err) => {
+  logger.fatal({ err }, 'Uncaught exception — shutting down')
+  void shutdown('uncaughtException', 1)
+})
 
 try {
   await app.listen({ port: PORT, host: '0.0.0.0' })

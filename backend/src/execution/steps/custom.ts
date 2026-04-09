@@ -4,7 +4,7 @@ import { db } from '../../db/database.js'
 import { executeRsync } from '../../tools/rsync.js'
 import { getEncryptionPassword } from '../../utils/encryptionKey.js'
 import { encryptFileGPG } from '../../utils/gpgEncrypt.js'
-import { parseNasConfig, createNasTempDir, transferAndCleanup } from './nasTransfer.js'
+import { parseNasConfig, createNasTempDir, transferAndCleanup, finalizeLocalBackup } from './nasTransfer.js'
 import { spawn } from 'node:child_process'
 import type { JobExecutionEngine } from '../engine.js'
 import type { TargetRow } from '../../types/rows.js'
@@ -42,8 +42,8 @@ export async function executeCustomBackup(
   const nasConfig = await parseNasConfig(target)
   const folderName = path.basename(config.sourcePath) || 'custom'
   const destPath = path.join(targetConfig.path, 'custom', folderName, new Date().toISOString().split('T')[0])
-  const workDir = nasConfig ? await createNasTempDir('custom') : destPath
-  if (!nasConfig) await fs.mkdir(destPath, { recursive: true })
+  const workDir = nasConfig ? await createNasTempDir('custom') : destPath + '.partial'
+  if (!nasConfig) await fs.mkdir(workDir, { recursive: true })
 
   engine.log('info', 'system', `Source: ${config.sourcePath}`)
   engine.log('info', 'system', `Destination: ${destPath}`)
@@ -90,5 +90,6 @@ export async function executeCustomBackup(
   }
 
   const nasChecksums = nasConfig ? await transferAndCleanup(workDir, destPath, nasConfig, engine) : undefined
+  if (!nasConfig) await finalizeLocalBackup(workDir, destPath, engine)
   engine.recordBackupPath('custom', destPath, config.targetId, nasChecksums)
 }

@@ -4,7 +4,7 @@ import { db } from '../../db/database.js'
 import { exportHELBACKUP } from './helbackup-export.js'
 import { getEncryptionPassword } from '../../utils/encryptionKey.js'
 import { encryptFileGPG } from '../../utils/gpgEncrypt.js'
-import { parseNasConfig, createNasTempDir, transferAndCleanup } from './nasTransfer.js'
+import { parseNasConfig, createNasTempDir, transferAndCleanup, finalizeLocalBackup } from './nasTransfer.js'
 import type { JobExecutionEngine } from '../engine.js'
 import type { TargetRow } from '../../types/rows.js'
 
@@ -31,8 +31,8 @@ export async function executeHELBACKUPSelfBackup(
 
   const nasConfig = await parseNasConfig(target)
   const destPath = path.join(targetConfig.path, 'helbackup', new Date().toISOString().split('T')[0])
-  const workDir = nasConfig ? await createNasTempDir('helbackup') : destPath
-  if (!nasConfig) await fs.mkdir(destPath, { recursive: true })
+  const workDir = nasConfig ? await createNasTempDir('helbackup') : destPath + '.partial'
+  if (!nasConfig) await fs.mkdir(workDir, { recursive: true })
 
   // Export DB + SSH keys + metadata.json into workDir as helbackup-export.tar.gz
   const tarPath = await exportHELBACKUP(workDir, engine)
@@ -53,6 +53,7 @@ export async function executeHELBACKUPSelfBackup(
   }
 
   const nasChecksums = nasConfig ? await transferAndCleanup(workDir, destPath, nasConfig, engine) : undefined
+  if (!nasConfig) await finalizeLocalBackup(workDir, destPath, engine)
   engine.recordBackupPath('helbackup_self', destPath, config.targetId, nasChecksums)
   engine.log('info', 'system', 'HELBACKUP self-backup completed')
 }

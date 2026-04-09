@@ -8,7 +8,7 @@ import { createTarArchive } from '../../tools/tar.js'
 import { dumpDatabaseContainers } from './database-dump.js'
 import { getEncryptionPassword } from '../../utils/encryptionKey.js'
 import { encryptFileGPG } from '../../utils/gpgEncrypt.js'
-import { parseNasConfig, createNasTempDir, transferAndCleanup } from './nasTransfer.js'
+import { parseNasConfig, createNasTempDir, transferAndCleanup, finalizeLocalBackup } from './nasTransfer.js'
 import type { JobExecutionEngine } from '../engine.js'
 import type { TargetRow } from '../../types/rows.js'
 
@@ -83,8 +83,8 @@ export async function executeAppdataBackup(
 
   const nasConfig = await parseNasConfig(target)
   const destPath = path.join(targetConfig.path, 'appdata', new Date().toISOString().split('T')[0])
-  const workDir = nasConfig ? await createNasTempDir('appdata') : destPath
-  if (!nasConfig) await fs.mkdir(destPath, { recursive: true })
+  const workDir = nasConfig ? await createNasTempDir('appdata') : destPath + '.partial'
+  if (!nasConfig) await fs.mkdir(workDir, { recursive: true })
 
   // Pre-flight: verify source path is accessible BEFORE stopping any containers
   try {
@@ -297,6 +297,7 @@ export async function executeAppdataBackup(
   }
 
   const nasChecksums = nasConfig ? await transferAndCleanup(workDir, destPath, nasConfig, engine) : undefined
+  if (!nasConfig) await finalizeLocalBackup(workDir, destPath, engine)
   engine.recordBackupPath('appdata', destPath, config.targetId, nasChecksums)
   engine.log('info', 'system', 'Appdata backup completed')
 }

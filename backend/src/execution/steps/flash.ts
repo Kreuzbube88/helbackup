@@ -5,7 +5,7 @@ import { db } from '../../db/database.js'
 import { executeRsync } from '../../tools/rsync.js'
 import { getEncryptionPassword } from '../../utils/encryptionKey.js'
 import { encryptFileGPG } from '../../utils/gpgEncrypt.js'
-import { parseNasConfig, createNasTempDir, transferAndCleanup } from './nasTransfer.js'
+import { parseNasConfig, createNasTempDir, transferAndCleanup, finalizeLocalBackup } from './nasTransfer.js'
 import type { JobExecutionEngine } from '../engine.js'
 import type { TargetRow } from '../../types/rows.js'
 
@@ -37,8 +37,8 @@ export async function executeFlashBackup(
 
   const nasConfig = await parseNasConfig(target)
   const destPath = path.join(targetConfig.path, 'flash', new Date().toISOString().split('T')[0])
-  const workDir = nasConfig ? await createNasTempDir('flash') : destPath
-  if (!nasConfig) await fs.mkdir(destPath, { recursive: true })
+  const workDir = nasConfig ? await createNasTempDir('flash') : destPath + '.partial'
+  if (!nasConfig) await fs.mkdir(workDir, { recursive: true })
 
   engine.log('info', 'system', `Destination: ${destPath}`)
 
@@ -46,6 +46,8 @@ export async function executeFlashBackup(
     source: config.source,
     destination: workDir,
     excludePatterns: ['previous/', 'System Volume Information/', '*.tmp'],
+    // Flash drive must be byte-exact — fail on partial/vanished (rsync 23/24)
+    strict: true,
     onProgress: (() => { let last = -1; return ({ percent, speed }: { percent: number; speed: string }) => {
       if (percent < last) last = -1
       if (Math.floor(percent / 10) > Math.floor(last / 10)) { last = percent; engine.log('info', 'system', `Progress: ${percent}% — ${speed}`) }
@@ -92,5 +94,6 @@ export async function executeFlashBackup(
   }
 
   const nasChecksums = nasConfig ? await transferAndCleanup(workDir, destPath, nasConfig, engine) : undefined
+  if (!nasConfig) await finalizeLocalBackup(workDir, destPath, engine)
   engine.recordBackupPath('flash', destPath, config.targetId, nasChecksums)
 }

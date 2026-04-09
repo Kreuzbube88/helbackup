@@ -13,6 +13,12 @@ export interface RsyncOptions {
   filesFrom?: string // path to a file containing newline-separated relative paths to include
   bwLimit?: number // KB/s
   sshPull?: boolean // when true, SSH prefix goes on SOURCE (pull from remote) instead of destination (push to remote)
+  /**
+   * When true, only rsync exit code 0 is treated as success.
+   * Codes 23 (partial transfer / unreadable files) and 24 (vanished files) become fatal.
+   * Use for backups that MUST be byte-exact (Flash drive, System Config). Default: false.
+   */
+  strict?: boolean
   onProgress?: (data: { percent: number; transferred: string; speed: string }) => void
   onLog?: (message: string) => void
 }
@@ -95,8 +101,11 @@ export async function executeRsync(options: RsyncOptions): Promise<RsyncResult> 
     })
 
     rsync.on('close', (code: number | null) => {
-      // 0 = success, 23 = partial transfer (some files unreadable), 24 = vanished files — treat as warnings
-      if (code === 0 || code === 23 || code === 24) {
+      // 0 = success, 23 = partial transfer (some files unreadable), 24 = vanished files
+      // Non-strict mode: 23/24 are warnings (partial backup completes)
+      // Strict mode: only 0 is success — used for Flash and System Config which must be byte-exact
+      const acceptable = options.strict ? code === 0 : (code === 0 || code === 23 || code === 24)
+      if (acceptable) {
         const statsMatch = lastOutput.match(/Total transferred file size: ([\d,]+) bytes/)
         if (statsMatch) bytesTransferred = parseInt(statsMatch[1].replace(/,/g, ''))
         const filesMatch = lastOutput.match(/Number of regular files transferred: ([\d,]+)/)
@@ -105,7 +114,12 @@ export async function executeRsync(options: RsyncOptions): Promise<RsyncResult> 
         else logger.info(`Rsync completed. Transferred: ${bytesTransferred} bytes, ${filesTransferred} files`)
         resolve({ success: true, bytesTransferred, filesTransferred })
       } else {
-        const error = `Rsync failed with exit code ${code}`
+        const reason = code === 23
+          ? 'partial transfer (some source files were unreadable or vanished)'
+          : code === 24
+            ? 'source files vanished during transfer'
+            : `exit code ${code}`
+        const error = `Rsync failed: ${reason}`
         logger.error(error)
         reject(new Error(error))
       }

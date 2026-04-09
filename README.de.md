@@ -59,13 +59,25 @@ services:
     privileged: false
     ports:
       - "3000:3000"
+    environment:
+      - JWT_SECRET=dein_secret_hier   # openssl rand -hex 32
+      - SECURE_COOKIES=false          # true bei HTTPS via Reverse Proxy
+      - TZ=Europe/Berlin
+      - LOG_LEVEL=info
+      - PUID=99
+      - PGID=100
+      - LIBVIRT_DEFAULT_URI=qemu:///system
     volumes:
-      - /mnt/user/appdata/helbackup/data:/app/data
       - /mnt/user/appdata/helbackup/config:/app/config
+      - /mnt/user/appdata/helbackup/data:/app/data
       - /mnt/user/appdata/helbackup/logs:/app/logs
       - /var/run/docker.sock:/var/run/docker.sock
-      - /boot:/unraid/boot:ro
-      - /mnt/user:/unraid/user:ro
+      - /boot:/unraid/boot                          # rw — für Flash-Backup/Restore
+      - /mnt/user:/unraid/user                      # rw — für Appdata/VM-Backup/Restore
+      # Optional — nur für VM-Backups erforderlich:
+      # - /mnt/cache:/mnt/cache:ro
+      # - /etc/libvirt:/unraid/libvirt:ro
+      # - /var/run/libvirt/libvirt-sock:/var/run/libvirt/libvirt-sock
 ```
 
 

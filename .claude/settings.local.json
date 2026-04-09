@@ -27,7 +27,11 @@
       "WebSearch",
       "Bash(git rm:*)",
       "Bash(git pull:*)",
-      "Bash(python3:*)"
+      "Bash(python3:*)",
+      "Bash(npx vitest:*)",
+      "Bash(echo \"EXIT=$?\")",
+      "Bash(echo \"exit:$?\")",
+      "Bash(npx eslint:*)"
     ]
   }
 }

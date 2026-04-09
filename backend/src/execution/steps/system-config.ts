@@ -1,6 +1,6 @@
 import { spawn } from 'node:child_process'
 import { executeRsync } from '../../tools/rsync.js'
-import { parseNasConfig, createNasTempDir, transferAndCleanup } from './nasTransfer.js'
+import { parseNasConfig, createNasTempDir, transferAndCleanup, finalizeLocalBackup } from './nasTransfer.js'
 import type { JobExecutionEngine } from '../engine.js'
 import { getEncryptionPassword } from '../../utils/encryptionKey.js'
 import { encryptFileGPG } from '../../utils/gpgEncrypt.js'
@@ -40,8 +40,8 @@ export async function executeSystemConfigBackup(
 
   const nasConfig = await parseNasConfig(target)
   const destPath = path.join(targetConfig.path, 'system-config', new Date().toISOString().split('T')[0])
-  const workDir = nasConfig ? await createNasTempDir('system-config') : destPath
-  if (!nasConfig) await fs.mkdir(destPath, { recursive: true })
+  const workDir = nasConfig ? await createNasTempDir('system-config') : destPath + '.partial'
+  if (!nasConfig) await fs.mkdir(workDir, { recursive: true })
 
   engine.log('info', 'system', `Backing up system config to ${destPath}`)
 
@@ -75,6 +75,8 @@ export async function executeSystemConfigBackup(
             const rsyncResult = await executeRsync({
               source: sourcePath,
               destination: itemDestPath,
+              // System config must be byte-exact — fail on partial/vanished (rsync 23/24)
+              strict: true,
               onProgress: (() => { let last = -1; return (data: { percent: number }) => {
                 if (Math.floor(data.percent / 10) > Math.floor(last / 10)) { last = data.percent; engine.log('debug', 'system', `Progress: ${data.percent}%`) }
               } })(),
@@ -144,6 +146,7 @@ export async function executeSystemConfigBackup(
   }
 
   const nasChecksums = nasConfig ? await transferAndCleanup(workDir, destPath, nasConfig, engine) : undefined
+  if (!nasConfig) await finalizeLocalBackup(workDir, destPath, engine)
   engine.recordBackupPath('system_config', destPath, config.targetId, nasChecksums)
   engine.log('info', 'system', 'System config backup completed')
 }

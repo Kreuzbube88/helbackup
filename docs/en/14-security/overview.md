@@ -42,15 +42,23 @@ server {
 
 ## Container Security
 
-HELBACKUP requires Privileged Mode for:
-- `/boot` access (Flash Drive Backup)
-- Docker Socket
+**HELBACKUP does NOT require privileged mode.** The container runs with `privileged: false`
+and uses only the explicit host mounts listed in `docker-compose.yml`. Each mount has a
+specific purpose and minimum required access:
 
-Minimum permissions when no Flash/Docker backup needed:
-```
-Privileged: ☐
-Docker Socket: Only if Docker Image Backup required
-```
+| Host path | Container path | Mode | Purpose | Required for |
+|-----------|----------------|------|---------|--------------|
+| `/boot` | `/unraid/boot` | rw | Flash drive read + restore | Flash backup/restore |
+| `/mnt/user` | `/unraid/user` | rw | Appdata + VM image read + restore | Appdata, VM, custom path backups/restores |
+| `/var/run/docker.sock` | `/var/run/docker.sock` | rw | Docker API (container stop/start, image export) | Appdata, Docker image backups |
+| `/etc/libvirt` | `/unraid/libvirt` | ro | VM XML definitions | VM backups (optional) |
+| `/var/run/libvirt/libvirt-sock` | same | rw | libvirt API (snapshot, dumpxml) | VM backups (optional) |
+| `/mnt/cache` | `/mnt/cache` | ro | VM disk image read from cache pool | VM backups (optional) |
+
+If you don't need a given backup type, omit its mount — the related job types simply
+won't be available in the UI. The Docker socket is the only mount that grants any kind
+of host control; treat the helbackup container's network exposure accordingly (LAN only,
+or behind a reverse proxy with auth).
 
 ## Rate Limiting
 

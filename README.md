@@ -72,8 +72,8 @@ services:
       - /mnt/user/appdata/helbackup/data:/app/data
       - /mnt/user/appdata/helbackup/logs:/app/logs
       - /var/run/docker.sock:/var/run/docker.sock
-      - /boot:/unraid/boot                          # rw — required for Flash restore
-      - /mnt/user:/mnt/host/user                    # rw — required for Appdata/VM restore
+      - /boot:/unraid/boot                          # rw — required for Flash backup/restore
+      - /mnt/user:/unraid/user                      # rw — required for Appdata/VM backup/restore
       # Optional — required for VM backups:
       # - /mnt/cache:/mnt/cache:ro
       # - /etc/libvirt:/unraid/libvirt:ro

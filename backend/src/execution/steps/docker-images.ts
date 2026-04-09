@@ -2,7 +2,7 @@ import type { JobExecutionEngine } from '../engine.js'
 import { getEncryptionPassword } from '../../utils/encryptionKey.js'
 import { encryptFileGPG } from '../../utils/gpgEncrypt.js'
 import { saveImage } from '../../docker/client.js'
-import { parseNasConfig, createNasTempDir, transferAndCleanup } from './nasTransfer.js'
+import { parseNasConfig, createNasTempDir, transferAndCleanup, finalizeLocalBackup } from './nasTransfer.js'
 import path from 'path'
 import fs from 'fs/promises'
 
@@ -46,8 +46,8 @@ export async function executeDockerImageExport(
 
   const nasConfig = await parseNasConfig(target)
   const destPath = path.join(targetConfig.path, 'docker-images', new Date().toISOString().split('T')[0])
-  const workDir = nasConfig ? await createNasTempDir('docker-images') : destPath
-  if (!nasConfig) await fs.mkdir(destPath, { recursive: true })
+  const workDir = nasConfig ? await createNasTempDir('docker-images') : destPath + '.partial'
+  if (!nasConfig) await fs.mkdir(workDir, { recursive: true })
 
   engine.log('info', 'system', `Exporting ${config.images.length} Docker images to ${destPath}`)
 
@@ -95,6 +95,7 @@ export async function executeDockerImageExport(
   }
 
   const nasChecksums = nasConfig ? await transferAndCleanup(workDir, destPath, nasConfig, engine) : undefined
+  if (!nasConfig) await finalizeLocalBackup(workDir, destPath, engine)
   engine.recordBackupPath('docker_images', destPath, config.targetId, nasChecksums)
   engine.log('info', 'system', 'Docker image export completed')
 }

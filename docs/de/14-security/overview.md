@@ -42,15 +42,23 @@ server {
 
 ## Container Security
 
-HELBACKUP benötigt Privileged Mode für:
-- `/boot` Zugriff (Flash Drive Backup)
-- Docker Socket
+**HELBACKUP benötigt KEINEN Privileged-Mode.** Der Container läuft mit `privileged: false`
+und nutzt ausschließlich die in `docker-compose.yml` aufgeführten Host-Mounts. Jeder Mount
+hat einen klar definierten Zweck und benötigt nur den minimalen Zugriff:
 
-Minimalberechtigungen wenn kein Flash/Docker Backup:
-```
-Privileged: ☐
-Docker Socket: Nur wenn Docker Image Backup benötigt
-```
+| Host-Pfad | Container-Pfad | Modus | Zweck | Benötigt für |
+|-----------|----------------|-------|-------|--------------|
+| `/boot` | `/unraid/boot` | rw | Flash-Drive lesen + restore | Flash-Backup/Restore |
+| `/mnt/user` | `/unraid/user` | rw | Appdata + VM-Images lesen + restore | Appdata, VM, Custom-Path Backups/Restores |
+| `/var/run/docker.sock` | `/var/run/docker.sock` | rw | Docker-API (Container stop/start, Image-Export) | Appdata, Docker-Image-Backups |
+| `/etc/libvirt` | `/unraid/libvirt` | ro | VM-XML-Definitionen | VM-Backups (optional) |
+| `/var/run/libvirt/libvirt-sock` | gleich | rw | libvirt-API (Snapshot, dumpxml) | VM-Backups (optional) |
+| `/mnt/cache` | `/mnt/cache` | ro | VM-Disk-Images vom Cache-Pool | VM-Backups (optional) |
+
+Wird ein Backup-Typ nicht benötigt, kann der zugehörige Mount entfernt werden — die
+entsprechenden Job-Typen sind dann in der UI nicht verfügbar. Der Docker-Socket ist der
+einzige Mount, der Host-Kontrolle ermöglicht; den Container deshalb nur im LAN oder
+hinter einem Reverse Proxy mit Auth exponieren.
 
 ## Rate Limiting
 

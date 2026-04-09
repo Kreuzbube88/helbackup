@@ -3,7 +3,7 @@ import path from 'path'
 import fs from 'fs/promises'
 import { executeRsync } from '../../tools/rsync.js'
 import { executeSSHCommand } from '../../nas/ssh.js'
-import { generateChecksums } from '../verification.js'
+import { generateChecksums, verifyRemoteChecksums } from '../verification.js'
 import type { ChecksumEntry } from '../verification.js'
 import type { JobExecutionEngine } from '../engine.js'
 
@@ -38,6 +38,27 @@ export async function createNasTempDir(prefix: string): Promise<string> {
   return fs.mkdtemp(path.join(os.tmpdir(), `helbackup-${prefix}-`))
 }
 
+/**
+ * Atomically publish a local staging dir to the final destination.
+ * Uses a rename (same filesystem → atomic on POSIX). If destPath already exists
+ * (same-day re-run), it is removed first so the rename succeeds.
+ */
+export async function finalizeLocalBackup(
+  workDir: string,
+  destPath: string,
+  engine: JobExecutionEngine
+): Promise<void> {
+  engine.log('info', 'system', `Publishing backup: ${workDir} → ${destPath}`)
+  try {
+    await fs.rm(destPath, { recursive: true, force: true })
+    await fs.rename(workDir, destPath)
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err)
+    throw new Error(`Atomic backup publish failed (${workDir} → ${destPath}): ${msg}`)
+  }
+  engine.log('info', 'system', 'Backup committed to destination')
+}
+
 export async function transferAndCleanup(
   localDir: string,
   remotePath: string,
@@ -45,22 +66,45 @@ export async function transferAndCleanup(
   engine: JobExecutionEngine
 ): Promise<ChecksumEntry[]> {
   engine.log('info', 'system', `Transferring to NAS: ${nasConfig.host}:${remotePath}`)
-  // Pre-create remote directory via SSH (avoids --mkpath which requires rsync 3.2.3+, not available on Synology DSM)
+
+  const sshCfg = {
+    host: nasConfig.host,
+    port: nasConfig.port,
+    username: nasConfig.username,
+    password: nasConfig.password,
+    privateKey: nasConfig.privateKey,
+  }
+
+  // Use a .partial staging dir on the NAS so an interrupted transfer never
+  // leaves a seemingly-complete backup dir without a manifest.
+  // Only after verification succeeds do we rename .partial → final.
+  const partialPath = `${remotePath}.partial`
+  const escFinal  = remotePath.replace(/'/g, "'\\''")
+  const escPartial = partialPath.replace(/'/g, "'\\''")
+
+  // Clean up any leftover partial from a previous failed run, then create fresh
   const mkdirResult = await executeSSHCommand(
-    { host: nasConfig.host, port: nasConfig.port, username: nasConfig.username, password: nasConfig.password, privateKey: nasConfig.privateKey },
-    `mkdir -p '${remotePath.replace(/'/g, "'\\''")}'`
+    sshCfg,
+    `rm -rf '${escPartial}' && mkdir -p '${escPartial}'`
   )
   if (!mkdirResult.success) {
-    throw new Error(`Failed to create remote directory ${remotePath}: ${mkdirResult.error ?? 'unknown error'}`)
+    throw new Error(`Failed to prepare remote staging dir ${partialPath}: ${mkdirResult.error ?? 'unknown error'}`)
   }
+
+  // Generate checksums BEFORE transfer so we have a known-good source-of-truth.
+  // After rsync we re-hash on the remote and compare — that catches transit corruption.
+  const checksums = await generateChecksums(localDir, engine)
+
   await executeRsync({
     source: localDir + '/',
-    destination: remotePath,
+    destination: partialPath,
     sshHost: nasConfig.host,
     sshUser: nasConfig.username,
     sshPassword: nasConfig.password,
     sshKey: nasConfig.privateKey,
     sshPort: nasConfig.port,
+    // Source is our own staged temp dir — vanished/unreadable files indicate a real problem
+    strict: true,
     onProgress: (() => {
       let last = -1
       return ({ percent, speed }: { percent: number; speed: string }) => {
@@ -80,8 +124,21 @@ export async function transferAndCleanup(
       engine.log('error', 'system', content)
     },
   })
-  const checksums = await generateChecksums(localDir, engine)
+
+  // Verify the bytes that landed in the partial dir on the NAS match what we
+  // hashed locally. Throws on mismatch — local dir is preserved for re-run.
+  await verifyRemoteChecksums(partialPath, checksums, sshCfg, engine)
+
+  // Atomically promote .partial → final (rm old same-day dir first if present)
+  const publishResult = await executeSSHCommand(
+    sshCfg,
+    `rm -rf '${escFinal}' && mv '${escPartial}' '${escFinal}'`
+  )
+  if (!publishResult.success) {
+    throw new Error(`Failed to publish remote backup (rename .partial → final): ${publishResult.error ?? 'unknown error'}`)
+  }
+
   await fs.rm(localDir, { recursive: true, force: true })
-  engine.log('info', 'system', 'NAS transfer complete')
+  engine.log('info', 'system', 'NAS transfer complete (verified + committed)')
   return checksums
 }

@@ -2,10 +2,6 @@
 
 Intelligent backup orchestrator for Unraid. Self-hosted, single Docker container.
 
-## Claude Bridge
-
-At the start of each session, check `C:\Users\hendr\claude-bridge\` for `.pending` files addressed to `helbackup`. Process them before other tasks. Reply by creating a new `.pending` file (`helbackup_heldash_{id}.pending`), then rename the original to `.done`. Full spec in `C:\Users\hendr\claude-bridge\BRIDGE.md`.
-
 ## Stack
 
 | Layer | Tech |

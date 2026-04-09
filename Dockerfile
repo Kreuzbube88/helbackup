@@ -28,7 +28,7 @@ RUN npm run build
 FROM node:24-alpine AS final
 WORKDIR /app
 
-# Install runtime backup tools
+# Install runtime backup tools (wget is in busybox, used by HEALTHCHECK)
 RUN apk add --no-cache rsync openssh-client libvirt-client gnupg sshpass
 
 LABEL org.opencontainers.image.title="HELBACKUP"
@@ -52,5 +52,11 @@ ENV NODE_ENV=production
 ENV PORT=3000
 ENV DB_PATH=/app/data/helbackup.db
 ENV LOG_FORMAT=pretty
+
+# Liveness probe — Docker / Unraid will mark the container unhealthy if /api/health
+# stops returning 200. The endpoint runs a `SELECT 1` against SQLite, so this also
+# catches DB-stalled scenarios. Started after a 30s grace period for first-boot init.
+HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
+  CMD wget -qO- http://127.0.0.1:3000/api/health >/dev/null 2>&1 || exit 1
 
 CMD ["node", "dist/index.js"]
