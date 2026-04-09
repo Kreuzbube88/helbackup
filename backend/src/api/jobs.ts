@@ -31,6 +31,52 @@ interface UpdateJobBody {
   postBackupScript?: string | null
 }
 
+function validateJobSteps(steps: unknown[]): string | null {
+  if (!Array.isArray(steps) || steps.length === 0) return 'Job must have at least one step'
+  for (const raw of steps) {
+    const s = raw as { type?: string; config?: Record<string, unknown> } | null
+    if (!s || typeof s !== 'object' || !s.type || !s.config || typeof s.config !== 'object') {
+      return 'Invalid step structure'
+    }
+    if (typeof s.config.targetId !== 'string' || s.config.targetId === '') {
+      return `Step ${s.type}: targetId required`
+    }
+    switch (s.type) {
+      case 'appdata': {
+        const c = s.config.containers
+        if (!Array.isArray(c) || c.length === 0) return 'Appdata step: at least one container required'
+        break
+      }
+      case 'vms': {
+        const v = s.config.vms
+        if (!Array.isArray(v) || v.length === 0) return 'VM step: at least one VM required'
+        break
+      }
+      case 'docker_images': {
+        const i = s.config.images
+        if (!Array.isArray(i) || i.length === 0) return 'Docker images step: at least one image required'
+        break
+      }
+      case 'system_config': {
+        const it = s.config.includeItems
+        if (!Array.isArray(it) || it.length === 0) return 'System config step: at least one item required'
+        break
+      }
+      case 'custom': {
+        const p = s.config.sourcePath
+        if (typeof p !== 'string' || p.trim() === '') return 'Custom step: sourcePath required'
+        break
+      }
+      case 'flash':
+      case 'helbackup_self':
+        break
+      default:
+        return `Unknown step type: ${s.type}`
+    }
+  }
+  return null
+}
+
 function parseJob(row: JobRow) {
   return {
     ...row,
@@ -71,6 +117,9 @@ export async function jobsRoutes(app: FastifyInstance): Promise<void> {
       const { name, schedule, steps, enabled = true, preBackupScript, postBackupScript } = request.body
       if (!name || !steps) return reply.status(400).send({ error: 'Missing required fields' })
 
+      const validationError = validateJobSteps(steps)
+      if (validationError) return reply.status(400).send({ error: validationError })
+
       const id = uuidv4()
       db.prepare(
         'INSERT INTO jobs (id, name, schedule, steps, enabled, pre_backup_script, post_backup_script) VALUES (?, ?, ?, ?, ?, ?, ?)'
@@ -90,6 +139,12 @@ export async function jobsRoutes(app: FastifyInstance): Promise<void> {
       if (!existing) return reply.status(404).send({ error: 'Job not found' })
 
       const { name, schedule, steps, enabled, preBackupScript, postBackupScript } = request.body
+
+      if (steps !== undefined) {
+        const validationError = validateJobSteps(steps)
+        if (validationError) return reply.status(400).send({ error: validationError })
+      }
+
       const updates: string[] = []
       const values: unknown[] = []
 

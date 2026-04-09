@@ -2,6 +2,9 @@ import { useTranslation } from 'react-i18next'
 import { ArrowUp, ArrowDown } from 'lucide-react'
 import { Select } from '../../../common/Select'
 import DockerImageSelector from '../../../jobs/DockerImageSelector'
+import { EncryptionToggle } from '../shared/EncryptionToggle'
+import { RetentionFields } from '../shared/RetentionFields'
+import { NoTargetNotice } from '../shared/NoTargetNotice'
 import type { Target } from '../../../../api'
 
 export interface AppdataStepConfig {
@@ -11,6 +14,11 @@ export interface AppdataStepConfig {
   stopOrder: string[]
   stopDelay: number
   restartDelay: number
+  method: 'tar' | 'rsync'
+  useDatabaseDumps: boolean
+  useEncryption: boolean
+  retentionDays?: number
+  retentionMinimum: number
 }
 
 interface Props {
@@ -50,19 +58,65 @@ export function AppdataConfig({ value, onChange, targets }: Props) {
 
   return (
     <div className="space-y-5">
+      {targets.length === 0 && <NoTargetNotice />}
       <Select
         label={t('wizard_target')}
         options={[{ value: '', label: t('wizard_select_target') }, ...targetOptions]}
         value={value.targetId}
         onChange={e => onChange({ ...value, targetId: e.target.value })}
       />
+      {!value.targetId && (
+        <p className="text-xs text-[var(--status-error)]">{t('validation_needs_target')}</p>
+      )}
 
       <DockerImageSelector
         value={value.containers}
         onChange={handleContainersChange}
       />
+      {value.containers.length === 0 && (
+        <p className="text-xs text-[var(--status-error)]">{t('validation_needs_containers')}</p>
+      )}
 
       <p className="text-xs text-[var(--text-muted)] italic">{t('appdata_helbackup_excluded')}</p>
+
+      <div className="pt-3 border-t border-[var(--border-default)]">
+        <p className="text-sm font-medium text-[var(--text-primary)] mb-2">{t('wizard_backup_method')}</p>
+        <div className="flex gap-4">
+          <label className="flex items-center gap-2 text-sm cursor-pointer">
+            <input
+              type="radio"
+              name="appdata-method"
+              checked={value.method === 'rsync'}
+              onChange={() => onChange({ ...value, method: 'rsync' })}
+              className="accent-[var(--theme-primary)]"
+            />
+            Rsync
+          </label>
+          <label className="flex items-center gap-2 text-sm cursor-pointer">
+            <input
+              type="radio"
+              name="appdata-method"
+              checked={value.method === 'tar'}
+              onChange={() => onChange({ ...value, method: 'tar' })}
+              className="accent-[var(--theme-primary)]"
+            />
+            Tar
+          </label>
+        </div>
+      </div>
+
+      <label className="flex items-start gap-2 cursor-pointer pt-3 border-t border-[var(--border-default)]">
+        <input
+          type="checkbox"
+          checked={value.useDatabaseDumps}
+          onChange={e => onChange({ ...value, useDatabaseDumps: e.target.checked })}
+          className="mt-0.5 accent-[var(--theme-primary)]"
+        />
+        <div>
+          <p className="text-sm font-medium text-[var(--text-primary)]">{t('use_database_dumps')}</p>
+          <p className="text-xs text-[var(--text-muted)]">{t('database_dumps_hint')}</p>
+        </div>
+      </label>
 
       <div className="space-y-3 pt-3 border-t border-[var(--border-default)]">
         <label className="flex items-center gap-2 text-sm text-[var(--text-secondary)] cursor-pointer">
@@ -144,6 +198,23 @@ export function AppdataConfig({ value, onChange, targets }: Props) {
           </>
         )}
       </div>
+
+      <EncryptionToggle
+        value={value.useEncryption}
+        onChange={useEncryption => onChange({ ...value, useEncryption })}
+      />
+
+      <RetentionFields
+        days={value.retentionDays}
+        minimum={value.retentionMinimum}
+        onChange={patch => onChange({
+          ...value,
+          ...('retentionDays' in patch ? { retentionDays: patch.retentionDays } : {}),
+          ...('retentionMinimum' in patch ? { retentionMinimum: patch.retentionMinimum ?? value.retentionMinimum } : {}),
+        })}
+      />
+
+      <p className="text-[11px] text-[var(--text-muted)] italic">{t('checksums_always_on_note')}</p>
     </div>
   )
 }

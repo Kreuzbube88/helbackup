@@ -1,14 +1,13 @@
 import { useTranslation } from 'react-i18next'
-import { HardDrive, FolderOpen, Monitor, Container, Settings, FolderCog, ChevronDown, ChevronUp, Shield } from 'lucide-react'
+import { HardDrive, FolderOpen, Monitor, Container, Settings, FolderCog, Shield } from 'lucide-react'
 import { HelpText } from '../../common/HelpText'
-import type { Target } from '../../../api'
-import { FlashConfig, type FlashStepConfig } from './config/FlashConfig'
-import { AppdataConfig, type AppdataStepConfig } from './config/AppdataConfig'
-import { VMConfig, type VMStepConfig } from './config/VMConfig'
-import { DockerImagesConfig, type DockerImagesStepConfig } from './config/DockerImagesConfig'
-import { SystemConfigForm, type SystemConfigStepConfig } from './config/SystemConfigForm'
-import { CustomConfig, type CustomStepConfig } from './config/CustomConfig'
-import { HELBACKUPSelfConfig, type HELBACKUPSelfStepConfig } from './config/HELBACKUPSelfConfig'
+import type { FlashStepConfig } from './config/FlashConfig'
+import type { AppdataStepConfig } from './config/AppdataConfig'
+import type { VMStepConfig } from './config/VMConfig'
+import type { DockerImagesStepConfig } from './config/DockerImagesConfig'
+import type { SystemConfigStepConfig } from './config/SystemConfigForm'
+import type { CustomStepConfig } from './config/CustomConfig'
+import type { HELBACKUPSelfStepConfig } from './config/HELBACKUPSelfConfig'
 
 export type StepType = 'flash' | 'appdata' | 'vms' | 'docker_images' | 'system_config' | 'custom' | 'helbackup_self'
 
@@ -22,20 +21,38 @@ export interface BackupStepsConfig {
   helbackup_self: HELBACKUPSelfStepConfig | null
 }
 
+export const TYPE_ORDER: StepType[] = [
+  'flash', 'appdata', 'vms', 'docker_images', 'system_config', 'custom', 'helbackup_self',
+]
+
+export const DEFAULT_CONFIGS: {
+  flash: FlashStepConfig
+  appdata: AppdataStepConfig
+  vms: VMStepConfig
+  docker_images: DockerImagesStepConfig
+  system_config: SystemConfigStepConfig
+  custom: CustomStepConfig
+  helbackup_self: HELBACKUPSelfStepConfig
+} = {
+  flash: { targetId: '', useEncryption: false, retentionMinimum: 3 },
+  appdata: {
+    targetId: '', containers: [], stopContainers: true, stopOrder: [], stopDelay: 10, restartDelay: 5,
+    method: 'rsync', useDatabaseDumps: false, useEncryption: false, retentionMinimum: 3,
+  },
+  vms: { targetId: '', vms: [], includeDisks: false, useEncryption: false, retentionMinimum: 3 },
+  docker_images: { targetId: '', images: [], useEncryption: false, retentionMinimum: 3 },
+  system_config: {
+    targetId: '',
+    includeItems: ['boot_config', 'network', 'users', 'plugins'],
+    useEncryption: false, retentionMinimum: 3,
+  },
+  custom: { sourcePath: '', targetId: '', excludePatterns: [], useEncryption: false, retentionMinimum: 3 },
+  helbackup_self: { targetId: '', useEncryption: false, retentionMinimum: 3 },
+}
+
 interface Props {
   value: BackupStepsConfig
   onChange: (value: BackupStepsConfig) => void
-  targets: Target[]
-}
-
-const DEFAULT_CONFIGS = {
-  flash: { targetId: '' },
-  appdata: { targetId: '', containers: [], stopContainers: true, stopOrder: [], stopDelay: 10, restartDelay: 5 },
-  vms: { targetId: '', vms: [], includeDisks: false },
-  docker_images: { targetId: '', images: [] },
-  system_config: { targetId: '', includeItems: ['boot_config', 'network', 'users', 'plugins'] },
-  custom: { sourcePath: '', targetId: '', excludePatterns: [] },
-  helbackup_self: { targetId: '', useEncryption: false },
 }
 
 interface StepTypeInfo {
@@ -55,7 +72,12 @@ const STEP_TYPES: StepTypeInfo[] = [
   { type: 'helbackup_self', icon: <Shield size={16} />, labelKey: 'wizard_type_helbackup', descKey: 'wizard_type_helbackup_desc' },
 ]
 
-export function StepBackupTypes({ value, onChange, targets }: Props) {
+export const TYPE_META: Record<StepType, { icon: React.ReactNode; labelKey: string }> = STEP_TYPES.reduce(
+  (acc, s) => { acc[s.type] = { icon: s.icon, labelKey: s.labelKey }; return acc },
+  {} as Record<StepType, { icon: React.ReactNode; labelKey: string }>,
+)
+
+export function StepBackupTypes({ value, onChange }: Props) {
   const { t } = useTranslation('jobs')
 
   const toggle = (type: StepType) => {
@@ -76,86 +98,30 @@ export function StepBackupTypes({ value, onChange, targets }: Props) {
       {STEP_TYPES.map(({ type, icon, labelKey, descKey }) => {
         const enabled = value[type] !== null
         return (
-          <div key={type} className="border border-[var(--border-default)]">
-            <button
-              type="button"
-              className="w-full flex items-center justify-between p-3 hover:bg-[var(--bg-elevated)] transition-colors"
-              onClick={() => toggle(type)}
-            >
-              <div className="flex items-center gap-3">
-                <input
-                  type="checkbox"
-                  checked={enabled}
-                  onChange={() => toggle(type)}
-                  className="accent-[var(--theme-primary)]"
-                  onClick={e => e.stopPropagation()}
-                />
-                <span className="text-[var(--theme-accent)]">{icon}</span>
-                <div className="text-left">
-                  <p className="text-sm font-medium text-[var(--text-primary)]">{t(labelKey)}</p>
-                  <p className="text-xs text-[var(--text-muted)]">{t(descKey)}</p>
-                </div>
-              </div>
-              {enabled
-                ? <ChevronUp size={14} className="text-[var(--text-muted)]" />
-                : <ChevronDown size={14} className="text-[var(--text-muted)]" />
-              }
-            </button>
-
-            {enabled && (
-              <div className="p-4 border-t border-[var(--border-default)] bg-[var(--bg-elevated)]">
-                {type === 'flash' && (
-                  <FlashConfig
-                    value={value.flash!}
-                    onChange={cfg => onChange({ ...value, flash: cfg })}
-                    targets={targets}
-                  />
-                )}
-                {type === 'appdata' && (
-                  <AppdataConfig
-                    value={value.appdata!}
-                    onChange={cfg => onChange({ ...value, appdata: cfg })}
-                    targets={targets}
-                  />
-                )}
-                {type === 'vms' && (
-                  <VMConfig
-                    value={value.vms!}
-                    onChange={cfg => onChange({ ...value, vms: cfg })}
-                    targets={targets}
-                  />
-                )}
-                {type === 'docker_images' && (
-                  <DockerImagesConfig
-                    value={value.docker_images!}
-                    onChange={cfg => onChange({ ...value, docker_images: cfg })}
-                    targets={targets}
-                  />
-                )}
-                {type === 'system_config' && (
-                  <SystemConfigForm
-                    value={value.system_config!}
-                    onChange={cfg => onChange({ ...value, system_config: cfg })}
-                    targets={targets}
-                  />
-                )}
-                {type === 'custom' && (
-                  <CustomConfig
-                    value={value.custom!}
-                    onChange={cfg => onChange({ ...value, custom: cfg })}
-                    targets={targets}
-                  />
-                )}
-                {type === 'helbackup_self' && (
-                  <HELBACKUPSelfConfig
-                    value={value.helbackup_self!}
-                    onChange={cfg => onChange({ ...value, helbackup_self: cfg })}
-                    targets={targets}
-                  />
-                )}
-              </div>
-            )}
-          </div>
+          <button
+            key={type}
+            type="button"
+            className={[
+              'w-full flex items-center gap-3 p-3 border transition-colors text-left',
+              enabled
+                ? 'border-[var(--theme-accent)] bg-[var(--bg-elevated)]'
+                : 'border-[var(--border-default)] hover:bg-[var(--bg-elevated)]',
+            ].join(' ')}
+            onClick={() => toggle(type)}
+          >
+            <input
+              type="checkbox"
+              checked={enabled}
+              onChange={() => toggle(type)}
+              className="accent-[var(--theme-primary)]"
+              onClick={e => e.stopPropagation()}
+            />
+            <span className="text-[var(--theme-accent)]">{icon}</span>
+            <div className="flex-1">
+              <p className="text-sm font-medium text-[var(--text-primary)]">{t(labelKey)}</p>
+              <p className="text-xs text-[var(--text-muted)]">{t(descKey)}</p>
+            </div>
+          </button>
         )
       })}
     </div>

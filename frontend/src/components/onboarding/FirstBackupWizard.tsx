@@ -1,21 +1,21 @@
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { HardDrive, Server, CheckCircle2 } from 'lucide-react'
+import { CheckCircle2 } from 'lucide-react'
 import { Modal } from '../common/Modal'
 import { Button } from '../common/Button'
 import { Input } from '../common/Input'
 import { ConfirmModal } from '../common/ConfirmModal'
 import { useToast } from '../common/Toast'
 import { CronBuilder } from '../jobs/wizard/CronBuilder'
-import { Select } from '../common/Select'
-import { NASTargetForm, type NASPowerConfig } from '../targets/NASTargetForm'
-import { NASSetupHint } from '../targets/NASSetupHint'
 import { api } from '../../api'
 import { cryptoUUID } from '../../utils/format'
+import { useTargetWizardState } from '../targets/wizard/useTargetWizardState'
+import { useTargetWizardSteps } from '../targets/wizard/useTargetWizardSteps'
+import { TargetWizardBody } from '../targets/wizard/TargetWizardBody'
+import { StepIndicator } from '../targets/wizard/StepIndicator'
 
-type TargetType = 'local' | 'nas'
-// Steps: 1=Target, 2=BackupTypes, 3=Schedule+Name, 4=Review, 5=Done
-type Step = 1 | 2 | 3 | 4 | 5
+// Outer steps: 1=Target, 2=BackupTypes, 3=Schedule+Name, 4=Review, 5=Done
+type OuterStep = 1 | 2 | 3 | 4 | 5
 type BackupType = 'flash' | 'appdata' | 'vms' | 'docker_images' | 'system_config'
 
 interface Props {
@@ -24,59 +24,32 @@ interface Props {
   onSuccess: () => void
 }
 
-const DEFAULT_NAS_POWER: NASPowerConfig = {
-  enabled: false, mac: '', ip: '', autoShutdown: false,
-}
-
 export function FirstBackupWizard({ open, onClose, onSuccess }: Props) {
   const { t } = useTranslation()
   const { toast } = useToast()
 
-  const [step, setStep] = useState<Step>(1)
+  const [outerStep, setOuterStep] = useState<OuterStep>(1)
   const [saving, setSaving] = useState(false)
-  const [sshKeyLoading, setSshKeyLoading] = useState(false)
-  const [advancedOpen, setAdvancedOpen] = useState(false)
   const [confirmClose, setConfirmClose] = useState(false)
 
-  // Target fields
-  const [targetType, setTargetType] = useState<TargetType>('local')
-  const [targetName, setTargetName] = useState('')
-  const [localPath, setLocalPath] = useState('/unraid/user/backups')
-  const [nasHost, setNasHost] = useState('')
-  const [nasPort, setNasPort] = useState(22)
-  const [nasUser, setNasUser] = useState('')
-  const [nasPass, setNasPass] = useState('')
-  const [nasPrivateKey, setNasPrivateKey] = useState('')
-  const [nasType, setNasType] = useState('')
-  const [nasPath, setNasPath] = useState('/backups')
-  const [nasPower, setNasPower] = useState<NASPowerConfig>(DEFAULT_NAS_POWER)
+  // Target sub-flow (delegated to shared hook)
+  const wizard = useTargetWizardState({ mode: 'create' })
+  const targetSteps = useTargetWizardSteps(wizard.state.type)
+  const [targetSubIndex, setTargetSubIndex] = useState(0)
+  const [targetFurthest, setTargetFurthest] = useState(0)
+  const [sshTestResult, setSshTestResult] = useState<boolean | null>(null)
+  const [overrideTest, setOverrideTest] = useState(false)
 
   // Job fields
   const [jobName, setJobName] = useState('')
   const [schedule, setSchedule] = useState<string | null>(null)
   const [selectedTypes, setSelectedTypes] = useState<Set<BackupType>>(new Set(['appdata']))
 
-  const isDirty = step > 1 || targetName.trim() !== ''
-
-  async function handleSetupSshKey() {
-    setSshKeyLoading(true)
-    try {
-      const result = await api.nas.setupSshKey(nasHost, nasPort, nasUser, nasPass)
-      setNasPrivateKey(result.privateKeyPath)
-      toast(t('common:nas.ssh_key_deployed'), 'success')
-    } catch (err) {
-      toast(err instanceof Error ? err.message : t('common:nas.ssh_key_error'), 'error')
-    } finally {
-      setSshKeyLoading(false)
-    }
-  }
+  const isDirty = outerStep > 1 || wizard.isDirty
 
   function requestClose() {
-    if (isDirty && step < 5) {
-      setConfirmClose(true)
-    } else {
-      doClose()
-    }
+    if (isDirty && outerStep < 5) setConfirmClose(true)
+    else doClose()
   }
 
   function doClose() {
@@ -85,47 +58,60 @@ export function FirstBackupWizard({ open, onClose, onSuccess }: Props) {
   }
 
   function resetAll() {
-    setStep(1)
+    setOuterStep(1)
     setSaving(false)
     setConfirmClose(false)
-    setTargetType('local')
-    setTargetName('')
-    setLocalPath('/unraid/user/backups')
-    setNasHost('')
-    setNasPort(22)
-    setNasUser('')
-    setNasPass('')
-    setNasType('')
-    setNasPath('/backups')
-    setNasPower(DEFAULT_NAS_POWER)
+    wizard.reset()
+    setTargetSubIndex(0)
+    setTargetFurthest(0)
+    setSshTestResult(null)
+    setOverrideTest(false)
     setJobName('')
     setSchedule(null)
     setSelectedTypes(new Set(['appdata']))
   }
 
-  function buildTargetConfig(): Record<string, unknown> {
-    switch (targetType) {
-      case 'local': return { path: localPath }
-      case 'nas': return { host: nasHost, port: nasPort, username: nasUser, password: nasPass, ...(nasPrivateKey ? { privateKey: nasPrivateKey } : {}), ...(nasType ? { nasType } : {}), path: nasPath, power: nasPower }
+  const ctx = useMemo(() => ({ sshTestResult, overrideTest }), [sshTestResult, overrideTest])
+  const currentTargetStep = targetSteps[targetSubIndex]
+  const isLastTargetSub = targetSubIndex === targetSteps.length - 1
+  const canProceedTargetSub = currentTargetStep.canProceed(wizard.state, ctx)
+
+  function targetSubNext() {
+    if (!canProceedTargetSub) return
+    if (isLastTargetSub) {
+      setOuterStep(2)
+      return
     }
+    const next = targetSubIndex + 1
+    setTargetSubIndex(next)
+    setTargetFurthest(prev => Math.max(prev, next))
   }
 
-  function canProceedStep1(): boolean {
-    if (!targetName.trim()) return false
-    if (targetType === 'local') return localPath.trim().length > 0
-    if (targetType === 'nas') return nasHost.trim().length > 0 && nasUser.trim().length > 0
-    return true
+  function targetSubBack() {
+    if (targetSubIndex === 0) {
+      requestClose()
+      return
+    }
+    setTargetSubIndex(targetSubIndex - 1)
   }
+
+  // Reset target sub state when type switches
+  useEffect(() => {
+    setTargetSubIndex(0)
+    setTargetFurthest(0)
+    setSshTestResult(null)
+    setOverrideTest(false)
+  }, [wizard.state.type])
 
   async function handleFinish(runNow: boolean) {
     if (!jobName.trim() || selectedTypes.size === 0) return
     setSaving(true)
     try {
       const target = await api.targets.create({
-        name: targetName.trim(),
-        type: targetType,
+        name: wizard.state.name.trim(),
+        type: wizard.state.type,
         enabled: true,
-        config: buildTargetConfig(),
+        config: wizard.buildConfig(),
       })
 
       const steps = Array.from(selectedTypes).map(type => {
@@ -159,7 +145,7 @@ export function FirstBackupWizard({ open, onClose, onSuccess }: Props) {
       }
 
       onSuccess()
-      setStep(5)
+      setOuterStep(5)
     } catch (err) {
       toast(err instanceof Error ? err.message : t('common:unknown_error'), 'error')
     } finally {
@@ -183,16 +169,11 @@ export function FirstBackupWizard({ open, onClose, onSuccess }: Props) {
     system_config: t('guide.backup_sysconfig_hint'),
   }
 
-  const STEP_LABELS = [
+  const OUTER_LABELS = [
     t('guide.step_target'),
     t('guide.step_backup'),
     t('guide.step_schedule'),
     t('guide.step_review'),
-  ]
-
-  const targetTypeCards: { value: TargetType; icon: React.ReactNode; label: string; desc: string }[] = [
-    { value: 'local', icon: <HardDrive size={20} />, label: t('guide.step_target_type_local'), desc: t('guide.step_target_type_local_desc') },
-    { value: 'nas',   icon: <Server size={20} />,    label: t('guide.step_target_type_nas'),   desc: t('guide.step_target_type_nas_desc') },
   ]
 
   return (
@@ -204,114 +185,37 @@ export function FirstBackupWizard({ open, onClose, onSuccess }: Props) {
         className="max-w-2xl"
         disableBackdropClose
       >
-        {/* Step indicator */}
-        {step < 5 && (
-          <div className="flex items-center gap-1 mb-6">
-            {STEP_LABELS.map((label, i) => (
-              <div key={i} className="flex items-center gap-1 flex-1">
-                <div className={[
-                  'flex items-center gap-1.5 text-xs py-1 px-2',
-                  step === i + 1 ? 'text-[var(--theme-accent)] font-medium' :
-                  step > i + 1 ? 'text-[var(--text-secondary)]' : 'text-[var(--text-muted)]',
-                ].join(' ')}>
-                  <span className={[
-                    'w-4 h-4 rounded-full text-[10px] flex items-center justify-center',
-                    step === i + 1 ? 'bg-[var(--theme-accent)] text-black' :
-                    step > i + 1 ? 'bg-green-500 text-white' :
-                    'bg-[var(--bg-elevated)] text-[var(--text-muted)]',
-                  ].join(' ')}>
-                    {step > i + 1 ? '✓' : i + 1}
-                  </span>
-                  <span className="hidden sm:inline">{label}</span>
-                </div>
-                {i < 3 && <div className="flex-1 h-px bg-[var(--border-default)]" />}
-              </div>
-            ))}
-          </div>
+        {outerStep < 5 && (
+          <StepIndicator labels={OUTER_LABELS} current={outerStep - 1} furthest={outerStep - 1} />
         )}
 
         <div className="min-h-[300px] overflow-y-auto max-h-[60vh]">
 
-          {/* Step 1 — Target */}
-          {step === 1 && (
+          {/* Outer Step 1 — Target sub-flow */}
+          {outerStep === 1 && (
             <div className="space-y-4">
-              <p className="text-sm text-[var(--text-muted)]">{t('guide.step_target_desc')}</p>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                {targetTypeCards.map(card => (
-                  <button
-                    key={card.value}
-                    type="button"
-                    onClick={() => setTargetType(card.value)}
-                    className={[
-                      'flex flex-col gap-2 p-3 border text-left transition-colors',
-                      targetType === card.value
-                        ? 'border-[var(--theme-accent)] bg-[var(--bg-elevated)]'
-                        : 'border-[var(--border-default)] hover:bg-[var(--bg-elevated)]',
-                    ].join(' ')}
-                  >
-                    <span className="text-[var(--theme-accent)]">{card.icon}</span>
-                    <span className="text-sm font-medium text-[var(--text-primary)]">{card.label}</span>
-                    <span className="text-xs text-[var(--text-muted)] leading-relaxed">{card.desc}</span>
-                  </button>
-                ))}
+              <div className="border-b border-[var(--border-default)] pb-3">
+                <StepIndicator
+                  labels={targetSteps.map(s => t(`targets:${s.labelKey}`))}
+                  current={targetSubIndex}
+                  furthest={targetFurthest}
+                  onJump={(i) => i <= targetFurthest && setTargetSubIndex(i)}
+                />
               </div>
-
-              <Input
-                label={t('guide.step_target_name_label')}
-                value={targetName}
-                onChange={e => setTargetName(e.target.value)}
-                placeholder={t('guide.step_target_name_placeholder')}
-                required
+              <TargetWizardBody
+                stepId={currentTargetStep.id}
+                state={wizard.state}
+                update={wizard.update}
+                mode="create"
+                sshTestResult={sshTestResult}
+                setSshTestResult={setSshTestResult}
+                overrideTest={overrideTest}
+                setOverrideTest={setOverrideTest}
               />
-
-              {targetType === 'local' && (
-                <Input label="Path" value={localPath} onChange={e => setLocalPath(e.target.value)} required />
-              )}
-
-              {targetType === 'nas' && (
-                <>
-                  <Input label="Host" value={nasHost} onChange={e => setNasHost(e.target.value)} required />
-                  <Input label="Port" type="number" value={nasPort} onChange={e => setNasPort(Number(e.target.value))} />
-                  <Input label={t('common:nas.username')} value={nasUser} onChange={e => setNasUser(e.target.value)} required />
-                  <Input label={t('common:nas.password')} type="password" value={nasPass} onChange={e => setNasPass(e.target.value)} placeholder={t('common:nas.password_placeholder')} />
-                  <Select
-                    label={t('common:nas.type_label')}
-                    options={[
-                      { value: '', label: t('common:nas.type_placeholder') },
-                      { value: 'synology', label: t('common:nas.type_synology') },
-                      { value: 'qnap', label: t('common:nas.type_qnap') },
-                      { value: 'truenas', label: t('common:nas.type_truenas') },
-                      { value: 'omv', label: t('common:nas.type_omv') },
-                      { value: 'unraid', label: t('common:nas.type_unraid') },
-                      { value: 'linux', label: t('common:nas.type_linux') },
-                    ]}
-                    value={nasType}
-                    onChange={e => setNasType(e.target.value)}
-                  />
-                  {nasHost && nasUser && nasPass && (
-                    <Button type="button" variant="secondary" loading={sshKeyLoading} onClick={handleSetupSshKey}>
-                      {t('common:nas.setup_ssh_key')}
-                    </Button>
-                  )}
-                  <NASSetupHint nasType={nasType} />
-                  <button type="button" onClick={() => setAdvancedOpen(v => !v)} className="text-xs text-[var(--text-muted)] hover:text-[var(--text-secondary)] text-left">
-                    {advancedOpen ? '▾' : '▸'} {t('common:advanced')}
-                  </button>
-                  {advancedOpen && (
-                    <Input label={t('common:nas.private_key')} value={nasPrivateKey} onChange={e => setNasPrivateKey(e.target.value)} placeholder={t('common:nas.private_key_placeholder')} helpText={t('common:nas.private_key_hint')} />
-                  )}
-                  <Input label="Path" value={nasPath} onChange={e => setNasPath(e.target.value)} required />
-                  <div className="border border-[var(--border-default)] p-3">
-                    <NASTargetForm value={nasPower} onChange={setNasPower} sshHost={nasHost} sshUsername={nasUser} sshPassword={nasPass} />
-                  </div>
-                </>
-              )}
-
             </div>
           )}
 
-          {/* Step 2 — What to back up (simple selection only, no detail config) */}
-          {step === 2 && (
+          {outerStep === 2 && (
             <div className="space-y-3">
               <p className="text-sm text-[var(--text-muted)]">{t('guide.step_backup_desc')}</p>
               <div className="space-y-2">
@@ -341,8 +245,7 @@ export function FirstBackupWizard({ open, onClose, onSuccess }: Props) {
             </div>
           )}
 
-          {/* Step 3 — Job name + schedule */}
-          {step === 3 && (
+          {outerStep === 3 && (
             <div className="space-y-4">
               <Input
                 label={t('guide.job_name_label')}
@@ -359,12 +262,11 @@ export function FirstBackupWizard({ open, onClose, onSuccess }: Props) {
             </div>
           )}
 
-          {/* Step 4 — Review */}
-          {step === 4 && (
+          {outerStep === 4 && (
             <div className="border border-[var(--border-default)] divide-y divide-[var(--border-default)]">
               <div className="flex justify-between items-center px-4 py-3">
                 <span className="text-xs text-[var(--text-muted)]">{t('guide.step_review_target')}</span>
-                <span className="text-sm text-[var(--text-primary)] font-medium">{targetName}</span>
+                <span className="text-sm text-[var(--text-primary)] font-medium">{wizard.state.name}</span>
               </div>
               <div className="flex justify-between items-center px-4 py-3">
                 <span className="text-xs text-[var(--text-muted)]">{t('jobs:name')}</span>
@@ -385,8 +287,7 @@ export function FirstBackupWizard({ open, onClose, onSuccess }: Props) {
             </div>
           )}
 
-          {/* Step 5 — Done */}
-          {step === 5 && (
+          {outerStep === 5 && (
             <div className="flex flex-col items-center gap-4 py-6 text-center">
               <CheckCircle2 size={48} className="text-green-500" />
               <div>
@@ -397,28 +298,37 @@ export function FirstBackupWizard({ open, onClose, onSuccess }: Props) {
           )}
         </div>
 
-        {/* Navigation */}
-        {step < 5 && (
+        {outerStep < 5 && (
           <div className="flex gap-3 justify-between mt-6 pt-4 border-t border-[var(--border-default)]">
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={() => step > 1 ? setStep((step - 1) as Step) : requestClose()}
-            >
-              {step > 1 ? t('guide.back') : t('common:buttons.cancel')}
-            </Button>
+            {outerStep === 1 ? (
+              <Button type="button" variant="ghost" onClick={targetSubBack}>
+                {targetSubIndex === 0 ? t('common:buttons.cancel') : t('guide.back')}
+              </Button>
+            ) : (
+              <Button type="button" variant="ghost" onClick={() => setOuterStep((outerStep - 1) as OuterStep)}>
+                {t('guide.back')}
+              </Button>
+            )}
 
-            {step < 4 ? (
+            {outerStep === 1 ? (
+              <Button
+                type="button"
+                variant="primary"
+                disabled={!canProceedTargetSub}
+                onClick={targetSubNext}
+              >
+                {t('common:buttons.next')}
+              </Button>
+            ) : outerStep < 4 ? (
               <Button
                 type="button"
                 variant="primary"
                 disabled={
-                  step === 1 ? !canProceedStep1() :
-                  step === 2 ? selectedTypes.size === 0 :
-                  step === 3 ? !jobName.trim() :
+                  outerStep === 2 ? selectedTypes.size === 0 :
+                  outerStep === 3 ? !jobName.trim() :
                   false
                 }
-                onClick={() => setStep((step + 1) as Step)}
+                onClick={() => setOuterStep((outerStep + 1) as OuterStep)}
               >
                 {t('common:buttons.next')}
               </Button>
@@ -445,7 +355,7 @@ export function FirstBackupWizard({ open, onClose, onSuccess }: Props) {
           </div>
         )}
 
-        {step === 5 && (
+        {outerStep === 5 && (
           <div className="flex gap-3 justify-center mt-6 pt-4 border-t border-[var(--border-default)]">
             <Button type="button" variant="ghost" onClick={resetAll}>
               {t('guide.create_more')}

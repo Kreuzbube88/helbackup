@@ -2,12 +2,18 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Input } from '../../../common/Input'
 import { Select } from '../../../common/Select'
+import { EncryptionToggle } from '../shared/EncryptionToggle'
+import { RetentionFields } from '../shared/RetentionFields'
+import { NoTargetNotice } from '../shared/NoTargetNotice'
 import type { Target } from '../../../../api'
 
 export interface CustomStepConfig {
   sourcePath: string
   targetId: string
   excludePatterns: string[]
+  useEncryption: boolean
+  retentionDays?: number
+  retentionMinimum: number
 }
 
 interface Props {
@@ -30,6 +36,7 @@ export function CustomConfig({ value, onChange, targets }: Props) {
 
   return (
     <div className="space-y-3">
+      {targets.length === 0 && <NoTargetNotice />}
       <Input
         label={t('custom_source_path')}
         value={value.sourcePath}
@@ -37,6 +44,9 @@ export function CustomConfig({ value, onChange, targets }: Props) {
         placeholder="/unraid/user/data/my-folder"
       />
       <p className="text-xs text-[var(--text-muted)]">{t('custom_source_hint')}</p>
+      {!value.sourcePath.trim() && (
+        <p className="text-xs text-[var(--status-error)]">{t('validation_needs_source_path')}</p>
+      )}
 
       <Select
         label={t('wizard_target')}
@@ -44,6 +54,9 @@ export function CustomConfig({ value, onChange, targets }: Props) {
         value={value.targetId}
         onChange={e => onChange({ ...value, targetId: e.target.value })}
       />
+      {!value.targetId && (
+        <p className="text-xs text-[var(--status-error)]">{t('validation_needs_target')}</p>
+      )}
 
       <Input
         label={t('custom_exclude_patterns')}
@@ -52,6 +65,23 @@ export function CustomConfig({ value, onChange, targets }: Props) {
         placeholder="*.tmp, *.log, cache/"
       />
       <p className="text-xs text-[var(--text-muted)]">{t('custom_exclude_hint')}</p>
+
+      <EncryptionToggle
+        value={value.useEncryption}
+        onChange={useEncryption => onChange({ ...value, useEncryption })}
+      />
+
+      <RetentionFields
+        days={value.retentionDays}
+        minimum={value.retentionMinimum}
+        onChange={patch => onChange({
+          ...value,
+          ...('retentionDays' in patch ? { retentionDays: patch.retentionDays } : {}),
+          ...('retentionMinimum' in patch ? { retentionMinimum: patch.retentionMinimum ?? value.retentionMinimum } : {}),
+        })}
+      />
+
+      <p className="text-[11px] text-[var(--text-muted)] italic">{t('checksums_always_on_note')}</p>
     </div>
   )
 }
