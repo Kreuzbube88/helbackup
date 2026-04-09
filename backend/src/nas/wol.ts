@@ -20,28 +20,30 @@ export async function wakeNAS(options: WakeOptions): Promise<void> {
   const timeout = options.timeout ?? 300000
   const broadcastAddress = options.ip ? getBroadcastAddress(options.ip) : '255.255.255.255'
 
-  await new Promise<void>((resolve, reject) => {
-    logger.info(`Sending Wake-on-LAN magic packet to ${options.mac} via ${broadcastAddress}`)
-    wol.wake(options.mac, { address: broadcastAddress, num_packets: 10, interval: 200 }, (error: Error | null) => {
-      if (error) {
-        logger.error(`Wake-on-LAN failed: ${error.message}`)
-        reject(error)
-        return
-      }
-      logger.info('Wake-on-LAN packet sent successfully')
-      resolve()
+  const sendBurst = (): Promise<void> =>
+    new Promise((resolve, reject) => {
+      logger.info(`Sending Wake-on-LAN to ${options.mac} via ${broadcastAddress}`)
+      wol.wake(options.mac, { address: broadcastAddress, num_packets: 10, interval: 200 }, (error: Error | null) => {
+        if (error) { logger.error(`Wake-on-LAN failed: ${error.message}`); reject(error); return }
+        logger.info('Wake-on-LAN burst sent')
+        resolve()
+      })
     })
-  })
+
+  await sendBurst()
 
   if (options.ip && (options.wait ?? true)) {
-    await waitForHost(options.ip, timeout)
+    const resend = () => sendBurst().catch(err => logger.warn(`WOL retry failed: ${err instanceof Error ? err.message : String(err)}`))
+    await waitForHost(options.ip, timeout, resend)
     logger.info(`NAS ${options.ip} is now online`)
   }
 }
 
-function waitForHost(ip: string, timeout: number): Promise<void> {
+function waitForHost(ip: string, timeout: number, onWolRetry?: () => void): Promise<void> {
   const start = Date.now()
-  const interval = 5000
+  const pingInterval = 5000
+  const wolRetryInterval = 30000
+  let lastWol = Date.now()
 
   return new Promise((resolve, reject) => {
     const check = () => {
@@ -50,15 +52,15 @@ function waitForHost(ip: string, timeout: number): Promise<void> {
         return
       }
 
+      if (onWolRetry && Date.now() - lastWol >= wolRetryInterval) {
+        lastWol = Date.now()
+        logger.info(`Resending Wake-on-LAN (NAS ${ip} not yet online)`)
+        onWolRetry()
+      }
+
       const ping = spawn('ping', ['-c', '1', '-W', '2', ip])
-      ping.on('close', (code) => {
-        if (code === 0) {
-          resolve()
-        } else {
-          setTimeout(check, interval)
-        }
-      })
-      ping.on('error', () => setTimeout(check, interval))
+      ping.on('close', (code) => { if (code === 0) resolve(); else setTimeout(check, pingInterval) })
+      ping.on('error', () => setTimeout(check, pingInterval))
     }
 
     check()
