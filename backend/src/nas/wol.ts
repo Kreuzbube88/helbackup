@@ -1,4 +1,4 @@
-import wol from 'wake_on_lan'
+import { createSocket } from 'dgram'
 import { spawn } from 'child_process'
 import { logger } from '../utils/logger.js'
 
@@ -22,20 +22,36 @@ function getBroadcastAddress(ip: string): string {
   return parts.join('.')
 }
 
+function sendMagicPacket(mac: string, address: string): Promise<void> {
+  const macBytes = Buffer.from(mac.replace(/:/g, ''), 'hex')
+  const magic = Buffer.concat([Buffer.alloc(6, 0xff), ...Array(16).fill(macBytes)])
+  return new Promise((resolve, reject) => {
+    const socket = createSocket({ type: 'udp4', reuseAddr: true })
+    socket.on('error', (err) => { socket.close(); reject(err) })
+    socket.bind(() => {
+      socket.setBroadcast(true)
+      socket.send(magic, 0, magic.length, 9, address, (err) => {
+        socket.close()
+        if (err) reject(err)
+        else resolve()
+      })
+    })
+  })
+}
+
 export async function wakeNAS(options: WakeOptions): Promise<void> {
   const timeout = options.timeout ?? 300000
   const mac = normalizeMac(options.mac)
   const broadcastAddress = options.ip ? getBroadcastAddress(options.ip) : '255.255.255.255'
 
-  const sendBurst = (): Promise<void> =>
-    new Promise((resolve, reject) => {
-      logger.info(`Sending Wake-on-LAN to ${mac} via ${broadcastAddress}`)
-      wol.wake(mac, { address: broadcastAddress, num_packets: 10, interval: 200 }, (error: Error | null) => {
-        if (error) { logger.error(`Wake-on-LAN failed: ${error.message}`); reject(error); return }
-        logger.info(`Wake-on-LAN burst sent to ${mac}`)
-        resolve()
-      })
-    })
+  const sendBurst = async (): Promise<void> => {
+    logger.info(`Sending Wake-on-LAN to ${mac} via ${broadcastAddress} (10 packets)`)
+    for (let i = 0; i < 10; i++) {
+      await sendMagicPacket(mac, broadcastAddress)
+      if (i < 9) await new Promise(r => setTimeout(r, 200))
+    }
+    logger.info(`Wake-on-LAN burst sent to ${mac}`)
+  }
 
   await sendBurst()
 
