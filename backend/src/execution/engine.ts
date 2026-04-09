@@ -8,6 +8,7 @@ import { executeHook } from './hooks.js'
 import { notificationManager } from '../notifications/notificationManager.js'
 import { backupDurationHistogram } from '../metrics/prometheus.js'
 import { createJobManifest } from './manifest.js'
+import { applyRetentionPolicy } from './retention.js'
 import { ensureNASOnline, shutdownNASIfEnabled, type NASPowerConfig } from '../nas/power.js'
 import type { ChecksumEntry } from './verification.js'
 import type { JobRow, TargetRow } from '../types/rows.js'
@@ -154,6 +155,7 @@ export class JobExecutionEngine extends EventEmitter {
       await ensureNASOnline(cfg, powerLog)
     }
 
+    let capturedError: unknown
     try {
       // Execute pre-backup hook
       if (hooks?.prePath) {
@@ -227,6 +229,28 @@ export class JobExecutionEngine extends EventEmitter {
         `Backup completed: ${this.summary.filesCopied} files copied, ${this.summary.errors} errors`
       )
 
+      // Per-step retention policies (only after a successful run)
+      if (finalStatus === 'success') {
+        for (const step of steps) {
+          const cfg = step.config as { retentionDays?: number; retentionMinimum?: number }
+          if (typeof cfg.retentionDays === 'number' && cfg.retentionDays > 0) {
+            try {
+              const result = await applyRetentionPolicy(this.jobId, {
+                deleteOlderThanDays: cfg.retentionDays,
+                keepMinimum: cfg.retentionMinimum ?? 3,
+                stepType: step.type,
+              })
+              this.log('info', 'system',
+                `Retention (${step.type}): deleted ${result.deleted}, kept ${result.kept}`
+              )
+            } catch (err) {
+              const msg = err instanceof Error ? err.message : String(err)
+              this.log('warn', 'system', `Retention policy failed for ${step.type}: ${msg}`)
+            }
+          }
+        }
+      }
+
       // Execute post-backup hook
       if (hooks?.postPath) {
         this.log('info', 'system', 'Executing post-backup hook...')
@@ -265,8 +289,6 @@ export class JobExecutionEngine extends EventEmitter {
         // /mnt/user may not be mounted in dev — non-critical
       }
 
-      this.emit('job:complete')
-      logger.info({ runId: this.runId }, 'Job execution completed')
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err)
       const duration = this.elapsedSeconds()
@@ -285,14 +307,21 @@ export class JobExecutionEngine extends EventEmitter {
         error: message,
       })
 
-      this.emit('job:error', { error: message })
-      logger.error({ runId: this.runId, error: message }, 'Job execution failed')
-      throw err
+      capturedError = err
     } finally {
       for (const cfg of nasPowerConfigs) {
         await shutdownNASIfEnabled(cfg, powerLog)
       }
     }
+
+    if (capturedError !== undefined) {
+      const message = capturedError instanceof Error ? capturedError.message : String(capturedError)
+      this.emit('job:error', { error: message })
+      logger.error({ runId: this.runId, error: message }, 'Job execution failed')
+      throw capturedError
+    }
+    this.emit('job:complete')
+    logger.info({ runId: this.runId }, 'Job execution completed')
   }
 
   private async executeStep(step: JobStep): Promise<void> {
