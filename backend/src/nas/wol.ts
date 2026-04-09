@@ -9,6 +9,12 @@ export interface WakeOptions {
   wait?: boolean  // default true; false = send packet only, don't wait for NAS to boot
 }
 
+function normalizeMac(mac: string): string {
+  const hex = mac.replace(/[^0-9a-fA-F]/g, '')
+  if (hex.length !== 12) throw new Error(`Invalid MAC address: "${mac}"`)
+  return hex.match(/.{2}/g)!.join(':').toUpperCase()
+}
+
 function getBroadcastAddress(ip: string): string {
   const parts = ip.split('.')
   if (parts.length !== 4) return '255.255.255.255'
@@ -18,14 +24,15 @@ function getBroadcastAddress(ip: string): string {
 
 export async function wakeNAS(options: WakeOptions): Promise<void> {
   const timeout = options.timeout ?? 300000
+  const mac = normalizeMac(options.mac)
   const broadcastAddress = options.ip ? getBroadcastAddress(options.ip) : '255.255.255.255'
 
   const sendBurst = (): Promise<void> =>
     new Promise((resolve, reject) => {
-      logger.info(`Sending Wake-on-LAN to ${options.mac} via ${broadcastAddress}`)
-      wol.wake(options.mac, { address: broadcastAddress, num_packets: 10, interval: 200 }, (error: Error | null) => {
+      logger.info(`Sending Wake-on-LAN to ${mac} via ${broadcastAddress}`)
+      wol.wake(mac, { address: broadcastAddress, num_packets: 10, interval: 200 }, (error: Error | null) => {
         if (error) { logger.error(`Wake-on-LAN failed: ${error.message}`); reject(error); return }
-        logger.info('Wake-on-LAN burst sent')
+        logger.info(`Wake-on-LAN burst sent to ${mac}`)
         resolve()
       })
     })

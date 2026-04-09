@@ -78,6 +78,10 @@ export function NASTargetForm({ value, onChange, sshHost, sshUsername, sshPasswo
                 label={t('nas.mac_address')}
                 value={value.mac}
                 onChange={(e) => onChange({ ...value, mac: e.target.value })}
+                onBlur={(e) => {
+                  const hex = e.target.value.replace(/[^0-9a-fA-F]/g, '')
+                  if (hex.length === 12) onChange({ ...value, mac: hex.match(/.{2}/g)!.join(':').toUpperCase() })
+                }}
                 placeholder="00:11:22:33:44:55"
               />
               <Input
