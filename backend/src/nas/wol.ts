@@ -42,7 +42,7 @@ export async function wakeNAS(options: WakeOptions): Promise<void> {
 function waitForHost(ip: string, timeout: number, onWolRetry?: () => void): Promise<void> {
   const start = Date.now()
   const pingInterval = 5000
-  const wolRetryInterval = 30000
+  const wolRetryInterval = 10000
   let lastWol = Date.now()
 
   return new Promise((resolve, reject) => {
