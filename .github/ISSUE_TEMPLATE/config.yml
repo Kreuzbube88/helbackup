@@ -2,4 +2,7 @@ blank_issues_enabled: false
 contact_links:
   - name: 📚 Documentation
     url: https://github.com/Kreuzbube88/helbackup/tree/main/docs
-    about: Check our comprehensive documentation
+    about: Check our comprehensive documentation before opening an issue
+  - name: 💬 Discussions — Questions & Help
+    url: https://github.com/Kreuzbube88/helbackup/discussions
+    about: "How do I…?" questions, setup help, and general discussion belong here — not in Issues

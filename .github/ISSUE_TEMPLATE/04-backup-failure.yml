@@ -6,13 +6,30 @@ body:
     attributes:
       value: |
         ## 💾 Backup Failure
-        Let's fix your backup issue!
+
+        > **⚠️ Important — please read before filling out this form:**
+        > - Do **NOT** delete the failed backup directory or its manifest
+        > - Do **NOT** re-run the job until asked to do so
+        > - These files may be needed for root-cause analysis
+
+        Please complete **all required fields** below. Incomplete reports significantly
+        slow down triage. If you are unsure about a field, choose the best available
+        option and explain in the "Additional Context" section.
 
   - type: input
     id: version
     attributes:
       label: 📦 HELBACKUP Version
-      placeholder: "e.g., 1.0.0"
+      description: Found in the UI footer or `docker inspect helbackup | grep -i version`
+      placeholder: "e.g., 1.2.3"
+    validations:
+      required: true
+
+  - type: input
+    id: unraid-version
+    attributes:
+      label: 🖥️ Unraid Version
+      placeholder: "e.g., 6.12.6"
     validations:
       required: true
 
@@ -20,13 +37,16 @@ body:
     id: backup-type
     attributes:
       label: 📂 Backup Type
+      description: Which type of backup failed?
       options:
         - Flash Drive
         - Appdata
         - VMs
         - Docker Images
         - Databases
-        - Multiple Types
+        - Custom Path
+        - HELBACKUP Self-Backup
+        - Multiple Types (describe in Additional Context)
     validations:
       required: true
 
@@ -34,27 +54,57 @@ body:
     id: target-type
     attributes:
       label: 🎯 Target Type
+      description: Where does this backup write to?
       options:
-        - Local
-        - NAS (SMB)
-        - NAS (NFS)
-        - Cloud (S3/B2/etc)
+        - Local filesystem (inside container / host-mounted path)
+        - NAS via SSH+Rsync
+        - NAS via SMB/CIFS
+        - NAS via NFS
+        - Other (describe in Additional Context)
     validations:
       required: true
 
-  - type: checkboxes
+  - type: dropdown
     id: encryption
     attributes:
-      label: 🔐 Encryption Enabled
+      label: 🔐 Encryption
+      description: Is encryption enabled for this backup job?
       options:
-        - label: This backup job uses encryption
+        - "No — encryption disabled"
+        - "Yes — encryption enabled"
+        - "Unsure"
+    validations:
+      required: true
+
+  - type: input
+    id: health-output
+    attributes:
+      label: 🩺 Health endpoint output
+      description: |
+        Run `curl -s http://YOUR-UNRAID-IP:3000/api/health` and paste the JSON response.
+        This tells us if the DB and service are healthy at the time of the report.
+      placeholder: '{"status":"healthy","database":"ok","version":"1.2.3"}'
+    validations:
+      required: true
 
   - type: textarea
     id: error-message
     attributes:
       label: ❌ Error Message
-      description: Exact error message from logs
-      placeholder: "Paste the error message..."
+      description: |
+        Paste the **exact** error message from the HELBACKUP job logs.
+        Open the job run in the UI → click the failed step → copy the red error line.
+      render: shell
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: 📋 Container Logs (last 200 lines)
+      description: |
+        Run: `docker logs --tail 200 helbackup`
+        Redact any passwords or private keys before pasting.
       render: shell
     validations:
       required: true
@@ -62,23 +112,46 @@ body:
   - type: textarea
     id: job-config
     attributes:
-      label: ⚙️ Job Configuration
-      description: Job settings (schedule, containers, etc.)
-      placeholder: "Describe your job configuration..."
+      label: ⚙️ Anonymized Job Configuration
+      description: |
+        Copy the job JSON from Settings → Jobs → Edit → Export (or describe the job settings).
+        **Replace all real hostnames, IPs, paths, and credentials with placeholders** like
+        `<nas-ip>`, `<backup-path>`, etc. Never paste real passwords or private keys.
+      placeholder: |
+        {
+          "name": "My Backup Job",
+          "schedule": "0 2 * * *",
+          "steps": [
+            { "type": "appdata", "config": { "targetId": "<target-id>", "source": "/unraid/user/appdata" } }
+          ]
+        }
 
   - type: textarea
-    id: logs
+    id: docker-inspect
     attributes:
-      label: 📋 Full Logs
-      description: Complete log output from failed backup
-      render: shell
+      label: 🐳 Volume Mounts
+      description: |
+        Run: `docker inspect helbackup | python3 -c "import sys,json; m=json.load(sys.stdin)[0]['Mounts']; [print(v['Source'],'→',v['Destination']) for v in m]"`
+        This verifies that required host paths are correctly mounted.
+      placeholder: |
+        /mnt/user/appdata/helbackup/config → /app/config
+        /mnt/user/appdata/helbackup/data → /app/data
+        /boot → /unraid/boot
+        /mnt/user → /unraid/user
 
   - type: textarea
     id: troubleshooting
     attributes:
-      label: 🔧 Troubleshooting Steps Tried
-      description: What have you already tried?
+      label: 🔧 Troubleshooting Steps Already Tried
+      description: What have you already checked or attempted?
       placeholder: |
-        - Checked disk space
-        - Verified target connectivity
+        - Checked disk space on target
+        - Verified SSH connectivity to NAS
+        - Restarted the container
         - etc.
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: 💬 Additional Context
+      description: Anything else that might be relevant (recent changes, unusual setup, etc.)

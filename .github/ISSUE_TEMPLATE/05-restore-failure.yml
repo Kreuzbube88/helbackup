@@ -6,13 +6,30 @@ body:
     attributes:
       value: |
         ## ♻️ Restore Failure
-        Let's get your data restored!
+
+        > **⚠️ Critical — please read before filling out this form:**
+        > - Do **NOT** delete the backup you are trying to restore
+        > - Do **NOT** re-run the restore until asked — repeated attempts may overwrite data
+        > - If this is an active data-loss situation, please use the
+        >   [Data Loss / Corruption template](https://github.com/Kreuzbube88/helbackup/issues/new?template=13-data-loss.yml) instead
+
+        Please complete all required fields. The more detail you provide, the faster
+        we can help.
 
   - type: input
     id: version
     attributes:
       label: 📦 HELBACKUP Version
-      placeholder: "e.g., 1.0.0"
+      description: Found in the UI footer or `docker inspect helbackup | grep -i version`
+      placeholder: "e.g., 1.2.3"
+    validations:
+      required: true
+
+  - type: input
+    id: unraid-version
+    attributes:
+      label: 🖥️ Unraid Version
+      placeholder: "e.g., 6.12.6"
     validations:
       required: true
 
@@ -21,27 +38,70 @@ body:
     attributes:
       label: 🔄 Restore Type
       options:
-        - Granular (Single File/Folder)
+        - Granular (Single File / Folder)
         - Container Appdata
         - Database
         - Full Server Restore
+        - HELBACKUP Self-Restore (fresh container from self-backup)
+        - Flash Drive Restore
+        - Other
     validations:
       required: true
 
-  - type: checkboxes
+  - type: dropdown
+    id: target-type
+    attributes:
+      label: 🎯 Backup Target Location
+      description: Where does the backup being restored live?
+      options:
+        - Local filesystem (inside container / host-mounted path)
+        - NAS via SSH+Rsync
+        - NAS via SMB/CIFS
+        - NAS via NFS
+        - Other
+    validations:
+      required: true
+
+  - type: dropdown
     id: encryption
     attributes:
-      label: 🔐 Backup Encrypted
+      label: 🔐 Backup Encrypted?
       options:
-        - label: This backup is encrypted
-        - label: I have the recovery key
+        - "No — backup is not encrypted"
+        - "Yes — encrypted, and I have the recovery key"
+        - "Yes — encrypted, but I do NOT have the recovery key"
+        - "Unsure"
+    validations:
+      required: true
+
+  - type: input
+    id: health-output
+    attributes:
+      label: 🩺 Health endpoint output
+      description: |
+        Run `curl -s http://YOUR-UNRAID-IP:3000/api/health` and paste the JSON response.
+      placeholder: '{"status":"healthy","database":"ok","version":"1.2.3"}'
+    validations:
+      required: true
 
   - type: textarea
     id: error-message
     attributes:
       label: ❌ Error Message
-      description: Exact error from restore operation
-      placeholder: "Paste error message..."
+      description: |
+        Paste the **exact** error message from the restore operation.
+        Open the restore run in the UI → copy the red error text.
+      render: shell
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: 📋 Container Logs (last 200 lines)
+      description: |
+        Run: `docker logs --tail 200 helbackup`
+        Redact passwords and private keys before pasting.
       render: shell
     validations:
       required: true
@@ -50,20 +110,28 @@ body:
     id: backup-info
     attributes:
       label: 📦 Backup Information
-      description: Backup date, size, verification status
+      description: Details about the backup you are trying to restore from.
       placeholder: |
-        - Backup Date: ...
-        - Size: ...
-        - Verified: Yes/No
+        - Backup Date: 2025-01-15
+        - Backup ID: (from UI or manifest.json)
+        - Approximate size: ~10 GB
+        - Verification status: passed / failed / never run
+        - Backup created with HELBACKUP version: 1.2.3
 
   - type: textarea
-    id: logs
+    id: docker-inspect
     attributes:
-      label: 📋 Restore Logs
-      description: Complete log output
-      render: shell
+      label: 🐳 Volume Mounts
+      description: |
+        Run: `docker inspect helbackup | python3 -c "import sys,json; m=json.load(sys.stdin)[0]['Mounts']; [print(v['Source'],'→',v['Destination']) for v in m]"`
+      placeholder: |
+        /mnt/user/appdata/helbackup/config → /app/config
+        /mnt/user/appdata/helbackup/data → /app/data
+        /boot → /unraid/boot
+        /mnt/user → /unraid/user
 
   - type: textarea
     id: additional
     attributes:
       label: 💬 Additional Context
+      description: Anything else relevant — what were you restoring after? Hardware change? Unraid reinstall?

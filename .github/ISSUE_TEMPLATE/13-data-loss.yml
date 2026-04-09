@@ -1,0 +1,136 @@
+name: 🚨 Data Loss / Corruption Suspected
+description: You believe backup data is missing, corrupted, or unrestorable
+labels: ["data-loss", "urgent", "needs-investigation"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        # 🚨 Data Loss / Corruption Suspected
+
+        > ## ⛔ STOP — Read this first
+        >
+        > **Do NOT:**
+        > - Delete any backup files, manifests, or directories
+        > - Re-run any backup or restore job
+        > - Upgrade or change your HELBACKUP version
+        > - Modify any files in the backup target directory
+        >
+        > **Do:**
+        > - Fill out this form as completely as possible
+        > - Attach your `docker logs --tail 500 helbackup` output
+        > - Wait for a maintainer response before taking further action
+        >
+        > This issue will be treated with highest priority.
+
+  - type: input
+    id: version
+    attributes:
+      label: 📦 HELBACKUP Version
+      placeholder: "e.g., 1.2.3"
+    validations:
+      required: true
+
+  - type: input
+    id: unraid-version
+    attributes:
+      label: 🖥️ Unraid Version
+      placeholder: "e.g., 6.12.6"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: data-loss-type
+    attributes:
+      label: ❓ What happened?
+      options:
+        - Backup completed but files are missing from target
+        - Backup completed but files appear corrupted / unreadable
+        - Restore failed — backed-up data cannot be recovered
+        - manifest.json missing or broken
+        - Checksum verification failed during backup
+        - Checksum verification failed during restore
+        - Container/app data was overwritten or deleted during backup
+        - Other (describe below)
+    validations:
+      required: true
+
+  - type: dropdown
+    id: target-type
+    attributes:
+      label: 🎯 Target Type
+      options:
+        - Local filesystem
+        - NAS via SSH+Rsync
+        - NAS via SMB/CIFS
+        - NAS via NFS
+        - Other
+    validations:
+      required: true
+
+  - type: dropdown
+    id: encryption
+    attributes:
+      label: 🔐 Backup Encrypted?
+      options:
+        - "No"
+        - "Yes — I have the recovery key"
+        - "Yes — I do NOT have the recovery key"
+        - "Unsure"
+    validations:
+      required: true
+
+  - type: input
+    id: health-output
+    attributes:
+      label: 🩺 Health endpoint
+      description: Run `curl -s http://YOUR-UNRAID-IP:3000/api/health`
+      placeholder: '{"status":"healthy","database":"ok","version":"1.2.3"}'
+    validations:
+      required: true
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: 📝 Full Description
+      description: |
+        Describe exactly what happened, in chronological order.
+        What did you do? What did you expect? What did you observe?
+      placeholder: |
+        1. I ran a backup job on 2025-01-15 at 02:00
+        2. The job showed "completed" in the UI
+        3. I tried to restore file X and found...
+    validations:
+      required: true
+
+  - type: textarea
+    id: container-logs
+    attributes:
+      label: 📋 Container Logs
+      description: |
+        Run: `docker logs --tail 500 helbackup`
+        Redact passwords and private key content before pasting.
+      render: shell
+    validations:
+      required: true
+
+  - type: textarea
+    id: manifest
+    attributes:
+      label: 📄 manifest.json content (if available)
+      description: |
+        Paste the content of the `manifest.json` file from the affected backup directory.
+        If you cannot find it, note that here.
+      render: json
+
+  - type: textarea
+    id: docker-inspect
+    attributes:
+      label: 🐳 Volume Mounts
+      description: |
+        Run: `docker inspect helbackup | python3 -c "import sys,json; m=json.load(sys.stdin)[0]['Mounts']; [print(v['Source'],'→',v['Destination']) for v in m]"`
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: 💬 Anything Else
+      description: Recent updates, hardware changes, power outages, manual file operations on the backup target?
