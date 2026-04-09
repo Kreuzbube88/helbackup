@@ -27,9 +27,16 @@ export async function ensureNASOnline(config: NASPowerConfig): Promise<void> {
   logger.info(`NAS ${config.ip} is offline, sending Wake-on-LAN...`)
   await wakeNAS({ mac: config.mac, ip: config.ip, timeout: 300000 })
 
-  const verifyOnline = await testSSHConnection(config.sshConfig)
-  if (!verifyOnline) {
-    throw new Error('NAS woke up but SSH connection failed')
+  // NAS responds to ping before SSH daemon is ready — retry SSH for up to 60s
+  let sshReady = false
+  for (let i = 0; i < 6; i++) {
+    sshReady = await testSSHConnection(config.sshConfig)
+    if (sshReady) break
+    logger.info(`NAS ${config.ip} SSH not ready yet, retrying in 10s... (${i + 1}/6)`)
+    await new Promise(resolve => setTimeout(resolve, 10000))
+  }
+  if (!sshReady) {
+    throw new Error(`NAS ${config.ip} is online but SSH connection failed after 60s`)
   }
 }
 
