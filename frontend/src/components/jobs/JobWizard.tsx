@@ -348,7 +348,7 @@ export function JobWizard({ job, open, onClose, onSuccess }: Props) {
     <>
     <Modal open={open} onClose={handleClose} title={title} className="max-w-4xl" disableBackdropClose>
       {/* Step indicator */}
-      <div className="flex items-center gap-1 mb-6 overflow-x-auto">
+      <div className="flex items-center gap-1 gap-y-1.5 mb-6 flex-wrap">
         {steps.map((s, i) => {
           const isCurrent = i === currentIndex
           const isDone = i < currentIndex
@@ -382,7 +382,7 @@ export function JobWizard({ job, open, onClose, onSuccess }: Props) {
       </div>
 
       {/* Step content */}
-      <div className="min-h-[420px] overflow-y-auto max-h-[72vh]">
+      <div className="min-h-[420px] overflow-y-auto overflow-x-hidden max-h-[72vh] min-w-0">
         {currentStep.kind === 'basic' && (
           <StepBasicInfo value={basicInfo} onChange={setBasicInfo} />
         )}

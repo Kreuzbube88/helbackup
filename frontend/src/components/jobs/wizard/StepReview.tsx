@@ -67,7 +67,7 @@ export function StepReview({ basicInfo, backupSteps, hooks, targets }: Props) {
         const c = cfg as CustomStepConfig
         return (
           <div className="space-y-0.5 text-xs text-[var(--text-muted)]">
-            <p className="font-mono">{c.sourcePath}</p>
+            <p className="font-mono break-all">{c.sourcePath}</p>
             {c.excludePatterns.length > 0 && <p>exclude: {c.excludePatterns.join(', ')}</p>}
           </div>
         )
@@ -87,7 +87,7 @@ export function StepReview({ basicInfo, backupSteps, hooks, targets }: Props) {
           {basicInfo.schedule ? (
             <>
               <Calendar size={11} className="text-[var(--text-muted)]" />
-              <span className="text-xs font-mono text-[var(--text-muted)]">{basicInfo.schedule}</span>
+              <span className="text-xs font-mono text-[var(--text-muted)] break-all">{basicInfo.schedule}</span>
             </>
           ) : (
             <>
@@ -136,8 +136,8 @@ export function StepReview({ basicInfo, backupSteps, hooks, targets }: Props) {
         <div className="border border-[var(--border-default)] p-3">
           <p className="text-xs font-mono text-[var(--text-muted)] uppercase mb-2">{t('hooks')}</p>
           <div className="space-y-0.5 text-xs text-[var(--text-muted)]">
-            {hooks.preBackupScript && <p>✓ {t('pre_hook')}: <span className="font-mono">{hooks.preBackupScript}</span></p>}
-            {hooks.postBackupScript && <p>✓ {t('post_hook')}: <span className="font-mono">{hooks.postBackupScript}</span></p>}
+            {hooks.preBackupScript && <p>✓ {t('pre_hook')}: <span className="font-mono break-all">{hooks.preBackupScript}</span></p>}
+            {hooks.postBackupScript && <p>✓ {t('post_hook')}: <span className="font-mono break-all">{hooks.postBackupScript}</span></p>}
           </div>
         </div>
       )}

@@ -34,8 +34,9 @@ export function Modal({ open, onClose, title, children, className = '', disableB
       <div
         className={[
           'relative w-full max-w-lg bg-[var(--bg-elevated)] border border-[var(--border-default)]',
-          'shadow-xl flex flex-col max-h-[90vh]',
+          'shadow-xl flex flex-col max-h-[90vh] min-w-0',
           className,
+          'max-w-[95vw]',
         ].join(' ')}
         role="dialog"
         aria-modal="true"
@@ -55,7 +56,7 @@ export function Modal({ open, onClose, title, children, className = '', disableB
           </button>
         </div>
 
-        <div className="px-6 py-4 overflow-y-auto">{children}</div>
+        <div className="px-6 py-4 overflow-y-auto overflow-x-hidden min-w-0">{children}</div>
       </div>
     </div>
   )
