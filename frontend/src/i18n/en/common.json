@@ -188,6 +188,7 @@
     "volumes": "volumes",
     "verified": "Verified",
     "not_verified": "Not verified",
+    "not_in_backup": "not in backup",
     "last_verified": "Last verified",
     "verify_backup": "Verify backup",
     "verify_backup_description": "Verify the integrity of this backup before restoring.",

@@ -23,6 +23,7 @@ export default function RecoveryPage() {
   const [showWizard, setShowWizard] = useState(false);
   const [showFullServerWizard, setShowFullServerWizard] = useState(false);
   const [fullServerManifest, setFullServerManifest] = useState<Manifest | null>(null);
+  const [fullServerBackupTypes, setFullServerBackupTypes] = useState<string[]>([]);
   const [showGuide, setShowGuide] = useState(false);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -81,8 +82,9 @@ export default function RecoveryPage() {
     setShowWizard(true);
   };
 
-  const handleFullServerRestore = (manifest: Manifest) => {
+  const handleFullServerRestore = (manifest: Manifest, backupTypes: string[]) => {
     setFullServerManifest(manifest);
+    setFullServerBackupTypes(backupTypes);
     setShowFullServerWizard(true);
   };
 
@@ -163,9 +165,11 @@ export default function RecoveryPage() {
     return (
       <FullServerRestoreWizard
         manifest={fullServerManifest}
+        availableTypes={fullServerBackupTypes}
         onClose={() => {
           setShowFullServerWizard(false);
           setFullServerManifest(null);
+          setFullServerBackupTypes([]);
         }}
       />
     );

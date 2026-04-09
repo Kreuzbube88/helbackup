@@ -43,7 +43,7 @@ interface Manifest {
 interface Props {
   manifests: Manifest[];
   onSelect: (manifest: Manifest) => void;
-  onFullServerRestore: (manifest: Manifest) => void;
+  onFullServerRestore: (manifest: Manifest, backupTypes: string[]) => void;
   onRefresh: () => void;
 }
 
@@ -281,11 +281,11 @@ export default function ManifestBrowser({ manifests, onSelect, onFullServerResto
                     <Button variant="primary" size="sm" onClick={() => handleSelect(manifest)}>
                       {encrypted && !unlocked ? t('decryption.unlock') : t('recovery.restore')}
                     </Button>
-                    {(!encrypted || unlocked) && (
+                    {(!encrypted || unlocked) && backupTypes.length > 1 && (
                       <Button
                         variant="secondary"
                         size="sm"
-                        onClick={() => onFullServerRestore(manifest)}
+                        onClick={() => onFullServerRestore(manifest, backupTypes)}
                       >
                         {t('recovery.full_server_restore_btn')}
                       </Button>

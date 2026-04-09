@@ -14,21 +14,45 @@ interface Manifest {
 
 interface Props {
   manifest: Manifest
+  availableTypes?: string[]
   onClose: () => void
 }
 
 type WizardStep = 'select' | 'plan' | 'done'
 
-const DEFAULT_OPTIONS: RestoreOptions = {
-  includeFlash: true,
-  includeAppdata: true,
-  includeVMs: true,
-  includeDockerImages: true,
-  includeSystemConfig: true,
-  includeDatabases: true,
+const TYPE_TO_OPTION: Record<string, keyof RestoreOptions> = {
+  flash: 'includeFlash',
+  appdata: 'includeAppdata',
+  vms: 'includeVMs',
+  docker_images: 'includeDockerImages',
+  sysconfig: 'includeSystemConfig',
 }
 
-const OPTION_KEYS = Object.keys(DEFAULT_OPTIONS) as (keyof RestoreOptions)[]
+const ALL_OPTION_KEYS = [
+  'includeFlash',
+  'includeAppdata',
+  'includeVMs',
+  'includeDockerImages',
+  'includeSystemConfig',
+  'includeDatabases',
+] as const satisfies (keyof RestoreOptions)[]
+
+function buildInitialOptions(availableTypes: string[]): RestoreOptions {
+  const hasAppdata = availableTypes.includes('appdata')
+  const result: RestoreOptions = {
+    includeFlash: false,
+    includeAppdata: false,
+    includeVMs: false,
+    includeDockerImages: false,
+    includeSystemConfig: false,
+    includeDatabases: false,
+  }
+  for (const [type, key] of Object.entries(TYPE_TO_OPTION)) {
+    if (availableTypes.includes(type)) result[key] = true
+  }
+  if (hasAppdata) result.includeDatabases = true
+  return result
+}
 
 function formatDuration(seconds: number): string {
   const m = Math.floor(seconds / 60)
@@ -36,11 +60,13 @@ function formatDuration(seconds: number): string {
   return m > 0 ? `${m}m ${s}s` : `${s}s`
 }
 
-export default function FullServerRestoreWizard({ manifest, onClose }: Props) {
+export default function FullServerRestoreWizard({ manifest, availableTypes = [], onClose }: Props) {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const [step, setStep] = useState<WizardStep>('select')
-  const [options, setOptions] = useState<RestoreOptions>({ ...DEFAULT_OPTIONS })
+  const [options, setOptions] = useState<RestoreOptions>(() =>
+    availableTypes.length > 0 ? buildInitialOptions(availableTypes) : Object.fromEntries(ALL_OPTION_KEYS.map(k => [k, true])) as RestoreOptions
+  )
   const [plan, setPlan] = useState<RestorePlan | null>(null)
   const [loading, setLoading] = useState(false)
   const [executing, setExecuting] = useState(false)
@@ -98,17 +124,26 @@ export default function FullServerRestoreWizard({ manifest, onClose }: Props) {
         <div className="border-2 border-[var(--border-default)] p-6">
           <h3 className="font-bold mb-4">{t('recovery.select_restore_items')}</h3>
           <div className="space-y-3">
-            {OPTION_KEYS.map(key => (
-              <label key={key} className="flex items-center gap-3 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={options[key] !== false}
-                  onChange={() => toggleOption(key)}
-                  className="w-5 h-5"
-                />
-                <span>{t(`recovery.restore_option_${key}`)}</span>
-              </label>
-            ))}
+            {ALL_OPTION_KEYS.map(key => {
+              const typeEntry = Object.entries(TYPE_TO_OPTION).find(([, v]) => v === key)
+              const isAvailable = availableTypes.length === 0
+                || (key === 'includeDatabases' ? availableTypes.includes('appdata') : typeEntry ? availableTypes.includes(typeEntry[0]) : true)
+              return (
+                <label key={key} className={`flex items-center gap-3 ${isAvailable ? 'cursor-pointer' : 'cursor-not-allowed opacity-40'}`}>
+                  <input
+                    type="checkbox"
+                    checked={options[key] !== false}
+                    onChange={() => { if (isAvailable) toggleOption(key) }}
+                    disabled={!isAvailable}
+                    className="w-5 h-5"
+                  />
+                  <span>{t(`recovery.restore_option_${key}`)}</span>
+                  {!isAvailable && (
+                    <span className="text-xs font-mono text-[var(--text-muted)]">({t('recovery.not_in_backup')})</span>
+                  )}
+                </label>
+              )
+            })}
           </div>
         </div>
 
