@@ -22,7 +22,7 @@ export async function wakeNAS(options: WakeOptions): Promise<void> {
 
   await new Promise<void>((resolve, reject) => {
     logger.info(`Sending Wake-on-LAN magic packet to ${options.mac} via ${broadcastAddress}`)
-    wol.wake(options.mac, { address: broadcastAddress }, (error: Error | null) => {
+    wol.wake(options.mac, { address: broadcastAddress, num_packets: 10, interval: 200 }, (error: Error | null) => {
       if (error) {
         logger.error(`Wake-on-LAN failed: ${error.message}`)
         reject(error)
