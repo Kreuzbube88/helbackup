@@ -20,6 +20,7 @@ export interface ExecOptions {
   timeoutMs?: number             // default 60_000
   pty?: boolean                  // default false — request a TTY (needed for sudo on some OSes)
   tolerateDisconnect?: boolean   // default false — treat mid-command disconnect/no-exit-code as success
+  stdin?: string                 // optional data to write to the command's stdin then close
 }
 
 export async function executeSSHCommand(
@@ -80,13 +81,22 @@ export async function executeSSHCommand(
             logger.info(`SSH stream closed without exit code (expected for shutdown): ${command}`)
             settle(() => resolve({ success: true, output, error: undefined }))
           } else {
-            logger.warn(`SSH command exited with code ${code ?? 'null'}: ${command}`)
-            settle(() => resolve({ success: false, error: errorOutput || `Exit code: ${code ?? 'null'}` }))
+            // When pty:true is used, stderr is merged into stdout, so fall back
+            // to the tail of output when errorOutput is empty.
+            const tail = output.trim().split('\n').slice(-3).join(' | ').trim()
+            const detail = errorOutput.trim() || tail || `Exit code: ${code ?? 'null'}`
+            logger.warn(`SSH command exited with code ${code ?? 'null'}: ${command} — ${detail}`)
+            settle(() => resolve({ success: false, error: detail }))
           }
         })
 
         stream.on('data', (data: Buffer) => { output += data.toString() })
         stream.stderr.on('data', (data: Buffer) => { errorOutput += data.toString() })
+
+        if (opts.stdin !== undefined) {
+          stream.write(opts.stdin)
+          stream.end()
+        }
       }
 
       if (pty) {
@@ -128,14 +138,36 @@ export async function testSSHConnection(config: SSHConfig): Promise<boolean> {
 
 /**
  * Universal shutdown cascade covering Synology / QNAP / TrueNAS / OMV / Unraid /
- * plain Linux. `sudo -n` is non-interactive so it fails fast without NOPASSWD
- * instead of hanging; absolute /sbin paths cover the stripped non-interactive
- * SSH PATH; bare forms cover distros where the binaries live elsewhere;
- * `shutdown -p now` is for TrueNAS/FreeBSD. Runs with PTY so sudoers rules
- * like `Defaults requiretty` still allow the command. The SSH session will
- * normally be torn down mid-command — executeSSHCommand tolerates that.
+ * plain Linux. Absolute /sbin paths cover the stripped non-interactive SSH
+ * PATH; `shutdown -p now` is for TrueNAS/FreeBSD; the no-sudo entries at the
+ * end cover boxes where we SSH in as root (Unraid default).
+ *
+ * Two modes:
+ *  - if `config.password` is set → `sudo -S -p ""` reads the password from
+ *    stdin once per attempt via a shell variable `P`, no prompt, no PTY.
+ *    This is the real fix: `sudo -n` fails instantly if NOPASSWD isn't
+ *    configured, which is the common case.
+ *  - no password → fall back to `sudo -n`, which will still surface a clear
+ *    "a password is required" stderr instead of a silent exit code 1
+ *    (now that we dropped PTY, stderr is captured separately).
  */
-const SHUTDOWN_CASCADE = [
+const POWEROFF_VARIANTS = [
+  '/sbin/poweroff',
+  '/sbin/shutdown -h now',
+  '/sbin/shutdown -p now',  // TrueNAS/FreeBSD
+  'poweroff',
+  'shutdown -h now',
+]
+
+function buildPasswordCascade(): string {
+  const sudoed = POWEROFF_VARIANTS.map(c => `echo "$P" | sudo -S -p "" ${c}`)
+  const asRoot = ['/sbin/poweroff', '/sbin/shutdown -h now']
+  // read -r consumes exactly one line from stdin into P, then each attempt
+  // reuses the shell variable — P is never on the command line or argv.
+  return `read -r P; ${[...sudoed, ...asRoot].join(' || ')}`
+}
+
+const SUDO_N_CASCADE = [
   'sudo -n /sbin/poweroff',
   'sudo -n /sbin/shutdown -h now',
   'sudo -n /sbin/shutdown -p now',
@@ -146,9 +178,15 @@ const SHUTDOWN_CASCADE = [
 ].join(' || ')
 
 export async function shutdownNAS(config: SSHConfig): Promise<SSHResult> {
-  return executeSSHCommand(config, SHUTDOWN_CASCADE, {
+  if (config.password) {
+    return executeSSHCommand(config, buildPasswordCascade(), {
+      timeoutMs: 15_000,
+      tolerateDisconnect: true,
+      stdin: `${config.password}\n`,
+    })
+  }
+  return executeSSHCommand(config, SUDO_N_CASCADE, {
     timeoutMs: 15_000,
-    pty: true,
     tolerateDisconnect: true,
   })
 }
