@@ -8,8 +8,9 @@ import { executeHook } from './hooks.js'
 import { notificationManager } from '../notifications/notificationManager.js'
 import { backupDurationHistogram } from '../metrics/prometheus.js'
 import { createJobManifest } from './manifest.js'
+import { ensureNASOnline, shutdownNASIfEnabled, type NASPowerConfig } from '../nas/power.js'
 import type { ChecksumEntry } from './verification.js'
-import type { JobRow } from '../types/rows.js'
+import type { JobRow, TargetRow } from '../types/rows.js'
 
 const execFileAsync = promisify(execFile)
 
@@ -112,8 +113,43 @@ export class JobExecutionEngine extends EventEmitter {
     logger.info({ runId: this.runId }, 'Job execution started')
   }
 
+  private collectNASPowerConfigs(steps: JobStep[]): NASPowerConfig[] {
+    const seen = new Set<string>()
+    const configs: NASPowerConfig[] = []
+    for (const step of steps) {
+      const targetId = step.config.targetId as string | undefined
+      if (!targetId || seen.has(targetId)) continue
+      seen.add(targetId)
+      const row = db.prepare('SELECT type, config FROM targets WHERE id = ?').get(targetId) as Pick<TargetRow, 'type' | 'config'> | undefined
+      if (!row || row.type !== 'nas') continue
+      let cfg: Record<string, unknown>
+      try { cfg = JSON.parse(row.config) as Record<string, unknown> } catch { continue }
+      const power = cfg.power as { enabled?: boolean; mac?: string; ip?: string; autoShutdown?: boolean } | undefined
+      if (!power?.enabled || !power.mac || !power.ip) continue
+      configs.push({
+        enabled: true,
+        mac: power.mac,
+        ip: power.ip,
+        autoShutdown: power.autoShutdown ?? false,
+        sshConfig: {
+          host: cfg.host as string,
+          port: cfg.port as number | undefined,
+          username: cfg.username as string,
+          password: cfg.password as string | undefined,
+          privateKey: cfg.privateKey as string | undefined,
+        },
+      })
+    }
+    return configs
+  }
+
   async execute(steps: JobStep[], hooks?: JobHooks): Promise<void> {
     void notificationManager.notify({ event: 'backup_started', jobName: this.jobName, timestamp: new Date().toISOString() })
+
+    const nasPowerConfigs = this.collectNASPowerConfigs(steps)
+    for (const cfg of nasPowerConfigs) {
+      await ensureNASOnline(cfg)
+    }
 
     try {
       // Execute pre-backup hook
@@ -249,6 +285,10 @@ export class JobExecutionEngine extends EventEmitter {
       this.emit('job:error', { error: message })
       logger.error({ runId: this.runId, error: message }, 'Job execution failed')
       throw err
+    } finally {
+      for (const cfg of nasPowerConfigs) {
+        await shutdownNASIfEnabled(cfg)
+      }
     }
   }
 
