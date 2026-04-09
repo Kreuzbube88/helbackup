@@ -104,6 +104,26 @@ Full documentation is available in the [`docs/`](docs/README.md) folder in both 
 
 ---
 
+## Verified Restore
+
+> **A backup is not a backup until you have restored from it.**
+
+Creating backup jobs is only the first step. Before you need it in an emergency,
+test the full recovery path:
+
+1. Run a backup job and let it complete
+2. Go to **Recovery** and run **Verify Backup** — confirms checksums match
+3. At least once, follow [Disaster Recovery — Day Zero](docs/en/05-recovery/disaster-recovery-day-zero.md)
+   end-to-end on a test machine or in a VM
+
+**3-2-1 rule:** Keep **3** copies of your data, on **2** different media types,
+with **1** copy offsite (or at minimum on a separate NAS from your primary array).
+
+HELBACKUP supports this pattern with multiple targets per job — assign a local
+target and an off-site SSH/Rsync target to the same job.
+
+---
+
 ## License
 
 MIT © HEL*Apps

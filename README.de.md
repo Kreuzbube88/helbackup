@@ -106,6 +106,26 @@ Die vollständige Dokumentation liegt im Ordner [`docs/`](docs/README.md) auf De
 
 ---
 
+## Wiederherstellung verifizieren
+
+> **Ein Backup ist kein Backup, bis du es wiederhergestellt hast.**
+
+Backup-Jobs anlegen ist nur der erste Schritt. Teste den vollständigen
+Wiederherstellungspfad, bevor du ihn im Notfall benötigst:
+
+1. Einen Backup-Job ausführen und abschließen lassen
+2. **Recovery → Backup verifizieren** ausführen — bestätigt, dass die Prüfsummen übereinstimmen
+3. Mindestens einmal [Disaster Recovery — Tag Null](docs/de/05-recovery/disaster-recovery-day-zero.md)
+   vollständig auf einem Testgerät oder in einer VM durchführen
+
+**3-2-1-Regel:** **3** Kopien der Daten, auf **2** verschiedenen Medientypen,
+mit **1** Kopie an einem anderen Ort (oder zumindest auf einem separaten NAS).
+
+HELBACKUP unterstützt dieses Muster mit mehreren Targets pro Job — ein lokales
+Target und ein externes SSH/Rsync-Target dem gleichen Job zuweisen.
+
+---
+
 ## Lizenz
 
 MIT © 2024 HEL*Apps
