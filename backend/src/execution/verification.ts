@@ -159,8 +159,8 @@ export async function verifyRemoteChecksums(
   // names that legitimately contain words like "FAILED".
   const cmd = [
     'set +e',
-    'if command -v sha256sum >/dev/null 2>&1; then HASH=sha256sum;',
-    'elif command -v shasum >/dev/null 2>&1; then HASH="shasum -a 256";',
+    'if command -v sha256sum >/dev/null 2>&1; then HASH=sha256sum',
+    'elif command -v shasum >/dev/null 2>&1; then HASH="shasum -a 256"',
     'else echo HBK_NO_HASH_TOOL; exit 0; fi',
     `cd '${escapedPath}' || { echo HBK_NO_REMOTE_PATH; exit 0; }`,
     '$HASH -c - 2>&1 || true',
