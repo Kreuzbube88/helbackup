@@ -17,9 +17,10 @@ interface Props {
   sshHost: string
   sshUsername: string
   sshPassword: string
+  sshPrivateKey?: string
 }
 
-export function NASTargetForm({ value, onChange, sshHost, sshUsername, sshPassword }: Props) {
+export function NASTargetForm({ value, onChange, sshHost, sshUsername, sshPassword, sshPrivateKey }: Props) {
   const { t } = useTranslation()
   const [wolTesting, setWolTesting] = useState(false)
   const [sshTesting, setSSHTesting] = useState(false)
@@ -45,7 +46,7 @@ export function NASTargetForm({ value, onChange, sshHost, sshUsername, sshPasswo
     try {
       // Use power IP if set (WOL target), fall back to main SSH host
       const host = value.ip || sshHost
-      const res = await api.nas.testSSH(host, undefined, sshUsername, sshPassword || undefined)
+      const res = await api.nas.testSSH(host, undefined, sshUsername, sshPassword || undefined, sshPrivateKey || undefined)
       setSSHResult(res.success)
     } catch {
       setSSHResult(false)

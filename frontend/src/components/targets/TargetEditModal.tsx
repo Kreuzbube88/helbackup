@@ -188,7 +188,7 @@ export function TargetEditModal({ target, open, onClose, onSuccess }: Props) {
             )}
             <Input label={t('path')} value={nasPath} onChange={e => setNasPath(e.target.value)} required />
             <div className="border border-[var(--border-default)] p-3">
-              <NASTargetForm value={nasPower} onChange={setNasPower} sshHost={nasHost} sshUsername={nasUser} sshPassword={nasPass} />
+              <NASTargetForm value={nasPower} onChange={setNasPower} sshHost={nasHost} sshUsername={nasUser} sshPassword={nasPass} sshPrivateKey={nasPrivateKey} />
             </div>
           </>
         )}
