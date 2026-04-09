@@ -35,10 +35,6 @@ export async function nasRoutes(app: FastifyInstance): Promise<void> {
       try {
         const { mac, ip } = request.body
         await wakeNAS({ mac, ip, timeout: 60000, wait: false })
-        // Schedule 2 additional bursts in background — NAS may need multiple attempts
-        const resend = () => wakeNAS({ mac, ip, timeout: 60000, wait: false }).catch(() => {})
-        setTimeout(resend, 10000)
-        setTimeout(resend, 20000)
         return reply.send({ success: true })
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : String(err)

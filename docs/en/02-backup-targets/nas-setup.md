@@ -57,5 +57,19 @@ Wait for NAS: 60 seconds
 Shutdown after backup: ✅
 ```
 
+### WOL in Docker networks (br0 / macvlan)
+
+HELBACKUP sends the magic packet in parallel across **all** available IPv4
+interfaces, to the subnet broadcast, `255.255.255.255`, **and** unicast to
+the configured NAS IP, on both port 7 and port 9.
+
+- The **NAS IP** field matters — not just the MAC. Some Docker network
+  modes (`br0`, macvlan, ipvlan) silently drop broadcast traffic; the
+  unicast path bypasses that restriction.
+- If WOL still fails, as a workaround switch the container to
+  `network_mode: host` in `docker-compose.yml` (remove the `networks:` /
+  `br0` block). Note that existing port bindings and reverse proxy
+  configuration must be adjusted accordingly.
+
 ---
 Back: [Target Overview](overview.md)
