@@ -263,56 +263,73 @@ export function Dashboard() {
             </h2>
           </div>
 
-          {data.storage.totalAvailable > 0 ? (
-            <>
-              <div className="flex justify-between text-xs text-[var(--text-muted)] mb-1">
-                <span className="font-mono text-[var(--text-primary)]">
-                  {formatBytes(data.storage.totalUsed)}
-                </span>
-                <span>{formatBytes(data.storage.totalAvailable)} {t('dashboard.storage_free')}</span>
-              </div>
-              <div className="w-full h-2 bg-[var(--bg-elevated)] rounded overflow-hidden">
-                <div
-                  className={`h-full rounded ${
-                    data.storage.percentage > 90
-                      ? 'bg-red-500'
-                      : data.storage.percentage > 75
-                      ? 'bg-amber-500'
-                      : 'bg-emerald-500'
-                  }`}
-                  style={{ width: `${data.storage.percentage}%` }}
-                />
-              </div>
-              <div className="text-xs text-[var(--text-muted)] mt-1">
-                {t('dashboard.storage_percent_used', { value: data.storage.percentage })}
-              </div>
-            </>
-          ) : (
-            <div className="text-xs text-[var(--text-muted)] py-2">
-              {t('dashboard.storage_unavailable')}
-            </div>
-          )}
-
-          <div className="mt-3 space-y-1 text-xs text-[var(--text-muted)]">
+          {/* Global stats */}
+          <div className="space-y-1 text-xs text-[var(--text-muted)] mb-3">
             <div className="flex justify-between">
               <span>{t('dashboard.total_backups')}</span>
               <span className="font-mono">{data.storage.backupCount}</span>
             </div>
+            {data.storage.manifestTotalBytes > 0 && (
+              <div className="flex justify-between">
+                <span>{t('dashboard.storage_backup_volume')}</span>
+                <span className="font-mono text-[var(--text-secondary)]">{formatBytes(data.storage.manifestTotalBytes)}</span>
+              </div>
+            )}
             {data.storage.oldestBackup && (
               <div className="flex justify-between">
                 <span>{t('dashboard.oldest_backup')}</span>
-                <span className="font-mono">
-                  {new Date(data.storage.oldestBackup).toLocaleDateString()}
-                </span>
-              </div>
-            )}
-            {data.storage.growthTrend.weekly > 0 && (
-              <div className="flex justify-between">
-                <span>{t('dashboard.weekly_growth')}</span>
-                <span className="font-mono">~{formatBytes(data.storage.growthTrend.weekly)}</span>
+                <span className="font-mono">{new Date(data.storage.oldestBackup).toLocaleDateString()}</span>
               </div>
             )}
           </div>
+
+          {/* Per-target disk info */}
+          {data.storage.targets.length === 0 ? (
+            <div className="text-xs text-[var(--text-muted)] py-1">
+              {t('dashboard.storage_unavailable')}
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {data.storage.targets.map(target => {
+                const pct = target.diskTotal && target.diskUsed
+                  ? Math.round((target.diskUsed / target.diskTotal) * 100)
+                  : null
+                return (
+                  <div key={target.id} className="border-t border-[var(--border-default)] pt-2">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-xs font-mono text-[var(--text-primary)] truncate">{target.name}</span>
+                      <span className="text-[10px] font-mono border border-[var(--border-default)] text-[var(--text-muted)] px-1">
+                        {t(`dashboard.storage_target_type_${target.type}`, target.type.toUpperCase())}
+                      </span>
+                    </div>
+                    {target.diskTotal && target.diskUsed !== null && target.diskAvailable !== null ? (
+                      <>
+                        <div className="flex justify-between text-xs text-[var(--text-muted)] mb-1">
+                          <span className="font-mono text-[var(--text-primary)]">{formatBytes(target.diskUsed)}</span>
+                          <span>{t('dashboard.storage_disk_free', { free: formatBytes(target.diskAvailable), total: formatBytes(target.diskTotal) })}</span>
+                        </div>
+                        <div className="w-full h-1.5 bg-[var(--bg-elevated)] rounded overflow-hidden">
+                          <div
+                            className={`h-full rounded ${pct && pct > 90 ? 'bg-red-500' : pct && pct > 75 ? 'bg-amber-500' : 'bg-emerald-500'}`}
+                            style={{ width: `${pct ?? 0}%` }}
+                          />
+                        </div>
+                        {target.diskCheckedAt && (
+                          <div className="text-[10px] text-[var(--text-muted)] mt-1">
+                            {t('dashboard.storage_disk_checked', { date: new Date(target.diskCheckedAt).toLocaleString() })}
+                          </div>
+                        )}
+                      </>
+                    ) : (
+                      <div className="text-[10px] text-[var(--text-muted)]">
+                        {t('dashboard.storage_disk_pending')}
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          )}
         </Card>
 
         <Card className="p-5 border border-[var(--border-default)] corner-cuts">

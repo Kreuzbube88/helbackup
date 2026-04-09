@@ -171,47 +171,77 @@ async function getStorageInfo() {
     db.prepare('SELECT MIN(created_at) as oldest FROM manifest').get() as { oldest: string | null }
   ).oldest
 
-  let totalUsed = 0
-  let totalAvailable = 0
-
+  // Sum all backup entry sizes from manifests
+  let manifestTotalBytes = 0
   try {
-    const targets = db.prepare(
-      `SELECT config, type FROM targets WHERE enabled = 1`
-    ).all() as { config: string; type: string }[]
-
-    for (const t of targets) {
-      if (t.type !== 'local') continue
-      let cfg: Record<string, unknown>
-      try { cfg = JSON.parse(t.config) } catch { continue }
-      const p = cfg['path'] as string | undefined
-      if (!p || typeof p !== 'string') continue
-
+    const rows = db.prepare('SELECT manifest FROM manifest').all() as { manifest: string }[]
+    for (const row of rows) {
       try {
-        // Use execFile (not exec) to avoid shell injection via path value
-        const { stdout: duOut } = await execFileAsync('du', ['-sb', p]).catch(() => ({ stdout: '0\t.' }))
-        totalUsed += parseInt(duOut.split('\t')[0]) || 0
-
-        const { stdout: dfOut } = await execFileAsync('df', ['-B1', p])
-        const dfParts = (dfOut.split('\n')[1] ?? '').trim().split(/\s+/).filter(Boolean)
-        totalAvailable += parseInt(dfParts[3] ?? '0') || 0
-      } catch { /* target not accessible */ }
+        const m = JSON.parse(row.manifest) as { entries?: { size?: number }[] }
+        manifestTotalBytes += m.entries?.reduce((s, e) => s + (e.size ?? 0), 0) ?? 0
+      } catch { /* skip corrupt manifest */ }
     }
-  } catch { /* skip storage calculation */ }
+  } catch { /* skip */ }
 
-  const percentage = (totalUsed + totalAvailable) > 0
-    ? Math.round((totalUsed / (totalUsed + totalAvailable)) * 100)
-    : 0
+  // Per-target info
+  interface TargetInfo {
+    id: string
+    name: string
+    type: string
+    diskTotal: number | null
+    diskUsed: number | null
+    diskAvailable: number | null
+    diskCheckedAt: string | null
+  }
+
+  const targets: TargetInfo[] = []
+  try {
+    const rows = db.prepare('SELECT id, name, type, config FROM targets WHERE enabled = 1').all() as {
+      id: string; name: string; type: string; config: string
+    }[]
+
+    for (const t of rows) {
+      let diskTotal: number | null = null
+      let diskUsed: number | null = null
+      let diskAvailable: number | null = null
+      let diskCheckedAt: string | null = null
+
+      if (t.type === 'nas') {
+        const usage = db.prepare(
+          'SELECT total_bytes, used_bytes, available_bytes, checked_at FROM target_disk_usage WHERE target_id = ?'
+        ).get(t.id) as { total_bytes: number; used_bytes: number; available_bytes: number; checked_at: string } | undefined
+        if (usage) {
+          diskTotal = usage.total_bytes
+          diskUsed = usage.used_bytes
+          diskAvailable = usage.available_bytes
+          diskCheckedAt = usage.checked_at
+        }
+      } else if (t.type === 'local') {
+        try {
+          let cfg: Record<string, unknown> = {}
+          try { cfg = JSON.parse(t.config) as Record<string, unknown> } catch { /* default */ }
+          const p = cfg['path'] as string | undefined
+          if (p) {
+            const { stdout: duOut } = await execFileAsync('du', ['-sb', p]).catch(() => ({ stdout: '0\t.' }))
+            diskUsed = parseInt(duOut.split('\t')[0]) || 0
+            const { stdout: dfOut } = await execFileAsync('df', ['-B1', p])
+            const parts = (dfOut.split('\n')[1] ?? '').trim().split(/\s+/).filter(Boolean)
+            diskAvailable = parseInt(parts[3] ?? '0') || 0
+            diskTotal = diskUsed + diskAvailable
+            diskCheckedAt = new Date().toISOString()
+          }
+        } catch { /* target not accessible */ }
+      }
+
+      targets.push({ id: t.id, name: t.name, type: t.type, diskTotal, diskUsed, diskAvailable, diskCheckedAt })
+    }
+  } catch { /* skip */ }
 
   return {
-    totalUsed,
-    totalAvailable,
-    percentage,
-    oldestBackup: oldest,
     backupCount,
-    growthTrend: {
-      daily: totalUsed > 0 ? Math.round(totalUsed / 30) : 0,
-      weekly: totalUsed > 0 ? Math.round((totalUsed / 30) * 7) : 0,
-    },
+    oldestBackup: oldest,
+    manifestTotalBytes,
+    targets,
   }
 }
 

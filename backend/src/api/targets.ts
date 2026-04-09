@@ -1,6 +1,7 @@
 import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify'
 import { v4 as uuidv4 } from 'uuid'
 import { db } from '../db/database.js'
+import { checkAndStoreDiskUsage } from '../nas/diskUsage.js'
 import type { TargetRow } from '../types/rows.js'
 
 interface CreateTargetBody {
@@ -97,6 +98,7 @@ export async function targetsRoutes(app: FastifyInstance): Promise<void> {
       ).run(id, name, type, JSON.stringify(config), enabled ? 1 : 0)
 
       const row = db.prepare('SELECT * FROM targets WHERE id = ?').get(id) as TargetRow
+      void checkAndStoreDiskUsage(id).catch(() => {})
       return reply.status(201).send(parseTarget(row))
     }
   )
@@ -132,6 +134,7 @@ export async function targetsRoutes(app: FastifyInstance): Promise<void> {
       db.prepare(`UPDATE targets SET ${updates.join(', ')} WHERE id = ?`).run(...values)
 
       const row = db.prepare('SELECT * FROM targets WHERE id = ?').get(request.params.id) as TargetRow
+      void checkAndStoreDiskUsage(request.params.id).catch(() => {})
       return reply.send(parseTarget(row))
     }
   )

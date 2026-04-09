@@ -290,12 +290,18 @@ export interface DashboardData {
   backupHistory: { date: string; success: number; failed: number; total: number }[]
   successRate: { percentage: number; total: number; successful: number; failed: number }
   storage: {
-    totalUsed: number
-    totalAvailable: number
-    percentage: number
-    oldestBackup: string | null
     backupCount: number
-    growthTrend: { daily: number; weekly: number }
+    oldestBackup: string | null
+    manifestTotalBytes: number
+    targets: {
+      id: string
+      name: string
+      type: string
+      diskTotal: number | null
+      diskUsed: number | null
+      diskAvailable: number | null
+      diskCheckedAt: string | null
+    }[]
   }
   recentJobs: {
     id: string

@@ -10,6 +10,7 @@ import { backupDurationHistogram } from '../metrics/prometheus.js'
 import { createJobManifest } from './manifest.js'
 import { applyRetentionPolicy } from './retention.js'
 import { ensureNASOnline, shutdownNASIfEnabled, type NASPowerConfig } from '../nas/power.js'
+import { checkAndStoreDiskUsage } from '../nas/diskUsage.js'
 import type { ChecksumEntry } from './verification.js'
 import type { JobRow, TargetRow } from '../types/rows.js'
 
@@ -155,6 +156,17 @@ export class JobExecutionEngine extends EventEmitter {
     }
     for (const cfg of nasPowerConfigs) {
       await ensureNASOnline(cfg, powerLog)
+    }
+
+    // Fire-and-forget disk usage check — NAS is guaranteed up at this point
+    const targetIds = [...new Set(
+      steps.map(s => s.config.targetId as string | undefined).filter(Boolean) as string[]
+    )]
+    if (targetIds.length > 0) {
+      this.log('info', 'system', 'Checking target disk space')
+      for (const id of targetIds) {
+        void checkAndStoreDiskUsage(id).catch(() => {})
+      }
     }
 
     let capturedError: unknown
