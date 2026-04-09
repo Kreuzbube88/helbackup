@@ -16,6 +16,7 @@ export interface TargetWizardState {
   nasUser: string
   nasPass: string
   nasPrivateKey: string
+  nasKnownHostsFile: string
   nasType: string
   nasPath: string
   nasPower: NASPowerConfig
@@ -38,6 +39,7 @@ const DEFAULTS: TargetWizardState = {
   nasUser: '',
   nasPass: '',
   nasPrivateKey: '',
+  nasKnownHostsFile: '',
   nasType: '',
   nasPath: '/backups',
   nasPower: { ...DEFAULT_POWER },
@@ -56,6 +58,7 @@ function fromTarget(target: Target): TargetWizardState {
     nasUser: (cfg.username as string) ?? '',
     nasPass: '',
     nasPrivateKey: (cfg.privateKey as string) ?? '',
+    nasKnownHostsFile: (cfg.knownHostsFile as string) ?? '',
     nasType: (cfg.nasType as string) ?? '',
     nasPath: type === 'nas' ? ((cfg.path as string) ?? '') : DEFAULTS.nasPath,
     nasPower: (cfg.power as NASPowerConfig | undefined) ?? { ...DEFAULT_POWER },
@@ -128,6 +131,7 @@ export function useTargetWizardState({ initialTarget, mode }: UseTargetWizardSta
       username: state.nasUser,
       ...(state.nasPass ? { password: state.nasPass } : {}),
       ...(state.nasPrivateKey ? { privateKey: state.nasPrivateKey } : {}),
+      ...(state.nasKnownHostsFile ? { knownHostsFile: state.nasKnownHostsFile } : {}),
       ...(state.nasType ? { nasType: state.nasType } : {}),
       path: state.nasPath,
       power: state.nasPower,

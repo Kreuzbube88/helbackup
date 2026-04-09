@@ -33,7 +33,7 @@ interface Props {
   onSuccess: () => void
 }
 
-const DEFAULT_BASIC: BasicInfo = { name: '', schedule: null, enabled: true }
+const DEFAULT_BASIC: BasicInfo = { name: '', schedule: null, enabled: true, catchUpOnStart: false }
 
 const DEFAULT_STEPS: BackupStepsConfig = {
   flash: null, appdata: null, vms: null, docker_images: null,
@@ -65,6 +65,7 @@ function buildSteps(backupSteps: BackupStepsConfig): unknown[] {
         targetId: f.targetId,
         useEncryption: f.useEncryption,
       },
+      stop_on_error: f.stopOnError !== false,
       retry: { max_attempts: 2, backoff: 'linear' },
     }, f)
   }
@@ -86,6 +87,7 @@ function buildSteps(backupSteps: BackupStepsConfig): unknown[] {
         databaseContainers: a.useDatabaseDumps ? a.containers : [],
         useEncryption: a.useEncryption,
       },
+      stop_on_error: a.stopOnError !== false,
       retry: { max_attempts: 2, backoff: 'linear' },
     }, a)
   }
@@ -101,6 +103,7 @@ function buildSteps(backupSteps: BackupStepsConfig): unknown[] {
         includeDisks: v.includeDisks,
         useEncryption: v.useEncryption,
       },
+      stop_on_error: v.stopOnError !== false,
       retry: { max_attempts: 1, backoff: 'linear' },
     }, v)
   }
@@ -115,6 +118,7 @@ function buildSteps(backupSteps: BackupStepsConfig): unknown[] {
         targetId: d.targetId,
         useEncryption: d.useEncryption,
       },
+      stop_on_error: d.stopOnError !== false,
       retry: { max_attempts: 1, backoff: 'linear' },
     }, d)
   }
@@ -129,6 +133,7 @@ function buildSteps(backupSteps: BackupStepsConfig): unknown[] {
         includeItems: s.includeItems,
         useEncryption: s.useEncryption,
       },
+      stop_on_error: s.stopOnError !== false,
       retry: { max_attempts: 2, backoff: 'linear' },
     }, s)
   }
@@ -143,6 +148,7 @@ function buildSteps(backupSteps: BackupStepsConfig): unknown[] {
         excludePatterns: c.excludePatterns,
         useEncryption: c.useEncryption,
       },
+      stop_on_error: c.stopOnError !== false,
       retry: { max_attempts: 2, backoff: 'linear' },
     }, c)
   }
@@ -155,6 +161,7 @@ function buildSteps(backupSteps: BackupStepsConfig): unknown[] {
         targetId: h.targetId,
         useEncryption: h.useEncryption,
       },
+      stop_on_error: h.stopOnError !== false,
       retry: { max_attempts: 2, backoff: 'linear' },
     }, h)
   }
@@ -203,13 +210,17 @@ export function JobWizard({ job, open, onClose, onSuccess }: Props) {
     api.targets.getAll().then(setTargets).catch(() => { /* non-critical */ })
 
     if (job) {
-      setBasicInfo({ name: job.name, schedule: job.schedule, enabled: job.enabled })
+      setBasicInfo({ name: job.name, schedule: job.schedule, enabled: job.enabled, catchUpOnStart: job.catch_up_on_start ?? false })
       const jobSteps = (job.steps ?? []) as Array<{ type: string; config: Record<string, unknown> }>
       const newBackupSteps: BackupStepsConfig = { ...DEFAULT_STEPS }
 
       const readRetention = (c: Record<string, unknown>): { retentionDays?: number; retentionMinimum: number } => ({
         retentionDays: typeof c.retentionDays === 'number' ? c.retentionDays : undefined,
         retentionMinimum: typeof c.retentionMinimum === 'number' ? c.retentionMinimum : 3,
+      })
+
+      const readStopOnError = (s: { type: string; config: Record<string, unknown> }): { stopOnError: boolean } => ({
+        stopOnError: (s as { stop_on_error?: boolean }).stop_on_error !== false,
       })
 
       for (const s of jobSteps) {
@@ -221,6 +232,7 @@ export function JobWizard({ job, open, onClose, onSuccess }: Props) {
             targetId: (c.targetId as string) ?? '',
             useEncryption: enc,
             ...readRetention(c),
+            ...readStopOnError(s),
           }
         } else if (s.type === 'appdata') {
           const method: AppdataStepConfig['method'] = c.method === 'tar' ? 'tar' : 'rsync'
@@ -236,6 +248,7 @@ export function JobWizard({ job, open, onClose, onSuccess }: Props) {
             useDatabaseDumps: c.useDatabaseDumps === true,
             useEncryption: enc,
             ...readRetention(c),
+            ...readStopOnError(s),
           }
         } else if (s.type === 'vms') {
           newBackupSteps.vms = {
@@ -245,6 +258,7 @@ export function JobWizard({ job, open, onClose, onSuccess }: Props) {
             includeDisks: (c.includeDisks as boolean) ?? false,
             useEncryption: enc,
             ...readRetention(c),
+            ...readStopOnError(s),
           }
         } else if (s.type === 'docker_images') {
           newBackupSteps.docker_images = {
@@ -253,6 +267,7 @@ export function JobWizard({ job, open, onClose, onSuccess }: Props) {
             images: (c.images as string[]) ?? [],
             useEncryption: enc,
             ...readRetention(c),
+            ...readStopOnError(s),
           }
         } else if (s.type === 'system_config') {
           newBackupSteps.system_config = {
@@ -261,6 +276,7 @@ export function JobWizard({ job, open, onClose, onSuccess }: Props) {
             includeItems: (c.includeItems as string[]) ?? [],
             useEncryption: enc,
             ...readRetention(c),
+            ...readStopOnError(s),
           }
         } else if (s.type === 'custom') {
           newBackupSteps.custom = {
@@ -270,6 +286,7 @@ export function JobWizard({ job, open, onClose, onSuccess }: Props) {
             excludePatterns: (c.excludePatterns as string[]) ?? [],
             useEncryption: enc,
             ...readRetention(c),
+            ...readStopOnError(s),
           }
         } else if (s.type === 'helbackup_self') {
           newBackupSteps.helbackup_self = {
@@ -277,6 +294,7 @@ export function JobWizard({ job, open, onClose, onSuccess }: Props) {
             targetId: (c.targetId as string) ?? '',
             useEncryption: enc,
             ...readRetention(c),
+            ...readStopOnError(s),
           }
         }
       }
@@ -303,6 +321,7 @@ export function JobWizard({ job, open, onClose, onSuccess }: Props) {
           name: basicInfo.name.trim(),
           schedule: basicInfo.schedule,
           enabled: basicInfo.enabled,
+          catchUpOnStart: basicInfo.catchUpOnStart,
           steps: built,
           preBackupScript: hooks.preBackupScript ?? null,
           postBackupScript: hooks.postBackupScript ?? null,
@@ -313,6 +332,7 @@ export function JobWizard({ job, open, onClose, onSuccess }: Props) {
           name: basicInfo.name.trim(),
           ...(basicInfo.schedule ? { schedule: basicInfo.schedule } : {}),
           enabled: basicInfo.enabled,
+          catchUpOnStart: basicInfo.catchUpOnStart,
           steps: built,
           ...(hooks.preBackupScript ? { preBackupScript: hooks.preBackupScript } : {}),
           ...(hooks.postBackupScript ? { postBackupScript: hooks.postBackupScript } : {}),

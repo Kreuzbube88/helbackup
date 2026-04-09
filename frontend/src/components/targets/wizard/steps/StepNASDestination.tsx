@@ -15,7 +15,7 @@ interface Props {
 export function StepNASDestination({ state, update, privateKeyPlaceholder }: Props) {
   const { t } = useTranslation('targets')
   const { toast } = useToast()
-  const [advancedOpen, setAdvancedOpen] = useState(state.nasPrivateKey !== '')
+  const [advancedOpen, setAdvancedOpen] = useState(state.nasPrivateKey !== '' || state.nasKnownHostsFile !== '')
   const [sshKeyLoading, setSshKeyLoading] = useState(false)
 
   async function handleSetupSshKey() {
@@ -63,13 +63,22 @@ export function StepNASDestination({ state, update, privateKeyPlaceholder }: Pro
         {advancedOpen ? '▾' : '▸'} {t('common:advanced')}
       </button>
       {advancedOpen && (
-        <Input
-          label={t('common:nas.private_key')}
-          value={state.nasPrivateKey}
-          onChange={e => update('nasPrivateKey', e.target.value)}
-          placeholder={privateKeyPlaceholder ?? t('common:nas.private_key_placeholder')}
-          helpText={t('common:nas.private_key_hint')}
-        />
+        <div className="space-y-3">
+          <Input
+            label={t('common:nas.private_key')}
+            value={state.nasPrivateKey}
+            onChange={e => update('nasPrivateKey', e.target.value)}
+            placeholder={privateKeyPlaceholder ?? t('common:nas.private_key_placeholder')}
+            helpText={t('common:nas.private_key_hint')}
+          />
+          <Input
+            label={t('wizard.known_hosts_file')}
+            value={state.nasKnownHostsFile}
+            onChange={e => update('nasKnownHostsFile', e.target.value)}
+            placeholder="/app/config/ssh/known_hosts_mynas"
+            helpText={t('wizard.known_hosts_file_hint')}
+          />
+        </div>
       )}
 
       <Input

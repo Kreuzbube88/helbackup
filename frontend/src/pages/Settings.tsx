@@ -31,6 +31,13 @@ export function Settings() {
   const [pwLoading, setPwLoading] = useState(false)
   const [pwError, setPwError] = useState('')
 
+  const [logRetentionDays, setLogRetentionDays] = useState(90)
+  const [systemLoading, setSystemLoading] = useState(false)
+
+  useEffect(() => {
+    api.settings.get().then(s => setLogRetentionDays(s.logRetentionDays)).catch(() => {})
+  }, [])
+
   // Warn on browser close/refresh when form has unsaved data
   useEffect(() => {
     if (!hasChanges) return
@@ -38,6 +45,20 @@ export function Settings() {
     window.addEventListener('beforeunload', handler)
     return () => window.removeEventListener('beforeunload', handler)
   }, [hasChanges])
+
+  async function handleSystemSave(e: React.FormEvent) {
+    e.preventDefault()
+    setSystemLoading(true)
+    try {
+      const res = await api.settings.update({ logRetentionDays })
+      setLogRetentionDays(res.logRetentionDays)
+      toast(t('system.saved'), 'success')
+    } catch {
+      toast(t('common:error'), 'error')
+    } finally {
+      setSystemLoading(false)
+    }
+  }
 
   function handleLangChange(value: string) {
     setLang(value)
@@ -140,6 +161,25 @@ export function Settings() {
             {t('settings:notifications.title', 'Notifications')}
           </h2>
           <NotificationSettings />
+        </Card>
+        <Card>
+          <h2 className="text-sm font-semibold text-[var(--text-secondary)] mb-4 uppercase tracking-wider">
+            {t('system.title')}
+          </h2>
+          <form onSubmit={e => { void handleSystemSave(e) }} className="flex flex-col gap-3">
+            <Input
+              type="number"
+              label={t('system.log_retention_label')}
+              value={String(logRetentionDays)}
+              onChange={e => setLogRetentionDays(Math.max(1, parseInt(e.target.value) || 1))}
+              min="1"
+              max="3650"
+              helpText={t('system.log_retention_hint')}
+            />
+            <Button type="submit" variant="primary" size="sm" loading={systemLoading} className="self-start">
+              {t('system.save')}
+            </Button>
+          </form>
         </Card>
         <Card>
           <h2 className="text-sm font-semibold text-[var(--text-secondary)] mb-4 uppercase tracking-wider">

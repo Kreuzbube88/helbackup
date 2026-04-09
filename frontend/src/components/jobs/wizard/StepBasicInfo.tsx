@@ -7,6 +7,7 @@ export interface BasicInfo {
   name: string
   schedule: string | null
   enabled: boolean
+  catchUpOnStart: boolean
 }
 
 interface Props {
@@ -46,6 +47,19 @@ export function StepBasicInfo({ value, onChange }: Props) {
           className="accent-[var(--theme-primary)]"
         />
         {t('enabled')}
+      </label>
+
+      <label className="flex items-start gap-2 cursor-pointer">
+        <input
+          type="checkbox"
+          checked={value.catchUpOnStart}
+          onChange={e => onChange({ ...value, catchUpOnStart: e.target.checked })}
+          className="mt-0.5 accent-[var(--theme-primary)]"
+        />
+        <div>
+          <p className="text-sm text-[var(--text-secondary)]">{t('catch_up_on_start')}</p>
+          <p className="text-xs text-[var(--text-muted)]">{t('help_catch_up_on_start')}</p>
+        </div>
       </label>
     </div>
   )

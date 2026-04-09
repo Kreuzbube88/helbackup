@@ -47,6 +47,7 @@ export interface Job {
   id: string
   name: string
   enabled: boolean
+  catch_up_on_start: boolean
   schedule: string | null
   steps: unknown[]
   created_at: string
@@ -170,9 +171,9 @@ export const api = {
   jobs: {
     getAll: () => request<Job[]>('GET', '/jobs'),
     getById: (id: string) => request<Job>('GET', `/jobs/${id}`),
-    create: (data: { name: string; schedule?: string; steps: unknown[]; enabled?: boolean; preBackupScript?: string; postBackupScript?: string }) =>
+    create: (data: { name: string; schedule?: string; steps: unknown[]; enabled?: boolean; catchUpOnStart?: boolean; preBackupScript?: string; postBackupScript?: string }) =>
       request<Job>('POST', '/jobs', data),
-    update: (id: string, data: Partial<{ name: string; schedule: string | null; steps: unknown[]; enabled: boolean; preBackupScript: string | null; postBackupScript: string | null }>) =>
+    update: (id: string, data: Partial<{ name: string; schedule: string | null; steps: unknown[]; enabled: boolean; catchUpOnStart: boolean; preBackupScript: string | null; postBackupScript: string | null }>) =>
       request<Job>('PUT', `/jobs/${id}`, data),
     delete: (id: string) => request<{ ok: boolean }>('DELETE', `/jobs/${id}`),
     getHistory: (id: string) => request<unknown[]>('GET', `/jobs/${id}/history`),
@@ -270,6 +271,12 @@ export const api = {
   helbackup: {
     restore: (fileData: string, encryptionPassword?: string) =>
       request<{ ok: boolean; message: string }>('POST', '/helbackup/restore', { fileData, ...(encryptionPassword ? { encryptionPassword } : {}) }),
+  },
+
+  settings: {
+    get: () => request<{ logRetentionDays: number }>('GET', '/settings'),
+    update: (data: { logRetentionDays?: number }) =>
+      request<{ logRetentionDays: number }>('POST', '/settings', data),
   },
 }
 
