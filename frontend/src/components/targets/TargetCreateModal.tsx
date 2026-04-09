@@ -29,14 +29,12 @@ export function TargetCreateModal({ open, onClose, onSuccess }: Props) {
   return (
     <>
       <Modal open={open} onClose={handleClose} title={t('create_new')} className="max-w-[96rem]" disableBackdropClose>
-        <div className="mx-auto w-full max-w-3xl">
-          <TargetWizard
-            mode="create"
-            onCancel={handleClose}
-            onSuccess={handleSuccess}
-            onDirtyChange={setDirty}
-          />
-        </div>
+        <TargetWizard
+          mode="create"
+          onCancel={handleClose}
+          onSuccess={handleSuccess}
+          onDirtyChange={setDirty}
+        />
       </Modal>
 
       <ConfirmModal

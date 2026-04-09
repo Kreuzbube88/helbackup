@@ -347,7 +347,6 @@ export function JobWizard({ job, open, onClose, onSuccess }: Props) {
   return (
     <>
     <Modal open={open} onClose={handleClose} title={title} className="max-w-[112rem]" disableBackdropClose>
-      <div className="mx-auto w-full max-w-4xl">
       {/* Step indicator */}
       <div className="flex items-center gap-1 gap-y-1.5 mb-6 flex-wrap">
         {steps.map((s, i) => {
@@ -455,7 +454,6 @@ export function JobWizard({ job, open, onClose, onSuccess }: Props) {
             </Button>
           )}
         </div>
-      </div>
       </div>
     </Modal>
 
