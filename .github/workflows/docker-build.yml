@@ -4,7 +4,40 @@ on:
   workflow_dispatch:
 
 jobs:
+  validate:
+    name: Type-check & Tests
+    runs-on: ubuntu-latest
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Set up Node.js 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install backend dependencies
+        run: cd backend && npm ci
+
+      - name: TypeScript type-check (backend)
+        run: cd backend && npx tsc --noEmit
+
+      - name: Run backend tests
+        run: cd backend && npm test
+
+      - name: Install frontend dependencies
+        run: cd frontend && npm ci
+
+      - name: Build frontend (type-check + vite)
+        run: cd frontend && npm run build
+
   build:
+    name: Build & Push
+    needs: validate
     runs-on: ubuntu-latest
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
