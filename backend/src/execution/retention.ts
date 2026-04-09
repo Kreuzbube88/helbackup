@@ -5,6 +5,12 @@ import { logger } from '../utils/logger.js'
 export interface RetentionPolicy {
   deleteOlderThanDays?: number
   keepMinimum?: number
+  stepType?: string
+}
+
+interface ManifestStepPath {
+  type: string
+  path: string
 }
 
 interface ManifestRow {
@@ -21,9 +27,20 @@ export async function applyRetentionPolicy(
 ): Promise<{ deleted: number; kept: number }> {
   logger.info(`Applying retention policy for job ${jobId}`)
 
-  const manifests = db.prepare(
+  const allManifests = db.prepare(
     'SELECT * FROM manifest WHERE job_id = ? ORDER BY created_at DESC'
   ).all(jobId) as ManifestRow[]
+
+  // If stepType filter is set, only consider manifests that include that step type
+  const manifests = policy.stepType
+    ? allManifests.filter(m => {
+        try {
+          const parsed = JSON.parse(m.manifest) as { stepPaths?: ManifestStepPath[] }
+          return Array.isArray(parsed.stepPaths)
+            && parsed.stepPaths.some(sp => sp.type === policy.stepType)
+        } catch { return false }
+      })
+    : allManifests
 
   let deleted = 0
   let kept = 0
