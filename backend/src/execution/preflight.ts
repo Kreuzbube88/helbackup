@@ -27,7 +27,7 @@ export async function runPreflight(
   const errors: string[] = []
   const warnings: string[] = []
 
-  await checkArrayState(errors)
+  await checkArrayState(errors, warnings)
   await checkParityOrMover(errors, warnings)
   for (const p of localTargetPaths) {
     await checkTargetSpace(p, MIN_FREE_BYTES, errors, warnings)
@@ -40,7 +40,7 @@ export async function runPreflight(
 // Individual checks
 // ---------------------------------------------------------------------------
 
-async function checkArrayState(errors: string[]): Promise<void> {
+async function checkArrayState(errors: string[], warnings: string[]): Promise<void> {
   // /unraid/boot is the container-internal mount of /boot
   // mdState is persisted in /boot/config/disk.cfg on running arrays
   try {

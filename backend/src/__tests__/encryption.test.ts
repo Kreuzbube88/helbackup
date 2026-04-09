@@ -23,12 +23,12 @@ process.env.JWT_SECRET = 'test-secret-for-unit-tests-32chars!!'
 
 describe('masterKey — AES-256-GCM round-trip', () => {
   it('encrypt then decrypt returns original plaintext', async () => {
-    const { encryptValue, decryptValue } = await import('../utils/masterKey.js')
+    const { encryptData, decryptData } = await import('../utils/masterKey.js')
     const plaintext = 'super-secret-password-123'
-    const encrypted = encryptValue(plaintext)
+    const encrypted = encryptData(plaintext, 'test-salt')
     expect(encrypted).not.toBe(plaintext)
     expect(encrypted).toContain(':') // format: iv:authTag:ciphertext
-    const decrypted = decryptValue(encrypted)
+    const decrypted = decryptData(encrypted, 'test-salt')
     expect(decrypted).toBe(plaintext)
   })
 
@@ -48,11 +48,11 @@ describe('masterKey — AES-256-GCM round-trip', () => {
   })
 
   it('decryption fails gracefully on tampered ciphertext', async () => {
-    const { encryptValue, decryptValue } = await import('../utils/masterKey.js')
-    const encrypted = encryptValue('hello')
+    const { encryptData, decryptData } = await import('../utils/masterKey.js')
+    const encrypted = encryptData('hello', 'test-salt')
     const [iv, tag, ciphertext] = encrypted.split(':')
     const tampered = `${iv}:${tag}:${'ff'.repeat((ciphertext.length / 2))}` // flip all bytes
-    expect(() => decryptValue(tampered)).toThrow()
+    expect(() => decryptData(tampered, 'test-salt')).toThrow()
   })
 })
 
@@ -62,8 +62,8 @@ describe('encryptionKey — password storage round-trip', () => {
   })
 
   it('generates a recovery key in HLBK-ENC-XXXX-XXXX-XXXX-XXXX format', async () => {
-    const { generateRecoveryKey } = await import('../utils/encryptionKey.js')
-    const key = generateRecoveryKey()
+    const { generateEncryptionRecoveryKey } = await import('../utils/encryptionKey.js')
+    const key = generateEncryptionRecoveryKey()
     expect(key).toMatch(/^HLBK-ENC-[A-F0-9]{4}-[A-F0-9]{4}-[A-F0-9]{4}-[A-F0-9]{4}$/)
   })
 })

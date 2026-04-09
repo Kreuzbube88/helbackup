@@ -54,7 +54,7 @@ describe('scheduler concurrency lock', () => {
       ]),
       get: vi.fn(),
       run: vi.fn(),
-    } as ReturnType<typeof db.prepare>)
+    } as unknown as ReturnType<typeof db.prepare>)
 
     // Dynamic import to pick up mocks
     const { initScheduler } = await import('../scheduler/index.js')
@@ -94,7 +94,7 @@ describe('scheduler concurrency lock', () => {
       ]),
       get: vi.fn(),
       run: vi.fn(),
-    } as ReturnType<typeof db.prepare>)
+    } as unknown as ReturnType<typeof db.prepare>)
 
     mockScheduleJob.mockClear()
     const { initScheduler } = await import('../scheduler/index.js')
