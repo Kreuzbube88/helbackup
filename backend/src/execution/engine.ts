@@ -131,7 +131,6 @@ export class JobExecutionEngine extends EventEmitter {
         mac: power.mac,
         ip: power.ip,
         autoShutdown: power.autoShutdown ?? false,
-        nasType: typeof cfg.nasType === 'string' ? cfg.nasType : undefined,
         sshConfig: {
           host: cfg.host as string,
           port: cfg.port as number | undefined,

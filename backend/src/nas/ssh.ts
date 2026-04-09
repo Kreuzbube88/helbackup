@@ -16,7 +16,21 @@ export interface SSHResult {
   error?: string
 }
 
-export async function executeSSHCommand(config: SSHConfig, command: string, timeoutMs = 60_000): Promise<SSHResult> {
+export interface ExecOptions {
+  timeoutMs?: number             // default 60_000
+  pty?: boolean                  // default false — request a TTY (needed for sudo on some OSes)
+  tolerateDisconnect?: boolean   // default false — treat mid-command disconnect/no-exit-code as success
+}
+
+export async function executeSSHCommand(
+  config: SSHConfig,
+  command: string,
+  opts: ExecOptions = {},
+): Promise<SSHResult> {
+  const timeoutMs = opts.timeoutMs ?? 60_000
+  const pty = opts.pty ?? false
+  const tolerate = opts.tolerateDisconnect ?? false
+
   let privateKey: Buffer | undefined
   if (config.privateKey) {
     try {
@@ -30,46 +44,66 @@ export async function executeSSHCommand(config: SSHConfig, command: string, time
 
   return new Promise((resolve, reject) => {
     const conn = new Client()
+    let settled = false
+    const settle = (fn: () => void): void => { if (!settled) { settled = true; fn() } }
 
     conn.on('ready', () => {
       logger.info(`SSH connected to ${config.host}`)
-      conn.exec(command, (err, stream) => {
+      const execCb = (err: Error | undefined, stream: import('ssh2').ClientChannel): void => {
         if (err) {
           logger.error(`SSH exec error: ${err.message}`)
           conn.end()
-          reject(err)
+          settle(() => reject(err))
           return
         }
 
         let output = ''
         let errorOutput = ''
 
-        // Timeout for command execution in addition to the connection timeout
         const execTimeout = setTimeout(() => {
           stream.destroy()
           conn.end()
-          reject(new Error(`SSH command timed out after ${timeoutMs / 1000}s: ${command}`))
+          if (tolerate) {
+            logger.info(`SSH command timed out after ${timeoutMs / 1000}s (expected for shutdown): ${command}`)
+            settle(() => resolve({ success: true, output, error: undefined }))
+          } else {
+            settle(() => reject(new Error(`SSH command timed out after ${timeoutMs / 1000}s: ${command}`)))
+          }
         }, timeoutMs)
 
-        stream.on('close', (code: number) => {
+        stream.on('close', (code: number | null, signal: string | null) => {
           clearTimeout(execTimeout)
           conn.end()
           if (code === 0) {
-            resolve({ success: true, output })
+            settle(() => resolve({ success: true, output }))
+          } else if (tolerate && (code == null || signal != null)) {
+            logger.info(`SSH stream closed without exit code (expected for shutdown): ${command}`)
+            settle(() => resolve({ success: true, output, error: undefined }))
           } else {
-            logger.warn(`SSH command exited with code ${code}: ${command}`)
-            resolve({ success: false, error: errorOutput || `Exit code: ${code}` })
+            logger.warn(`SSH command exited with code ${code ?? 'null'}: ${command}`)
+            settle(() => resolve({ success: false, error: errorOutput || `Exit code: ${code ?? 'null'}` }))
           }
         })
 
         stream.on('data', (data: Buffer) => { output += data.toString() })
         stream.stderr.on('data', (data: Buffer) => { errorOutput += data.toString() })
-      })
+      }
+
+      if (pty) {
+        conn.exec(command, { pty: true }, execCb)
+      } else {
+        conn.exec(command, execCb)
+      }
     })
 
     conn.on('error', (err) => {
+      if (tolerate && settled === false) {
+        logger.info(`SSH disconnected during command (expected for shutdown): ${err.message}`)
+        settle(() => resolve({ success: true, output: '', error: undefined }))
+        return
+      }
       logger.error(`SSH connection error: ${err.message}`)
-      reject(err)
+      settle(() => reject(err))
     })
 
     conn.connect({
@@ -93,46 +127,30 @@ export async function testSSHConnection(config: SSHConfig): Promise<boolean> {
 }
 
 /**
- * Non-interactive, backgrounded shutdown. `sudo -n` never prompts, so a
- * user without NOPASSWD fails through instantly to the next fallback. The
- * `nohup … &` detaches the actual shutdown from the SSH session, so the
- * session returns in <1s and we don't race the kernel tearing down TCP.
- * The expected mid-command SSH teardown is caught and treated as success;
- * the caller verifies the host actually went offline via ping.
+ * Universal shutdown cascade covering Synology / QNAP / TrueNAS / OMV / Unraid /
+ * plain Linux. `sudo -n` is non-interactive so it fails fast without NOPASSWD
+ * instead of hanging; absolute /sbin paths cover the stripped non-interactive
+ * SSH PATH; bare forms cover distros where the binaries live elsewhere;
+ * `shutdown -p now` is for TrueNAS/FreeBSD. Runs with PTY so sudoers rules
+ * like `Defaults requiretty` still allow the command. The SSH session will
+ * normally be torn down mid-command — executeSSHCommand tolerates that.
  */
-export async function shutdownNAS(config: SSHConfig, nasType?: string): Promise<SSHResult> {
-  const chain = buildShutdownChain(nasType)
-  const command = `nohup sh -c '( sleep 1; ${chain} ) >/dev/null 2>&1 &' ; exit 0`
-  try {
-    return await executeSSHCommand(config, command, 15_000)
-  } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : String(err)
-    if (/ECONNRESET|closed|ended|ETIMEDOUT|EPIPE/i.test(msg)) {
-      return { success: true, output: 'ssh session closed (expected during shutdown)' }
-    }
-    throw err
-  }
-}
+const SHUTDOWN_CASCADE = [
+  'sudo -n /sbin/poweroff',
+  'sudo -n /sbin/shutdown -h now',
+  'sudo -n /sbin/shutdown -p now',
+  'sudo -n poweroff',
+  'sudo -n shutdown -h now',
+  '/sbin/poweroff',
+  '/sbin/shutdown -h now',
+].join(' || ')
 
-function buildShutdownChain(nasType?: string): string {
-  const generic = [
-    'sudo -n /sbin/poweroff',
-    'sudo -n poweroff',
-    'sudo -n shutdown -h now',
-    '/sbin/poweroff',
-    'poweroff',
-    'shutdown -h now',
-  ]
-  const perType: Record<string, string[]> = {
-    synology: ['sudo -n /sbin/poweroff', 'sudo -n shutdown -h now'],
-    qnap:     ['sudo -n /sbin/poweroff', 'sudo -n /sbin/halt'],
-    truenas:  ['sudo -n /sbin/shutdown -p now', 'sudo -n poweroff'],
-    omv:      ['sudo -n /sbin/poweroff', 'sudo -n shutdown -h now'],
-    unraid:   ['sudo -n /sbin/powerdown', 'sudo -n /sbin/poweroff'],
-  }
-  const list = nasType && perType[nasType] ? [...perType[nasType], ...generic] : generic
-  const seen = new Set<string>()
-  return list.filter(c => (seen.has(c) ? false : (seen.add(c), true))).join(' || ')
+export async function shutdownNAS(config: SSHConfig): Promise<SSHResult> {
+  return executeSSHCommand(config, SHUTDOWN_CASCADE, {
+    timeoutMs: 15_000,
+    pty: true,
+    tolerateDisconnect: true,
+  })
 }
 
 /** Deploy a public key to the NAS authorized_keys via password SSH, then key auth can be used. */

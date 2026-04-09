@@ -40,7 +40,7 @@ async function verifyRemoteChecksums(
     { host: nasConfig.host, port: nasConfig.port, username: nasConfig.username,
       password: nasConfig.password, privateKey: nasConfig.privateKey },
     `find '${safeBackupPath}' -type f -exec sha256sum '{}' ';'`,
-    600_000
+    { timeoutMs: 600_000 },
   )
 
   if (!result.success || !result.output) {

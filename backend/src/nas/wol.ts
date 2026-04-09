@@ -165,27 +165,42 @@ async function sendBurstOnce(mac: string, targetIp?: string): Promise<void> {
   }
 }
 
+/** Single ICMP ping — resolves true on exit 0, false on any other outcome. */
+function pingOnce(ip: string): Promise<boolean> {
+  return new Promise((resolve) => {
+    const p = spawn('ping', ['-c', '1', '-W', '2', ip])
+    p.on('close', (code) => resolve(code === 0))
+    p.on('error', () => resolve(false))
+  })
+}
+
 /**
  * Polls ICMP ping every 2s and resolves true on the first successful reply,
  * or false if timeoutMs is exceeded. Does not send WOL packets — the outer
  * attempt loop owns retries.
  */
-function pingUntilOnline(ip: string, timeoutMs: number): Promise<boolean> {
+async function pingUntilOnline(ip: string, timeoutMs: number): Promise<boolean> {
   const start = Date.now()
   const POLL_MS = 2000
+  while (Date.now() - start < timeoutMs) {
+    if (await pingOnce(ip)) return true
+    await new Promise(r => setTimeout(r, POLL_MS))
+  }
+  return false
+}
 
-  return new Promise((resolve) => {
-    const check = () => {
-      if (Date.now() - start > timeoutMs) { resolve(false); return }
-      const ping = spawn('ping', ['-c', '1', '-W', '2', ip])
-      ping.on('close', (code) => {
-        if (code === 0) resolve(true)
-        else setTimeout(check, POLL_MS)
-      })
-      ping.on('error', () => setTimeout(check, POLL_MS))
-    }
-    check()
-  })
+/**
+ * Polls ICMP ping every 5s and resolves true as soon as the host stops
+ * responding (shutdown verification), or false if timeoutMs is exceeded.
+ */
+export async function waitForHostOffline(ip: string, timeoutMs: number): Promise<boolean> {
+  const start = Date.now()
+  const POLL_MS = 5000
+  while (Date.now() - start < timeoutMs) {
+    if (!(await pingOnce(ip))) return true
+    await new Promise(r => setTimeout(r, POLL_MS))
+  }
+  return false
 }
 
 export async function wakeNAS(options: WakeOptions): Promise<void> {

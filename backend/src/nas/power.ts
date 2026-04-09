@@ -1,5 +1,4 @@
-import { spawn } from 'child_process'
-import { wakeNAS } from './wol.js'
+import { wakeNAS, waitForHostOffline } from './wol.js'
 import { testSSHConnection, shutdownNAS, type SSHConfig } from './ssh.js'
 import { logger } from '../utils/logger.js'
 
@@ -9,8 +8,9 @@ export interface NASPowerConfig {
   ip: string
   sshConfig: SSHConfig
   autoShutdown: boolean
-  nasType?: string
 }
+
+const SHUTDOWN_VERIFY_TIMEOUT_MS = 120_000
 
 export async function ensureNASOnline(config: NASPowerConfig): Promise<void> {
   if (!config.enabled) {
@@ -55,42 +55,24 @@ export async function shutdownNASIfEnabled(config: NASPowerConfig): Promise<void
 
   logger.info(`Shutting down NAS ${config.ip}...`)
   try {
-    const result = await shutdownNAS(config.sshConfig, config.nasType)
+    const result = await shutdownNAS(config.sshConfig)
     if (!result.success) {
-      logger.error(`NAS shutdown command returned non-zero: ${result.error ?? 'unknown'}`)
+      logger.error(`NAS ${config.ip} shutdown command failed: ${result.error ?? 'unknown error'}`)
       return
     }
-    // Verify: NAS should stop responding to ping within ~120s.
-    const wentOffline = await waitForOffline(config.ip, 120_000)
-    if (wentOffline) {
-      logger.info(`NAS ${config.ip} powered off successfully`)
-    } else {
-      logger.error(`NAS ${config.ip} shutdown command accepted but host is still reachable after 120s`)
-    }
+    logger.info(`NAS ${config.ip} shutdown command dispatched, verifying host goes offline...`)
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err)
-    logger.error(`Failed to shutdown NAS ${config.ip}: ${msg}`)
+    logger.error(`Failed to issue NAS shutdown to ${config.ip}: ${msg}`)
+    return
   }
-}
 
-/**
- * Poll ping every 5s, resolve true on first non-zero exit (host unreachable)
- * or false on overall timeout. Symmetric to pingUntilOnline in wol.ts.
- */
-function waitForOffline(ip: string, timeoutMs: number): Promise<boolean> {
-  const start = Date.now()
-  const POLL_MS = 5000
-
-  return new Promise((resolve) => {
-    const check = () => {
-      if (Date.now() - start > timeoutMs) { resolve(false); return }
-      const ping = spawn('ping', ['-c', '1', '-W', '2', ip])
-      ping.on('close', (code) => {
-        if (code !== 0) resolve(true)
-        else setTimeout(check, POLL_MS)
-      })
-      ping.on('error', () => resolve(true))
-    }
-    check()
-  })
+  const wentOffline = await waitForHostOffline(config.ip, SHUTDOWN_VERIFY_TIMEOUT_MS)
+  if (wentOffline) {
+    logger.info(`NAS ${config.ip} powered off`)
+  } else {
+    logger.error(
+      `NAS ${config.ip} shutdown command accepted but host is still reachable after ${SHUTDOWN_VERIFY_TIMEOUT_MS / 1000}s`,
+    )
+  }
 }
