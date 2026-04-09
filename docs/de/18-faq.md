@@ -16,9 +16,6 @@ A: ~500 MB Container, ~100 MB Appdata/DB. Backups brauchen eigenen Speicher.
 **Q: Kann ich mehrere Targets gleichzeitig sichern?**  
 A: Ja! Pro Job ein Target, beliebig viele Jobs möglich.
 
-**Q: Was passiert wenn Backup während Parity Check läuft?**  
-A: HELBACKUP blockiert Backup automatisch. Schedule versetzt planen.
-
 **Q: Wie lange dauert ein Backup?**  
 A: Flash: ~5-30s. Appdata: 1-30 min. VMs: 10-60 min. Abhängig von Datenmenge.
 

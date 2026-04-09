@@ -14,7 +14,7 @@ graph TB
         API["Fastify API\n/api/*"]
         SCH["Scheduler\n(node-schedule)"]
         ENG["Execution Engine\n(steps / retry / manifest)"]
-        PRE["Pre-flight\n(array / parity / space)"]
+        PRE["Pre-flight\n(disk space)"]
         VER["Verification\n(SHA-256 checksums)"]
         DB["SQLite\n(better-sqlite3, WAL)"]
         ENC["Encryption\n(AES-256-GCM / GPG)"]
@@ -39,7 +39,7 @@ graph TB
     API --> ENG
     SCH -->|cron tick| ENG
     ENG --> PRE
-    PRE -->|parity / df| Unraid Host
+    PRE -->|df| Local Targets
     ENG --> Steps
     Steps -->|rsync| LOCAL
     Steps -->|rsync + SSH| NAS
@@ -61,7 +61,7 @@ graph TB
 | **Fastify API** | REST endpoints, JWT auth, rate limiting, SSE |
 | **Scheduler** | Cron-based job dispatch, catch-up on restart, concurrency guard |
 | **Execution Engine** | Step sequencing, retry, pre-flight, manifest, checksums |
-| **Pre-flight** | No parity/mover running, target free space |
+| **Pre-flight** | Local target disk space (500 MB minimum) |
 | **Verification** | SHA-256 checksums before + after transfer (local and remote via SSH) |
 | **Encryption** | AES-256-GCM for credentials (master key from JWT_SECRET), GPG for backup archives |
 | **SQLite** | Jobs, targets, history, logs, settings — WAL mode, no ORM |
@@ -70,7 +70,7 @@ graph TB
 
 ```
 Cron tick / API trigger
-  → Pre-flight checks (array, parity, disk space)
+  → Pre-flight checks (local target disk space)
   → NAS Wake-on-LAN (if configured)
   → For each step:
       → Stage into workDir.partial/

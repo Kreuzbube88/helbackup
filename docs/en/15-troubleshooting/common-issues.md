@@ -81,11 +81,7 @@ Warning: some files vanished before they could be transferred
 ```
 Normal when containers run during backup. Enable "Stop containers before backup" to prevent this.
 
-## 9. "Parity check is running"
-
-HELBACKUP blocks backup during parity check. Schedule jobs to avoid conflict.
-
-## 10. API: "401 Unauthorized"
+## 9. API: "401 Unauthorized"
 
 - Token correct? No leading/trailing spaces?
 - Token expired? Settings → API Tokens

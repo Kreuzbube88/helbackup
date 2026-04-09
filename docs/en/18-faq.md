@@ -16,9 +16,6 @@ A: ~500 MB container, ~100 MB Appdata/DB. Backups need separate storage.
 **Q: Can I back up to multiple targets simultaneously?**  
 A: Yes! One target per job, but unlimited jobs.
 
-**Q: What happens if a backup runs during parity check?**  
-A: HELBACKUP blocks automatically. Schedule jobs to avoid conflicts.
-
 **Q: How long does a backup take?**  
 A: Flash: ~5-30s. Appdata: 1-30 min. VMs: 10-60 min.
 

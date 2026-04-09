@@ -9,7 +9,6 @@
 | `ENOENT: no such file` | Path doesn't exist | Check mount paths |
 | `Connection refused` | NAS/Cloud unreachable | Check network, SSH key |
 | `Authentication failed` | Wrong password/key | Check credentials |
-| `Parity check is running` | Parity running | Wait or adjust schedule |
 
 ## API Errors
 

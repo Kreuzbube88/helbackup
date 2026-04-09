@@ -120,18 +120,7 @@ Warning: some files vanished before they could be transferred
 - Container stoppen vor Backup (Job-Option: "Stop containers")
 - Warnung ist oft harmlos — Backup ist trotzdem konsistent
 
-## 9. "Parity check läuft"
-
-**Symptom:**
-```
-Pre-flight check failed: Parity check is running
-```
-
-**Erklärung:** HELBACKUP blockiert Backup während Parity (Performance + Daten-Konsistenz).
-
-**Lösung:** Schedule so planen dass kein Konflikt mit Parity Check.
-
-## 10. API: "401 Unauthorized"
+## 9. API: "401 Unauthorized"
 
 **Symptom:**
 ```json
