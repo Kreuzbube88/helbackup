@@ -40,8 +40,8 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
         rateLimit: {
           max: 5,
           timeWindow: 15 * 60 * 1000,
-          keyGenerator: (request: FastifyRequest<{ Body: LoginBody }>) => {
-            const username = (request.body as Partial<LoginBody>)?.username ?? ''
+          keyGenerator: (request) => {
+            const username = (request.body as Partial<LoginBody> | null)?.username ?? ''
             return `${request.ip}:${username}`
           },
           errorResponseBuilder: () => ({

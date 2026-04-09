@@ -23,8 +23,6 @@ function getSshKeyEncryptionPassword(): string {
   return masterKey.toString('hex')
 }
 
-const DB_PATH = process.env.DB_PATH ?? '/app/data/helbackup.db'
-
 export async function exportHELBACKUP(destPath: string, engine: JobExecutionEngine): Promise<string> {
   engine.log('info', 'system', 'Exporting HELBACKUP configuration...')
 
