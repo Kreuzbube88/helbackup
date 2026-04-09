@@ -19,6 +19,12 @@ export interface RsyncOptions {
    * Use for backups that MUST be byte-exact (Flash drive, System Config). Default: false.
    */
   strict?: boolean
+  /**
+   * Path to a known_hosts file for SSH host-key pinning.
+   * When provided, StrictHostKeyChecking=yes is used — unknown hosts are rejected.
+   * When absent, StrictHostKeyChecking=no is used (current default).
+   */
+  knownHostsFile?: string
   onProgress?: (data: { percent: number; transferred: string; speed: string }) => void
   onLog?: (message: string) => void
 }
@@ -51,11 +57,14 @@ export async function executeRsync(options: RsyncOptions): Promise<RsyncResult> 
     if (options.sshHost && options.sshUser) {
       const portFlag = options.sshPort && options.sshPort !== 22 ? ` -p ${options.sshPort}` : ''
       // Prefer key auth over password — key takes priority if both are configured
+      const hostKeyOpts = options.knownHostsFile
+        ? `-o StrictHostKeyChecking=yes -o UserKnownHostsFile='${options.knownHostsFile.replace(/'/g, "'\\''")}'`
+        : `-o StrictHostKeyChecking=no`
       const sshCmd = options.sshKey
-        ? `ssh${portFlag} -i '${options.sshKey.replace(/'/g, "'\\''")}' -o StrictHostKeyChecking=no -o BatchMode=yes -o PasswordAuthentication=no -o KbdInteractiveAuthentication=no`
+        ? `ssh${portFlag} -i '${options.sshKey.replace(/'/g, "'\\''")}' ${hostKeyOpts} -o BatchMode=yes -o PasswordAuthentication=no -o KbdInteractiveAuthentication=no`
         : options.sshPassword
-          ? `sshpass -e ssh${portFlag} -o StrictHostKeyChecking=no`
-          : `ssh${portFlag} -o StrictHostKeyChecking=no`
+          ? `sshpass -e ssh${portFlag} ${hostKeyOpts}`
+          : `ssh${portFlag} ${hostKeyOpts}`
       args.push(`--rsh=${sshCmd}`)
       if (options.sshPull) {
         // Pull from remote: rsync user@host:/source /local/dest

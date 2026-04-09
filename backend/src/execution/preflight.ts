@@ -10,26 +10,27 @@ export interface PreflightResult {
   warnings: string[]
 }
 
+/** Minimum free bytes required on a local target (500 MB hardcoded floor). */
+const MIN_FREE_BYTES = 500 * 1024 * 1024
+
 /**
  * Run Unraid pre-flight checks before a backup job starts.
- * Checks: array online, no parity/mover running, optional target free-space.
+ * Checks: array online, no parity/mover running, local-target free-space.
  *
- * @param targetPath  Host-side path of the backup destination (for free-space check).
- *                    Pass undefined to skip the disk-space check.
- * @param estimatedBytes  Expected transfer size in bytes (for free-space check).
- *                        Pass 0 or undefined to skip the disk-space check.
+ * @param localTargetPaths  Host-side paths of local backup destinations.
+ *                          Each is checked for a minimum of 500 MB free space.
+ *                          Pass empty array or omit to skip the disk-space check.
  */
 export async function runPreflight(
-  targetPath?: string,
-  estimatedBytes?: number,
+  localTargetPaths: string[] = [],
 ): Promise<PreflightResult> {
   const errors: string[] = []
   const warnings: string[] = []
 
   await checkArrayState(errors)
   await checkParityOrMover(errors, warnings)
-  if (targetPath && estimatedBytes && estimatedBytes > 0) {
-    await checkTargetSpace(targetPath, estimatedBytes, errors, warnings)
+  for (const p of localTargetPaths) {
+    await checkTargetSpace(p, MIN_FREE_BYTES, errors, warnings)
   }
 
   return { passed: errors.length === 0, errors, warnings }
@@ -94,7 +95,7 @@ async function checkParityOrMover(errors: string[], warnings: string[]): Promise
 
 async function checkTargetSpace(
   targetPath: string,
-  estimatedBytes: number,
+  minFreeBytes: number,
   errors: string[],
   warnings: string[],
 ): Promise<void> {
@@ -102,17 +103,16 @@ async function checkTargetSpace(
     const stats = await statfs(targetPath)
     const freeBytes = stats.bsize * stats.bavail
 
-    if (freeBytes < estimatedBytes) {
+    if (freeBytes < minFreeBytes) {
       const freeMB = Math.round(freeBytes / 1024 / 1024)
-      const needMB = Math.round(estimatedBytes / 1024 / 1024)
+      const needMB = Math.round(minFreeBytes / 1024 / 1024)
       errors.push(
-        `Insufficient free space on target: ${freeMB} MB available, ${needMB} MB required.`,
+        `Insufficient free space on target path ${targetPath}: ${freeMB} MB available, minimum ${needMB} MB required.`,
       )
-    } else if (freeBytes < estimatedBytes * 2) {
+    } else if (freeBytes < minFreeBytes * 3) {
       const freeMB = Math.round(freeBytes / 1024 / 1024)
-      const needMB = Math.round(estimatedBytes / 1024 / 1024)
       warnings.push(
-        `Low free space on target: ${freeMB} MB available for ${needMB} MB backup. Consider running GFS cleanup.`,
+        `Low free space on target path ${targetPath}: ${freeMB} MB available. Consider running GFS cleanup.`,
       )
     }
   } catch {

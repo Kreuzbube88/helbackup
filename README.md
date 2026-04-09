@@ -92,6 +92,8 @@ After installation, open the web UI and follow the **onboarding wizard** — it 
 
 Full documentation is available in the [`docs/`](docs/README.md) folder in both German and English, covering installation, backup types, targets, encryption, recovery, API, and more.
 
+For a technical deep-dive into the architecture, data flow, and security model, see [docs/architecture.md](docs/architecture.md).
+
 ---
 
 ## Requirements

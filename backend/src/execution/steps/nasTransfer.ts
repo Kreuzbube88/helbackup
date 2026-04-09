@@ -14,6 +14,8 @@ export interface NasConfig {
   password?: string
   privateKey?: string  // absolute path to SSH private key file inside container (e.g. /app/config/ssh/nas_key)
   path: string
+  /** Path to a known_hosts file for host-key pinning. When set, StrictHostKeyChecking=yes is used. */
+  knownHostsFile?: string
 }
 
 export async function parseNasConfig(target: { type: string; config: string }): Promise<NasConfig | null> {
@@ -30,6 +32,13 @@ export async function parseNasConfig(target: { type: string; config: string }): 
     const defaultKey = `/app/config/ssh/nas_${safeName}`
     const keyExists = await fs.access(defaultKey).then(() => true).catch(() => false)
     if (keyExists) cfg = { ...cfg, privateKey: defaultKey }
+  }
+  // Auto-discover known_hosts: if no knownHostsFile but default exists, use it
+  if (!cfg.knownHostsFile) {
+    const safeName = cfg.host.replace(/[^a-z0-9]/gi, '_')
+    const defaultKnownHosts = `/app/config/ssh/known_hosts_${safeName}`
+    const exists = await fs.access(defaultKnownHosts).then(() => true).catch(() => false)
+    if (exists) cfg = { ...cfg, knownHostsFile: defaultKnownHosts }
   }
   return cfg
 }
@@ -103,6 +112,7 @@ export async function transferAndCleanup(
     sshPassword: nasConfig.password,
     sshKey: nasConfig.privateKey,
     sshPort: nasConfig.port,
+    knownHostsFile: nasConfig.knownHostsFile,
     // Source is our own staged temp dir — vanished/unreadable files indicate a real problem
     strict: true,
     onProgress: (() => {

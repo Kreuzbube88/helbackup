@@ -117,6 +117,23 @@ export class JobExecutionEngine extends EventEmitter {
     logger.info({ runId: this.runId }, 'Job execution started')
   }
 
+  private collectLocalTargetPaths(steps: JobStep[]): string[] {
+    const seen = new Set<string>()
+    const paths: string[] = []
+    for (const step of steps) {
+      const targetId = step.config.targetId as string | undefined
+      if (!targetId || seen.has(targetId)) continue
+      seen.add(targetId)
+      const row = db.prepare('SELECT type, config FROM targets WHERE id = ?').get(targetId) as Pick<TargetRow, 'type' | 'config'> | undefined
+      if (!row || row.type !== 'local') continue
+      try {
+        const cfg = JSON.parse(row.config) as { path?: string }
+        if (cfg.path) paths.push(cfg.path)
+      } catch { /* ignore */ }
+    }
+    return paths
+  }
+
   private collectNASPowerConfigs(steps: JobStep[]): NASPowerConfig[] {
     const seen = new Set<string>()
     const configs: NASPowerConfig[] = []
@@ -150,8 +167,10 @@ export class JobExecutionEngine extends EventEmitter {
   async execute(steps: JobStep[], hooks?: JobHooks): Promise<void> {
     void notificationManager.notify({ event: 'backup_started', jobName: this.jobName, timestamp: new Date().toISOString() })
 
-    // Pre-flight: verify array state, parity, mover before touching any NAS
-    const preflight = await runPreflight()
+    // Pre-flight: verify array state, parity, mover before touching any NAS.
+    // Also check free space on local targets.
+    const localTargetPaths = this.collectLocalTargetPaths(steps)
+    const preflight = await runPreflight(localTargetPaths)
     for (const w of preflight.warnings) {
       this.log('warn', 'system', `Pre-flight: ${w}`)
     }
