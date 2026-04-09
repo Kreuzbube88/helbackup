@@ -39,7 +39,7 @@ graph TB
     API --> ENG
     SCH -->|cron tick| ENG
     ENG --> PRE
-    PRE -->|df| Local Targets
+    PRE -->|df| LOCAL
     ENG --> Steps
     Steps -->|rsync| LOCAL
     Steps -->|rsync + SSH| NAS
