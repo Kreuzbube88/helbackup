@@ -2,9 +2,26 @@ import path from 'path'
 import fs from 'fs/promises'
 import { db } from '../../db/database.js'
 import { createTarArchive } from '../../tools/tar.js'
-import { getEncryptionPassword } from '../../utils/encryptionKey.js'
+import { getEncryptionPassword, isEncryptionConfigured } from '../../utils/encryptionKey.js'
+import { deriveMasterKey } from '../../utils/masterKey.js'
 import { encryptFileGPG } from '../../utils/gpgEncrypt.js'
 import type { JobExecutionEngine } from '../engine.js'
+
+/**
+ * Return the best available password for SSH key encryption:
+ * - If user-level encryption is configured, use that password (same recovery path)
+ * - Otherwise derive a stable password from JWT_SECRET via the master key
+ *   so SSH keys are always encrypted even before the user sets up job encryption.
+ */
+function getSshKeyEncryptionPassword(): string {
+  if (isEncryptionConfigured()) {
+    return getEncryptionPassword()
+  }
+  // Stable 32-byte key derived from JWT_SECRET — no salt needed here because the
+  // purpose is "encrypt this file for this installation", not user authentication.
+  const masterKey = deriveMasterKey('helbackup-ssh-key-export')
+  return masterKey.toString('hex')
+}
 
 const DB_PATH = process.env.DB_PATH ?? '/app/data/helbackup.db'
 
@@ -32,7 +49,7 @@ export async function exportHELBACKUP(destPath: string, engine: JobExecutionEngi
     const sshTar = path.join(exportDir, 'ssh.tar.gz')
     await createTarArchive({ source: sshStage, destination: sshTar, compress: true })
     const sshEncrypted = `${sshTar}.gpg`
-    const masterPassword = getEncryptionPassword()
+    const masterPassword = getSshKeyEncryptionPassword()
     await encryptFileGPG(sshTar, sshEncrypted, masterPassword)
 
     // Remove plaintext artefacts
