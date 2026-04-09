@@ -205,8 +205,6 @@ export default function ManifestBrowser({ manifests, onSelect, onFullServerResto
             const totalSize = parsed.entries?.reduce((sum, e) => sum + (e.size ?? 0), 0) ?? 0;
             const fileCount = parsed.entries?.length ?? 0;
             const containerCount = parsed.containerConfigs?.length ?? 0;
-            const verified = parsed.verified ?? false;
-            const lastVerified = parsed.lastVerified;
             const backupTypes = detectBackupTypes(parsed.entries ?? [], parsed.stepPaths);
             const restorableTypes = backupTypes.filter(t => t !== 'helbackup_self');
             const hasSelfBackup = backupTypes.includes('helbackup_self');
@@ -257,26 +255,13 @@ export default function ManifestBrowser({ manifests, onSelect, onFullServerResto
                       )}
                     </div>
 
-                    {/* Verified badge */}
-                    <div className="flex items-center gap-2 mt-2">
-                      {verified ? (
-                        <span className="inline-flex items-center gap-1 text-xs font-mono text-emerald-400 border border-emerald-500/40 px-1.5 py-0.5">
-                          ✓ {t('recovery.verified')}
-                          {lastVerified && (
-                            <span className="text-[var(--text-muted)]">· {new Date(lastVerified).toLocaleDateString()}</span>
-                          )}
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 text-xs font-mono text-amber-400 border border-amber-500/40 px-1.5 py-0.5">
-                          ⚠ {t('recovery.not_verified')}
-                        </span>
-                      )}
-                      {parsed.helbackupExport && (
+                    {parsed.helbackupExport && (
+                      <div className="flex items-center gap-2 mt-2">
                         <span className="text-xs font-mono text-[var(--theme-glow)] border border-[var(--theme-glow)]/40 px-1.5 py-0.5">
                           {t('recovery.includes_helbackup_config')}
                         </span>
-                      )}
-                    </div>
+                      </div>
+                    )}
                   </div>
 
                   {/* Action buttons */}
