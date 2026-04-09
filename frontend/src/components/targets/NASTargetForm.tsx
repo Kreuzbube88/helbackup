@@ -25,16 +25,19 @@ export function NASTargetForm({ value, onChange, sshHost, sshUsername, sshPasswo
   const [wolTesting, setWolTesting] = useState(false)
   const [sshTesting, setSSHTesting] = useState(false)
   const [wolResult, setWolResult] = useState<boolean | null>(null)
+  const [wolError, setWolError] = useState<string | null>(null)
   const [sshResult, setSSHResult] = useState<boolean | null>(null)
 
   const handleTestWoL = async () => {
     setWolTesting(true)
     setWolResult(null)
+    setWolError(null)
     try {
       const res = await api.nas.testWake(value.mac, value.ip || undefined)
       setWolResult(res.success)
-    } catch {
+    } catch (err) {
       setWolResult(false)
+      setWolError(err instanceof Error ? err.message : String(err))
     } finally {
       setWolTesting(false)
     }
@@ -99,9 +102,15 @@ export function NASTargetForm({ value, onChange, sshHost, sshUsername, sshPasswo
               <Button type="button" variant="secondary" size="sm" onClick={handleTestSSH} loading={sshTesting} disabled={!sshUsername}>
                 {t('nas.test_ssh')}
               </Button>
-              {wolResult !== null && (
-                <span className={wolResult ? 'text-green-400 text-xs' : 'text-red-400 text-xs'}>
-                  {wolResult ? t('nas.wol_sent') : t('nas.wol_failed')}
+              {wolResult === true && value.ip && (
+                <span className="text-green-400 text-xs">{t('nas.wol_online')}</span>
+              )}
+              {wolResult === true && !value.ip && (
+                <span className="text-green-400 text-xs">{t('nas.wol_sent')}</span>
+              )}
+              {wolResult === false && (
+                <span className="text-red-400 text-xs" title={wolError ?? ''}>
+                  {t('nas.wol_timeout')}
                 </span>
               )}
               {sshResult !== null && (

@@ -92,9 +92,47 @@ export async function testSSHConnection(config: SSHConfig): Promise<boolean> {
   }
 }
 
-export async function shutdownNAS(config: SSHConfig): Promise<SSHResult> {
-  // Works with Synology, QNAP, TrueNAS, OpenMediaVault, Unraid, etc.
-  return executeSSHCommand(config, 'sudo shutdown -h now')
+/**
+ * Non-interactive, backgrounded shutdown. `sudo -n` never prompts, so a
+ * user without NOPASSWD fails through instantly to the next fallback. The
+ * `nohup … &` detaches the actual shutdown from the SSH session, so the
+ * session returns in <1s and we don't race the kernel tearing down TCP.
+ * The expected mid-command SSH teardown is caught and treated as success;
+ * the caller verifies the host actually went offline via ping.
+ */
+export async function shutdownNAS(config: SSHConfig, nasType?: string): Promise<SSHResult> {
+  const chain = buildShutdownChain(nasType)
+  const command = `nohup sh -c '( sleep 1; ${chain} ) >/dev/null 2>&1 &' ; exit 0`
+  try {
+    return await executeSSHCommand(config, command, 15_000)
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err)
+    if (/ECONNRESET|closed|ended|ETIMEDOUT|EPIPE/i.test(msg)) {
+      return { success: true, output: 'ssh session closed (expected during shutdown)' }
+    }
+    throw err
+  }
+}
+
+function buildShutdownChain(nasType?: string): string {
+  const generic = [
+    'sudo -n /sbin/poweroff',
+    'sudo -n poweroff',
+    'sudo -n shutdown -h now',
+    '/sbin/poweroff',
+    'poweroff',
+    'shutdown -h now',
+  ]
+  const perType: Record<string, string[]> = {
+    synology: ['sudo -n /sbin/poweroff', 'sudo -n shutdown -h now'],
+    qnap:     ['sudo -n /sbin/poweroff', 'sudo -n /sbin/halt'],
+    truenas:  ['sudo -n /sbin/shutdown -p now', 'sudo -n poweroff'],
+    omv:      ['sudo -n /sbin/poweroff', 'sudo -n shutdown -h now'],
+    unraid:   ['sudo -n /sbin/powerdown', 'sudo -n /sbin/poweroff'],
+  }
+  const list = nasType && perType[nasType] ? [...perType[nasType], ...generic] : generic
+  const seen = new Set<string>()
+  return list.filter(c => (seen.has(c) ? false : (seen.add(c), true))).join(' || ')
 }
 
 /** Deploy a public key to the NAS authorized_keys via password SSH, then key auth can be used. */

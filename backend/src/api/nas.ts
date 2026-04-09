@@ -34,11 +34,17 @@ export async function nasRoutes(app: FastifyInstance): Promise<void> {
     async (request, reply) => {
       try {
         const { mac, ip } = request.body
-        await wakeNAS({ mac, ip, timeout: 60000, wait: false })
-        return reply.send({ success: true })
+        if (ip) {
+          // Verified wake: up to 5 × 30s (~150s max). Blocks until NAS is online or all attempts fail.
+          await wakeNAS({ mac, ip, maxAttempts: 5, attemptTimeoutMs: 30_000 })
+          return reply.send({ success: true, online: true })
+        }
+        // No IP → cannot verify, single-shot burst.
+        await wakeNAS({ mac, wait: false })
+        return reply.send({ success: true, online: false })
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : String(err)
-        return reply.status(500).send({ error: msg })
+        return reply.status(504).send({ error: msg })
       }
     }
   )

@@ -6,8 +6,10 @@ import { logger } from '../utils/logger.js'
 export interface WakeOptions {
   mac: string
   ip?: string
-  timeout?: number
-  wait?: boolean  // default true; false = send packet only, don't wait for NAS to boot
+  wait?: boolean             // default true when ip is set; false = fire packets only
+  maxAttempts?: number       // default 5
+  attemptTimeoutMs?: number  // default 30_000
+  timeout?: number           // kept for API back-compat, unused by attempt loop
 }
 
 interface Sender {
@@ -33,17 +35,6 @@ export function computeSubnetBroadcast(addr: string, netmask: string): string {
   if (a.length !== 4 || m.length !== 4) return '255.255.255.255'
   const b = a.map((oct, i) => (oct & m[i]!) | (~m[i]! & 0xff))
   return b.join('.')
-}
-
-function ipInSubnet(ip: string, addr: string, netmask: string): boolean {
-  const ipP = ip.split('.').map(Number)
-  const aP = addr.split('.').map(Number)
-  const mP = netmask.split('.').map(Number)
-  if (ipP.length !== 4 || aP.length !== 4 || mP.length !== 4) return false
-  for (let i = 0; i < 4; i++) {
-    if ((ipP[i]! & mP[i]!) !== (aP[i]! & mP[i]!)) return false
-  }
-  return true
 }
 
 export function enumerateSenders(targetIp?: string): Sender[] {
@@ -126,17 +117,19 @@ async function runBurst(senders: Sender[], magic: Buffer): Promise<{ ok: number;
   return { ok, total }
 }
 
-export async function wakeNAS(options: WakeOptions): Promise<void> {
-  const timeout = options.timeout ?? 300000
-  const mac = normalizeMac(options.mac)
+/**
+ * Sends one full multi-interface magic-packet burst (16 × 150ms) and closes
+ * all sockets before returning. Throws if no interface could be bound or
+ * every single packet send failed.
+ */
+async function sendBurstOnce(mac: string, targetIp?: string): Promise<void> {
   const magic = buildMagicPacket(mac)
 
-  const senders = enumerateSenders(options.ip)
+  const senders = enumerateSenders(targetIp)
   if (senders.length === 0) {
     throw new Error('Wake-on-LAN: no usable IPv4 network interfaces found')
   }
 
-  // Bind a socket per sender; tolerate individual failures
   for (const s of senders) {
     try {
       s.socket = await createBoundSocket(s.localAddr)
@@ -154,7 +147,7 @@ export async function wakeNAS(options: WakeOptions): Promise<void> {
   const dstSummary = Array.from(new Set(active.flatMap(s => s.destinations))).join(', ')
   logger.info(`Wake-on-LAN ${mac} senders=[${ifaceSummary}] dst=[${dstSummary}] ports=[${PORTS.join(',')}]`)
 
-  const sendBurst = async (): Promise<{ ok: number; total: number }> => {
+  try {
     let okSum = 0
     let totalSum = 0
     for (let i = 0; i < PACKET_COUNT; i++) {
@@ -163,19 +156,8 @@ export async function wakeNAS(options: WakeOptions): Promise<void> {
       totalSum += total
       if (i < PACKET_COUNT - 1) await new Promise(r => setTimeout(r, PACKET_INTERVAL_MS))
     }
-    return { ok: okSum, total: totalSum }
-  }
-
-  try {
-    const { ok, total } = await sendBurst()
-    logger.info(`Wake-on-LAN: sent ${ok}/${total} packets to ${mac}`)
-    if (ok === 0) throw new Error('Wake-on-LAN: all packet sends failed')
-
-    if (options.ip && (options.wait ?? true)) {
-      const resend = () => sendBurst().catch(err => logger.warn(`WOL retry failed: ${err instanceof Error ? err.message : String(err)}`))
-      await waitForHost(options.ip, timeout, resend)
-      logger.info(`NAS ${options.ip} is now online`)
-    }
+    logger.info(`Wake-on-LAN: sent ${okSum}/${totalSum} packets to ${mac}`)
+    if (okSum === 0) throw new Error('Wake-on-LAN: all packet sends failed')
   } finally {
     for (const s of active) {
       try { s.socket?.close() } catch { /* ignore */ }
@@ -183,33 +165,56 @@ export async function wakeNAS(options: WakeOptions): Promise<void> {
   }
 }
 
-function waitForHost(ip: string, timeout: number, onWolRetry: () => void): Promise<void> {
+/**
+ * Polls ICMP ping every 2s and resolves true on the first successful reply,
+ * or false if timeoutMs is exceeded. Does not send WOL packets — the outer
+ * attempt loop owns retries.
+ */
+function pingUntilOnline(ip: string, timeoutMs: number): Promise<boolean> {
   const start = Date.now()
-  let lastWol = Date.now()
+  const POLL_MS = 2000
 
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve) => {
     const check = () => {
-      const elapsed = Date.now() - start
-      if (elapsed > timeout) {
-        reject(new Error(`Timeout waiting for NAS ${ip} to respond`))
-        return
-      }
-
-      // Aggressive in first 30s, calmer after
-      const pingInterval = elapsed < 30000 ? 2000 : 5000
-      const wolRetryInterval = elapsed < 30000 ? 3000 : 10000
-
-      if (Date.now() - lastWol >= wolRetryInterval) {
-        lastWol = Date.now()
-        logger.info(`Resending Wake-on-LAN (NAS ${ip} not yet online)`)
-        onWolRetry()
-      }
-
+      if (Date.now() - start > timeoutMs) { resolve(false); return }
       const ping = spawn('ping', ['-c', '1', '-W', '2', ip])
-      ping.on('close', (code) => { if (code === 0) resolve(); else setTimeout(check, pingInterval) })
-      ping.on('error', () => setTimeout(check, pingInterval))
+      ping.on('close', (code) => {
+        if (code === 0) resolve(true)
+        else setTimeout(check, POLL_MS)
+      })
+      ping.on('error', () => setTimeout(check, POLL_MS))
     }
-
     check()
   })
+}
+
+export async function wakeNAS(options: WakeOptions): Promise<void> {
+  const mac = normalizeMac(options.mac)
+  const maxAttempts = options.maxAttempts ?? 5
+  const attemptTimeoutMs = options.attemptTimeoutMs ?? 30_000
+  const wait = options.wait ?? true
+
+  // No-verify mode: either no IP to ping, or caller explicitly asked for fire-and-forget.
+  if (!options.ip || !wait) {
+    await sendBurstOnce(mac, options.ip)
+    return
+  }
+
+  const startedAt = Date.now()
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    logger.info(`WOL attempt ${attempt}/${maxAttempts} for ${options.ip}`)
+    try {
+      await sendBurstOnce(mac, options.ip)
+    } catch (err) {
+      logger.warn(`WOL attempt ${attempt}/${maxAttempts} burst failed: ${err instanceof Error ? err.message : String(err)}`)
+      continue
+    }
+    if (await pingUntilOnline(options.ip, attemptTimeoutMs)) {
+      const elapsed = Math.round((Date.now() - startedAt) / 1000)
+      logger.info(`NAS ${options.ip} online after ${attempt} attempt(s), ${elapsed}s`)
+      return
+    }
+    logger.warn(`WOL attempt ${attempt}/${maxAttempts} failed — NAS ${options.ip} did not respond within ${attemptTimeoutMs / 1000}s`)
+  }
+  throw new Error(`Wake-on-LAN failed: NAS ${options.ip} did not respond after ${maxAttempts} attempts`)
 }

@@ -82,6 +82,8 @@
     "test_wol": "Send WoL packet",
     "wol_sent": "Packet sent",
     "wol_failed": "Failed",
+    "wol_online": "NAS is online",
+    "wol_timeout": "NAS did not respond",
     "ssh_config": "SSH configuration",
     "username": "Username",
     "password": "Password",
