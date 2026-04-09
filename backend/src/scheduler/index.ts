@@ -1,5 +1,5 @@
 import schedule from 'node-schedule'
-import { parseExpression } from 'cron-parser'
+import cronParser from 'cron-parser'
 import { randomUUID } from 'crypto'
 import { db } from '../db/database.js'
 import { logger } from '../utils/logger.js'
@@ -64,7 +64,7 @@ function maybeCatchUp(job: JobRow): void {
 
   let lastTick: Date
   try {
-    const interval = parseExpression(job.schedule, { currentDate: new Date() })
+    const interval = cronParser.parseExpression(job.schedule, { currentDate: new Date() })
     lastTick = interval.prev().toDate()
   } catch {
     logger.warn({ jobId: job.id }, 'catch-up: could not parse cron expression')
