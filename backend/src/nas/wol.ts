@@ -3,6 +3,8 @@ import { spawn } from 'child_process'
 import { networkInterfaces } from 'os'
 import { logger } from '../utils/logger.js'
 
+export type PowerLogCallback = (level: 'info' | 'warn' | 'error', message: string) => void
+
 export interface WakeOptions {
   mac: string
   ip?: string
@@ -10,6 +12,7 @@ export interface WakeOptions {
   maxAttempts?: number       // default 5
   attemptTimeoutMs?: number  // default 30_000
   timeout?: number           // kept for API back-compat, unused by attempt loop
+  onLog?: PowerLogCallback   // receives progress messages in parallel with container logger
 }
 
 interface Sender {
@@ -208,6 +211,14 @@ export async function wakeNAS(options: WakeOptions): Promise<void> {
   const maxAttempts = options.maxAttempts ?? 5
   const attemptTimeoutMs = options.attemptTimeoutMs ?? 30_000
   const wait = options.wait ?? true
+  const onLog = options.onLog
+
+  const report = (level: 'info' | 'warn' | 'error', msg: string): void => {
+    if (level === 'info') logger.info(msg)
+    else if (level === 'warn') logger.warn(msg)
+    else logger.error(msg)
+    onLog?.(level, msg)
+  }
 
   // No-verify mode: either no IP to ping, or caller explicitly asked for fire-and-forget.
   if (!options.ip || !wait) {
@@ -217,19 +228,19 @@ export async function wakeNAS(options: WakeOptions): Promise<void> {
 
   const startedAt = Date.now()
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-    logger.info(`WOL attempt ${attempt}/${maxAttempts} for ${options.ip}`)
+    report('info', `WOL attempt ${attempt}/${maxAttempts} for ${options.ip}, waiting up to ${attemptTimeoutMs / 1000}s for ping reply...`)
     try {
       await sendBurstOnce(mac, options.ip)
     } catch (err) {
-      logger.warn(`WOL attempt ${attempt}/${maxAttempts} burst failed: ${err instanceof Error ? err.message : String(err)}`)
+      report('warn', `WOL attempt ${attempt}/${maxAttempts} burst failed: ${err instanceof Error ? err.message : String(err)}`)
       continue
     }
     if (await pingUntilOnline(options.ip, attemptTimeoutMs)) {
       const elapsed = Math.round((Date.now() - startedAt) / 1000)
-      logger.info(`NAS ${options.ip} online after ${attempt} attempt(s), ${elapsed}s`)
+      report('info', `NAS ${options.ip} online after ${attempt} attempt(s), ${elapsed}s`)
       return
     }
-    logger.warn(`WOL attempt ${attempt}/${maxAttempts} failed — NAS ${options.ip} did not respond within ${attemptTimeoutMs / 1000}s`)
+    report('warn', `WOL attempt ${attempt}/${maxAttempts} failed — NAS ${options.ip} did not respond within ${attemptTimeoutMs / 1000}s`)
   }
   throw new Error(`Wake-on-LAN failed: NAS ${options.ip} did not respond after ${maxAttempts} attempts`)
 }

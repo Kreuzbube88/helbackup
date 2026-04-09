@@ -147,8 +147,11 @@ export class JobExecutionEngine extends EventEmitter {
     void notificationManager.notify({ event: 'backup_started', jobName: this.jobName, timestamp: new Date().toISOString() })
 
     const nasPowerConfigs = this.collectNASPowerConfigs(steps)
+    const powerLog = (level: 'info' | 'warn' | 'error', message: string): void => {
+      this.log(level, 'system', message)
+    }
     for (const cfg of nasPowerConfigs) {
-      await ensureNASOnline(cfg)
+      await ensureNASOnline(cfg, powerLog)
     }
 
     try {
@@ -287,7 +290,7 @@ export class JobExecutionEngine extends EventEmitter {
       throw err
     } finally {
       for (const cfg of nasPowerConfigs) {
-        await shutdownNASIfEnabled(cfg)
+        await shutdownNASIfEnabled(cfg, powerLog)
       }
     }
   }
