@@ -1,6 +1,15 @@
 # Full Server Restore (Disaster Recovery)
 
-## When to Use?
+## When does the button appear?
+
+The **Full Server Restore** button appears on a backup entry only when **all** conditions are met:
+
+- The backup contains **more than one backup type** (e.g. Flash + Appdata)
+- The backup is **not encrypted** — or has already been unlocked
+
+A job that contains only a single step (e.g. Flash Drive only) will **not** show the button. Only the regular "Restore" button is available in that case.
+
+## When to use Full Server Restore?
 
 - Unraid array completely failed
 - All data lost
@@ -9,102 +18,61 @@
 
 ## Prerequisites
 
-- New/restored Unraid server
+- New or restored Unraid server
 - HELBACKUP container running
-- Access to backup target
-- Recovery key (if encrypted)
+- Recovery mode active
+- Recovery key (if backup was encrypted)
 
-## Start Wizard
+## Wizard flow
 
-1. **Navigate:** Recovery → "Full Server Restore"
-2. Wizard opens:
+### Step 1: Select restore components
 
-### Step 1: Select Backup
-
-```
-Target: Local Backups / NAS / Cloud
-Backup: backup_2024-01-15_020000
-Date: January 15, 2024, 02:00
-Size: 45 GB
-Components: Flash, Appdata (12 containers), VMs (2), Databases (3)
-```
-
-### Step 2: Select Components
+The wizard shows the backup types that are **actually present** in the selected backup — enabled and selectable. Types that were not backed up appear disabled with a *(not in backup)* label:
 
 ```
 ✅ Flash Drive (Unraid configuration)
 ✅ Appdata (all containers)
-✅ Virtual Machines
-✅ Docker Images
 ✅ Databases
-☐ System Config (optional)
+☐ Virtual Machines          (not in backup)
+☐ Docker Images             (not in backup)
+☐ System Config             (not in backup)
 ```
 
-### Step 3: Pre-Flight Check
+> **Note:** `Databases` is enabled when `Appdata` is in the backup — database dumps are detected from container configurations.
 
-HELBACKUP checks automatically:
-```
-✅ Target reachable
-✅ Backup complete (SHA-256 verified)
-✅ Sufficient storage (45 GB needed, 500 GB free)
-✅ Unraid array started
-⚠️ Containers running (will be stopped)
-```
+### Step 2: Review restore plan
 
-### Step 4: Dry Run (recommended)
+HELBACKUP generates a plan and shows:
 
-```
-Dry Run: ✅ enabled
-"Start Restore" → Simulation runs...
+- Number of restore items, total size, estimated duration
+- Execution order (grouped by priority)
+- Pre-flight checks:
+  - Sufficient disk space?
+  - Conflicts with running containers?
+  - Other warnings
 
-Would restore:
-- Flash Drive: 245 files
-- Appdata: 12 containers, 23.4 GB
-- VMs: 2 VMs, 18.2 GB
-- Databases: 3 dumps, 1.2 GB
-Total: ~43 GB
-```
-
-### Step 5: Actual Restore
-
-```
-Dry Run: ☐ disabled
-Overwrite existing: ✅
-"Start Restore"
-```
-
-**Restore order (automatic):**
+**Execution order (automatic, by priority):**
 1. Flash Drive (base configuration)
-2. Docker Images
+2. System Config
 3. Databases
-4. Appdata
-5. VMs
+4. Appdata (with dependency detection: reverse proxies and DBs first)
+5. Docker Images
+6. VMs
 
-## Restore Monitoring
+The "Execute Restore" button is disabled if disk space is insufficient.
 
-Live logs during restore:
-```
-[14:23:01] Starting Full Server Restore
-[14:23:02] Restoring Flash Drive...
-[14:23:08] Flash Drive restored (245 files, 6s)
-[14:23:09] Restoring Docker Images (3)...
-[14:35:22] Docker Images restored (3/3, 12m 13s)
-[14:35:23] Restoring Databases...
-[14:37:45] Databases restored (3/3, 2m 22s)
-[14:37:46] Restoring Appdata (12 containers)...
-[15:02:11] Appdata restored (12/12, 24m 25s)
-[15:02:12] Restoring VMs...
-[15:23:55] VMs restored (2/2, 21m 43s)
-[15:23:56] Full Server Restore completed!
-Total time: 61m 55s
-```
+### Step 3: Restore in progress
 
-## After Restore
+After confirmation the restore runs **in the background**. The wizard shows a confirmation screen — follow progress in the History logs.
 
-1. Restart Unraid
-2. Check containers: all started?
-3. Spot-check data
-4. Test services (Nextcloud, Plex, etc.)
+> Restart Unraid after the restore completes.
+
+## After the restore
+
+1. Check history logs (History → last entry)
+2. Restart Unraid
+3. Verify containers: all started?
+4. Spot-check data
 
 ---
 Back: [Recovery Overview](overview.md)

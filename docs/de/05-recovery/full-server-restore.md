@@ -1,5 +1,14 @@
 # Full Server Restore (Disaster Recovery)
 
+## Wann erscheint der Button?
+
+Der Button **Full Server Restore** erscheint bei einem Backup-Eintrag nur dann, wenn **alle** Bedingungen erfüllt sind:
+
+- Das Backup enthält **mehr als einen Backup-Typ** (z.B. Flash + Appdata)
+- Das Backup ist **nicht verschlüsselt** — oder bereits entsperrt
+
+Ein Job der nur einen Step enthält (z.B. nur Flash Drive) zeigt den Button **nicht**. Dort ist nur der normale "Restore"-Button verfügbar.
+
 ## Wann Full Server Restore?
 
 - Unraid-Array komplett ausgefallen
@@ -9,102 +18,61 @@
 
 ## Voraussetzungen
 
-- Neuer/wiederhergestellter Unraid Server
+- Neuer/wiederhergestellter Unraid-Server
 - HELBACKUP Container läuft
-- Zugang zum Backup-Target
-- Recovery Key (wenn verschlüsselt)
+- Recovery-Modus aktiv
+- Recovery Key (wenn Backup verschlüsselt war)
 
-## Wizard starten
+## Wizard-Ablauf
 
-1. **Navigation:** Recovery → "Full Server Restore"
-2. Wizard öffnet sich:
+### Schritt 1: Restore-Komponenten wählen
 
-### Schritt 1: Backup auswählen
-
-```
-Target: Local Backups / NAS / Cloud
-Backup: backup_2024-01-15_020000
-Date: 15. Januar 2024, 02:00 Uhr
-Size: 45 GB
-Components: Flash, Appdata (12 Container), VMs (2), Databases (3)
-```
-
-### Schritt 2: Restore-Komponenten wählen
+Der Wizard zeigt die Backup-Typen, die in dem gewählten Backup **tatsächlich enthalten** sind — aktiv und auswählbar. Typen, die nicht gesichert wurden, erscheinen deaktiviert mit dem Hinweis *(nicht im Backup)*:
 
 ```
 ✅ Flash Drive (Unraid Konfiguration)
 ✅ Appdata (alle Container)
-✅ Virtual Machines
-✅ Docker Images
 ✅ Databases
-☐ System Config (optional)
+☐ Virtual Machines          (nicht im Backup)
+☐ Docker Images             (nicht im Backup)
+☐ System Config             (nicht im Backup)
 ```
 
-### Schritt 3: Pre-Flight Check
+> **Hinweis:** `Databases` ist aktiv, wenn `Appdata` im Backup enthalten ist — Datenbank-Dumps werden aus Container-Konfigurationen erkannt.
 
-HELBACKUP prüft automatisch:
-```
-✅ Target erreichbar
-✅ Backup vollständig (SHA-256 verified)
-✅ Genug Speicher verfügbar (45 GB benötigt, 500 GB frei)
-✅ Unraid Array gestartet
-⚠️ Container laufen bereits (werden gestoppt)
-```
+### Schritt 2: Restore-Plan prüfen
 
-### Schritt 4: Dry Run (empfohlen)
+HELBACKUP generiert einen Plan und zeigt:
 
-```
-Dry Run: ✅ aktiviert
-"Start Restore" → Simulation läuft...
+- Anzahl der Restore-Items, Gesamtgröße, geschätzte Dauer
+- Ausführungsreihenfolge (nach Priorität gruppiert)
+- Pre-Flight-Checks:
+  - Verfügbarer Speicher ausreichend?
+  - Konflikte mit laufenden Containern?
+  - Sonstige Warnungen
 
-Would restore:
-- Flash Drive: 245 files
-- Appdata: 12 containers, 23.4 GB
-- VMs: 2 VMs, 18.2 GB
-- Databases: 3 dumps, 1.2 GB
-Total: ~43 GB
-```
-
-### Schritt 5: Echter Restore
-
-```
-Dry Run: ☐ deaktiviert
-Overwrite existing: ✅
-"Start Restore"
-```
-
-**Restore-Reihenfolge (automatisch):**
+**Ausführungsreihenfolge (automatisch nach Priorität):**
 1. Flash Drive (Basis-Konfiguration)
-2. Docker Images
+2. System Config
 3. Databases
-4. Appdata
-5. VMs
+4. Appdata (inkl. Abhängigkeits-Erkennung: Reverse Proxies und DBs zuerst)
+5. Docker Images
+6. VMs
 
-## Restore-Monitoring
+Der "Restore ausführen"-Button ist deaktiviert, solange der Speicherplatz nicht ausreicht.
 
-Live-Logs während Restore:
-```
-[14:23:01] Starting Full Server Restore
-[14:23:02] Restoring Flash Drive...
-[14:23:08] Flash Drive restored (245 files, 6s)
-[14:23:09] Restoring Docker Images (3)...
-[14:35:22] Docker Images restored (3/3, 12m 13s)
-[14:35:23] Restoring Databases...
-[14:37:45] Databases restored (3/3, 2m 22s)
-[14:37:46] Restoring Appdata (12 containers)...
-[15:02:11] Appdata restored (12/12, 24m 25s)
-[15:02:12] Restoring VMs...
-[15:23:55] VMs restored (2/2, 21m 43s)
-[15:23:56] Full Server Restore completed!
-Total time: 61m 55s
-```
+### Schritt 3: Restore läuft
+
+Nach Bestätigung wird der Restore **im Hintergrund** gestartet. Der Wizard zeigt eine Bestätigungs-Seite mit dem Hinweis, die Logs in der History zu verfolgen.
+
+> Unraid nach abgeschlossenem Restore neu starten.
 
 ## Nach dem Restore
 
-1. Unraid neu starten
-2. Container prüfen: Alle gestartet?
-3. Daten prüfen: Stichproben testen
-4. Services testen (Nextcloud, Plex, etc.)
+1. History-Logs prüfen (Verlauf → letzter Eintrag)
+2. Unraid neu starten
+3. Container prüfen: Alle gestartet?
+4. Daten stichprobenartig testen
 
 ---
 Zurück: [Recovery Overview](overview.md)
