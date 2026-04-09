@@ -39,7 +39,7 @@ graph TB
     API --> ENG
     SCH -->|cron tick| ENG
     ENG --> PRE
-    PRE -->|mdState / parity / df| Unraid Host
+    PRE -->|parity / df| Unraid Host
     ENG --> Steps
     Steps -->|rsync| LOCAL
     Steps -->|rsync + SSH| NAS
@@ -61,7 +61,7 @@ graph TB
 | **Fastify API** | REST endpoints, JWT auth, rate limiting, SSE |
 | **Scheduler** | Cron-based job dispatch, catch-up on restart, concurrency guard |
 | **Execution Engine** | Step sequencing, retry, pre-flight, manifest, checksums |
-| **Pre-flight** | Array online, no parity/mover, target free space |
+| **Pre-flight** | No parity/mover running, target free space |
 | **Verification** | SHA-256 checksums before + after transfer (local and remote via SSH) |
 | **Encryption** | AES-256-GCM for credentials (master key from JWT_SECRET), GPG for backup archives |
 | **SQLite** | Jobs, targets, history, logs, settings — WAL mode, no ORM |

@@ -14,8 +14,8 @@ export interface PreflightResult {
 const MIN_FREE_BYTES = 500 * 1024 * 1024
 
 /**
- * Run Unraid pre-flight checks before a backup job starts.
- * Checks: array online, no parity/mover running, local-target free-space.
+ * Run pre-flight checks before a backup job starts.
+ * Checks: no parity/mover running, local-target free-space.
  *
  * @param localTargetPaths  Host-side paths of local backup destinations.
  *                          Each is checked for a minimum of 500 MB free space.
@@ -27,7 +27,6 @@ export async function runPreflight(
   const errors: string[] = []
   const warnings: string[] = []
 
-  await checkArrayState(errors, warnings)
   await checkParityOrMover(errors, warnings)
   for (const p of localTargetPaths) {
     await checkTargetSpace(p, MIN_FREE_BYTES, errors, warnings)
@@ -39,29 +38,6 @@ export async function runPreflight(
 // ---------------------------------------------------------------------------
 // Individual checks
 // ---------------------------------------------------------------------------
-
-async function checkArrayState(errors: string[], warnings: string[]): Promise<void> {
-  // /unraid/boot is the container-internal mount of /boot
-  // mdState is persisted in /boot/config/disk.cfg on running arrays
-  try {
-    const { stdout } = await execFileAsync('sh', [
-      '-c',
-      // mdcmd status is available on Unraid; fall back to reading disk.cfg
-      'mdcmd status 2>/dev/null | grep "^mdState=" || grep "^mdState=" /unraid/boot/config/disk.cfg 2>/dev/null || echo "mdState=UNKNOWN"',
-    ])
-    const match = /mdState=(\w+)/.exec(stdout.trim())
-    const mdState = match ? match[1] : 'UNKNOWN'
-    if (mdState !== 'STARTED') {
-      errors.push(
-        `Unraid array is not started (mdState=${mdState}). Start the array before running a backup.`,
-      )
-    }
-  } catch {
-    // If the command fails entirely we cannot determine state — warn, not error,
-    // because the check may run outside an Unraid context (dev/test).
-    warnings.push('Could not determine Unraid array state. Proceeding without array check.')
-  }
-}
 
 async function checkParityOrMover(errors: string[], warnings: string[]): Promise<void> {
   // /proc/mdstat on the host is visible inside the container via the exec approach,

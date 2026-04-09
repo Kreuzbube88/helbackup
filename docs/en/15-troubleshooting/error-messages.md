@@ -10,7 +10,6 @@
 | `Connection refused` | NAS/Cloud unreachable | Check network, SSH key |
 | `Authentication failed` | Wrong password/key | Check credentials |
 | `Parity check is running` | Parity running | Wait or adjust schedule |
-| `Array is not started` | Array offline | Start Unraid array |
 
 ## API Errors
 
