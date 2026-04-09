@@ -21,7 +21,12 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
       - /boot:/unraid/boot
       - /mnt/user:/unraid/user
-      # Optional — required for VM backups:
-      # - /mnt/cache:/mnt/cache:ro
-      # - /etc/libvirt:/unraid/libvirt:ro
-      # - /var/run/libvirt/libvirt-sock:/var/run/libvirt/libvirt-sock
+      - /mnt/cache:/mnt/cache:ro
+      - /etc/libvirt:/unraid/libvirt:ro
+      - /var/run/libvirt/libvirt-sock:/var/run/libvirt/libvirt-sock
+    networks:
+      - br0
+
+networks:
+  br0:
+    external: true

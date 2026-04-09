@@ -33,7 +33,7 @@ export async function nasRoutes(app: FastifyInstance): Promise<void> {
     { preHandler: [app.authenticate] },
     async (request, reply) => {
       try {
-        await wakeNAS({ mac: request.body.mac, ip: request.body.ip, timeout: 60000 })
+        await wakeNAS({ mac: request.body.mac, ip: request.body.ip, timeout: 60000, wait: false })
         return reply.send({ success: true })
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : String(err)

@@ -3,7 +3,7 @@
   <Name>HELBACKUP</Name>
   <Repository>ghcr.io/kreuzbube88/helbackup:latest</Repository>
   <Registry>https://ghcr.io/kreuzbube88/helbackup</Registry>
-  <Network>bridge</Network>
+  <Network>br0</Network>
   <MyIP/>
   <Shell>sh</Shell>
   <Privileged>false</Privileged>
@@ -87,20 +87,20 @@ This container has write access to /boot and /mnt/user for automated restore cap
     Type="Path" Display="always" Required="true" Mask="false">/mnt/user</Config>
   
   <Config Name="Cache Drive" Target="/mnt/cache" Default="/mnt/cache" Mode="ro"
-    Description="Unraid cache drive (read-only) - Required if VM disks are stored on cache (e.g. /mnt/cache/domains/)"
-    Type="Path" Display="advanced" Required="false" Mask="false">/mnt/cache</Config>
+    Description="Unraid cache drive (read-only). Required if app data or VM disks are stored on cache (/mnt/cache/appdata/, /mnt/cache/domains/). Remove if cache is not used."
+    Type="Path" Display="always" Required="true" Mask="false">/mnt/cache</Config>
 
   <Config Name="Libvirt Configs" Target="/unraid/libvirt" Default="/etc/libvirt" Mode="ro"
-    Description="VM configurations (read-only) - For VM backup"
-    Type="Path" Display="advanced" Required="false" Mask="false">/etc/libvirt</Config>
+    Description="VM configurations (read-only). Required for VM backup and restore. Remove if you don't use virtual machines."
+    Type="Path" Display="always" Required="true" Mask="false">/etc/libvirt</Config>
 
   <Config Name="Libvirt Socket" Target="/var/run/libvirt/libvirt-sock" Default="/var/run/libvirt/libvirt-sock" Mode="rw"
-    Description="Libvirt Unix socket - Required for VM stop/start during backups"
-    Type="Path" Display="advanced" Required="false" Mask="false">/var/run/libvirt/libvirt-sock</Config>
+    Description="Libvirt Unix socket. Required for VM live snapshot support during backup. Only available when libvirt is running on the host — remove if not using VMs."
+    Type="Path" Display="always" Required="false" Mask="false">/var/run/libvirt/libvirt-sock</Config>
 
   <Config Name="LIBVIRT_DEFAULT_URI" Target="LIBVIRT_DEFAULT_URI" Default="qemu:///system" Mode=""
-    Description="Libvirt connection URI - do not change unless you know what you are doing"
-    Type="Variable" Display="advanced" Required="false" Mask="false">qemu:///system</Config>
+    Description="Libvirt connection URI for VM management. Do not change unless your libvirt setup uses a different URI."
+    Type="Variable" Display="always" Required="false" Mask="false">qemu:///system</Config>
 
   <Config Name="JWT_SECRET" Target="JWT_SECRET" Default="" Mode=""
     Description="Required: Random secret for authentication. Generate with: openssl rand -hex 32"

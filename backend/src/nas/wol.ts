@@ -6,6 +6,7 @@ export interface WakeOptions {
   mac: string
   ip?: string
   timeout?: number
+  wait?: boolean  // default true; false = send packet only, don't wait for NAS to boot
 }
 
 function getBroadcastAddress(ip: string): string {
@@ -32,7 +33,7 @@ export async function wakeNAS(options: WakeOptions): Promise<void> {
     })
   })
 
-  if (options.ip) {
+  if (options.ip && (options.wait ?? true)) {
     await waitForHost(options.ip, timeout)
     logger.info(`NAS ${options.ip} is now online`)
   }
