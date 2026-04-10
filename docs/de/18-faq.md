@@ -92,7 +92,7 @@ A: Nein, aber WebUI ist responsive.
 A: Nein, komplett kostenlos und Open Source!
 
 **Q: Meine Appdata liegt nicht auf `/mnt/user/appdata` — was tun?**  
-A: Den Pfad als Volume-Mount in `docker-compose.yml` eintragen (z. B. `/mnt/cache/appdata:/unraid/cache`). Danach unter **Einstellungen → Backup → Appdata-Quellpfad** den neuen Pfad eintragen. Details: [Docker Erweiterte Konfiguration](13-advanced/docker-advanced.md)
+A: Liegt Appdata auf dem Cache-Laufwerk (`/mnt/cache/appdata`): kein Mount nötig, das Cache-Laufwerk ist bereits eingebunden. Im Datei-Browser auf **"Cache-Laufwerk"** klicken und `appdata` auswählen. Liegt Appdata auf einem anderen Pool: den Pfad als Volume-Mount in `docker-compose.yml` eintragen. Details: [Docker Erweiterte Konfiguration](13-advanced/docker-advanced.md)
 
 ---
 *Frage nicht dabei? [Issue öffnen](https://github.com/Kreuzbube88/helbackup/issues)*

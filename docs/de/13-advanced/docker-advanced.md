@@ -49,10 +49,23 @@ Wenn "all appdata containers" aktiviert: HELBACKUP stoppt alle Container die App
 ## Benutzerdefinierte Volume-Mounts für Appdata
 
 Standardmäßig erwartet HELBACKUP Appdata unter `/unraid/user/appdata`.
-Liegt Appdata auf einem anderen Pool (z. B. `/mnt/cache/appdata` oder `/mnt/ssd/dockers`),
-muss das Verzeichnis als zusätzliches Volume in `docker-compose.yml` eingebunden werden.
 
-**Beispiel — docker-compose.yml:**
+### Appdata auf dem Cache-Laufwerk (häufigster Fall)
+
+Bei vielen Unraid-Installationen liegt Appdata auf dem Cache-Laufwerk (`/mnt/cache/appdata`).
+Das Cache-Laufwerk ist in HELBACKUP bereits standardmäßig als `/mnt/cache` eingebunden.
+
+Im **Datei-Browser** (Einstellungen → Backup → Appdata-Quellpfad → Durchsuchen) gibt es
+einen **Schnellzugriff-Button "Cache-Laufwerk"** der direkt zu `/mnt/cache` navigiert —
+dort ist `appdata` ohne weitere Konfiguration erreichbar und auswählbar.
+
+Danach in HELBACKUP: **Einstellungen → Backup → Appdata-Quellpfad** auf `/mnt/cache/appdata` setzen.
+
+### Appdata auf einem anderen Pool (z. B. SSD-Pool)
+
+Liegt Appdata auf einem weiteren Pool (z. B. `/mnt/ssd/dockers`), muss der Pfad zusätzlich
+in `docker-compose.yml` eingebunden werden:
+
 ```yaml
 volumes:
   - /mnt/user/appdata/helbackup:/app/config

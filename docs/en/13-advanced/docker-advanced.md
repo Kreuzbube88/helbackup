@@ -49,17 +49,30 @@ When "all appdata containers" is enabled: HELBACKUP stops all containers writing
 ## Custom Volume Mounts for Appdata
 
 By default, HELBACKUP expects Appdata at `/unraid/user/appdata`.
-If Appdata is on a different pool (e.g. `/mnt/cache/appdata` or `/mnt/ssd/dockers`),
-add an additional volume mount in `docker-compose.yml`.
 
-**Example — docker-compose.yml:**
+### Appdata on the cache drive (most common case)
+
+On many Unraid installations, Appdata lives on the cache drive (`/mnt/cache/appdata`).
+The cache drive is already mounted in HELBACKUP by default at `/mnt/cache`.
+
+The **file browser** (Settings → Backup → Appdata Source Path → Browse) has a
+**"Cache Drive" quick-access button** that jumps directly to `/mnt/cache` —
+`appdata` is reachable and selectable there without any extra configuration.
+
+Then in HELBACKUP: set **Settings → Backup → Appdata Source Path** to `/mnt/cache/appdata`.
+
+### Appdata on a different pool (e.g. SSD pool)
+
+If Appdata is on another pool (e.g. `/mnt/ssd/dockers`), add it as an additional volume
+mount in `docker-compose.yml`:
+
 ```yaml
 volumes:
   - /mnt/user/appdata/helbackup:/app/config
   - /mnt/ssd/dockers:/unraid/ssd      # ← mount your own pool
 ```
 
-Then in HELBACKUP: **Settings → Backup → Appdata Source Path**, set it to `/unraid/ssd`.
+Then in HELBACKUP: set **Settings → Backup → Appdata Source Path** to `/unraid/ssd`.
 
 **Important:**
 - HELBACKUP does not modify `docker-compose.yml` or `helbackup.xml` itself

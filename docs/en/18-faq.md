@@ -92,7 +92,7 @@ A: No, but the WebUI is responsive.
 A: No, completely free and open source!
 
 **Q: My Appdata is not at `/mnt/user/appdata` — what do I do?**  
-A: Add the path as a volume mount in `docker-compose.yml` (e.g. `/mnt/cache/appdata:/unraid/cache`). Then set **Settings → Backup → Appdata Source Path** to the new path. Details: [Docker Advanced Configuration](13-advanced/docker-advanced.md)
+A: If Appdata is on the cache drive (`/mnt/cache/appdata`): no extra mount needed, the cache drive is already available. In the file browser click **"Cache Drive"** and select `appdata`. If Appdata is on a different pool: add the path as a volume mount in `docker-compose.yml`. Details: [Docker Advanced Configuration](13-advanced/docker-advanced.md)
 
 ---
 *Question not listed? [Open an issue](https://github.com/Kreuzbube88/helbackup/issues)*
