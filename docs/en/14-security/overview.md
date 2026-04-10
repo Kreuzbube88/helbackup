@@ -49,11 +49,11 @@ specific purpose and minimum required access:
 | Host path | Container path | Mode | Purpose | Required for |
 |-----------|----------------|------|---------|--------------|
 | `/boot` | `/unraid/boot` | rw | Flash drive read + restore | Flash backup/restore |
-| `/mnt/user` | `/unraid/user` | rw | Appdata + VM image read + restore | Appdata, VM, custom path backups/restores |
+| `/mnt/user` | `/unraid/user` | rw | Array share read + restore | Appdata, VM, custom path backups/restores |
+| `/mnt/cache` | `/unraid/cache` | rw | Cache pool read + restore (Appdata/VM disks) | Appdata, VM backups/restores |
 | `/var/run/docker.sock` | `/var/run/docker.sock` | rw | Docker API (container stop/start, image export) | Appdata, Docker image backups |
-| `/etc/libvirt` | `/unraid/libvirt` | ro | VM XML definitions | VM backups (optional) |
+| `/etc/libvirt` | `/unraid/libvirt` | rw | VM XML definitions + restore | VM backups (optional) |
 | `/var/run/libvirt/libvirt-sock` | same | rw | libvirt API (snapshot, dumpxml) | VM backups (optional) |
-| `/mnt/cache` | `/mnt/cache` | ro | VM disk image read from cache pool | VM backups (optional) |
 
 If you don't need a given backup type, omit its mount — the related job types simply
 won't be available in the UI. The Docker socket is the only mount that grants any kind

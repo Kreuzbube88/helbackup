@@ -21,9 +21,11 @@ Backs up Unraid boot configuration from `/boot`.
 - Config export as JSON
 - Fast (~5-30 seconds)
 
+**Source path:** Configurable under **Settings → Backup → Flash Source Path** (default: `/unraid/boot`).
+
 ## Appdata
 
-Backs up Docker container configurations from `/mnt/user/appdata`.
+Backs up Docker container configurations from the configured source path.
 
 **Options:**
 ```
@@ -41,7 +43,7 @@ Database Dumps: ✅ (optional — dumps databases before stopping containers)
 - `*/cache/*`
 - `*/*.log`
 
-**Source path:** Default is `/mnt/user/appdata`. Configurable under **Settings → Backup → Appdata Source Path**. For paths outside `/unraid/user`, add the corresponding volume mount in `docker-compose.yml` → [Docker Advanced Configuration](../13-advanced/docker-advanced.md).
+**Source path:** Configurable under **Settings → Backup → Appdata Source Path** (default: `/unraid/cache/appdata`). For paths outside the pre-mounted volumes, add the corresponding volume mount in `docker-compose.yml` → [Docker Advanced Configuration](../13-advanced/docker-advanced.md).
 
 **Docker Config Export:** All container templates exported as JSON.
 
@@ -51,13 +53,15 @@ Details: [Database Backup](backup-databases.md)
 
 ## Virtual Machines (VMs)
 
-Backs up VM disk images from `/mnt/user/domains`.
+Backs up VM disk images from the configured source path.
 
 **Process:**
 1. Libvirt snapshot (if VM is running)
 2. Rsync of vDisk files
 3. XML export of VM configuration
 4. Delete snapshot
+
+**Source path:** Configurable under **Settings → Backup → VMs Source Path** (default: `/unraid/cache/domains`).
 
 **Important:** VMs should be stopped for consistent backup!
 
@@ -87,7 +91,7 @@ Backs up arbitrary paths not covered by the standard backup types.
 
 **Configuration:**
 ```
-Source Path: /mnt/host/user/data/my-folder
+Source Path: /unraid/user/data/my-folder
 Target: Local Backups
 Exclude Patterns: *.tmp, *.log, cache/
 Encryption: ☐ (optional)
@@ -98,7 +102,7 @@ Encryption: ☐ (optional)
 2. Rsync to target: `custom/<foldername>/<YYYY-MM-DD>/`
 3. Optional: GPG encryption (tar.gz → .gpg)
 
-> **Note:** The path must be reachable inside the container. Use `/mnt/host/user/...` for Unraid user share paths.
+> **Note:** The path must be reachable inside the container. Use `/unraid/user/...` for Unraid user share paths or `/unraid/cache/...` for cache pool paths.
 
 ---
 Back: [Creating Jobs](creating-jobs.md)

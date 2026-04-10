@@ -91,8 +91,8 @@ A: No, but the WebUI is responsive.
 **Q: Does HELBACKUP cost money?**  
 A: No, completely free and open source!
 
-**Q: My Appdata is not at `/mnt/user/appdata` — what do I do?**  
-A: If Appdata is on the cache drive (`/mnt/cache/appdata`): no extra mount needed, the cache drive is already available. In the file browser click **"Cache Drive"** and select `appdata`. If Appdata is on a different pool: add the path as a volume mount in `docker-compose.yml`. Details: [Docker Advanced Configuration](13-advanced/docker-advanced.md)
+**Q: My Appdata is not at the default path — what do I do?**  
+A: The default is `/unraid/cache/appdata` (cache pool, already mounted). If Appdata is on the array instead: set **Settings → Backup → Appdata Source Path** to `/unraid/user/appdata`. If Appdata is on a different pool: add it as a volume mount in `docker-compose.yml`. Details: [Docker Advanced Configuration](13-advanced/docker-advanced.md)
 
 ---
 *Question not listed? [Open an issue](https://github.com/Kreuzbube88/helbackup/issues)*

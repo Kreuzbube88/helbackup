@@ -21,9 +21,11 @@ Sichert Unraid Boot-Konfiguration von `/boot`.
 - Config-Export als JSON
 - Schnell (~5-30 Sekunden)
 
+**Quellpfad:** Konfigurierbar unter **Einstellungen → Backup → Flash-Quellpfad** (Standard: `/unraid/boot`).
+
 ## Appdata
 
-Sichert Docker Container-Konfigurationen von `/mnt/user/appdata`.
+Sichert Docker Container-Konfigurationen vom konfigurierten Quellpfad.
 
 **Optionen:**
 ```
@@ -31,6 +33,7 @@ Stop containers before backup: ✅ (empfohlen!)
 Stop Delay: 10  (Sekunden Wartezeit nach Container-Stop)
 Container restart after: ✅
 Restart Delay: 5  (Sekunden Wartezeit nach Container-Restart)
+Database Dumps: ✅ (optional — Datenbanken vor dem Stoppen sichern)
 ```
 
 `stopDelay` und `restartDelay` sind konfigurierbar (Standard: 10s / 5s). Auf `0` setzen um den Sleep zu überspringen — für schnelle Container ok, für Datenbank-Container erhöhen.
@@ -40,19 +43,25 @@ Restart Delay: 5  (Sekunden Wartezeit nach Container-Restart)
 - `*/cache/*`
 - `*/*.log`
 
-**Quellpfad:** Standard ist `/mnt/user/appdata`. Kann unter **Einstellungen → Backup → Appdata-Quellpfad** geändert werden. Für Pfade außerhalb von `/unraid/user` muss ein entsprechendes Volume-Mount in `docker-compose.yml` eingetragen werden → [Docker Erweiterte Konfiguration](../13-advanced/docker-advanced.md).
+**Quellpfad:** Konfigurierbar unter **Einstellungen → Backup → Appdata-Quellpfad** (Standard: `/unraid/cache/appdata`). Für Pfade außerhalb der vorgemounteten Volumes muss ein entsprechendes Volume-Mount in `docker-compose.yml` eingetragen werden → [Docker Erweiterte Konfiguration](../13-advanced/docker-advanced.md).
 
 **Docker Config Export:** Alle Container-Templates werden als JSON exportiert.
 
+**Datenbankdumps (optional):** Bei Aktivierung erkennt HELBACKUP Datenbank-Container (MariaDB, PostgreSQL, MongoDB) und sichert diese vor dem Stoppen. Unterstützte Typen: MariaDB/MySQL, PostgreSQL, MongoDB, Redis. Aktivierung über "Database Dumps" Checkbox in der Appdata-Step-Konfiguration.
+
+Details: [Datenbank-Backup](backup-databases.md)
+
 ## Virtual Machines (VMs)
 
-Sichert VM-Disk-Images von `/mnt/user/domains`.
+Sichert VM-Disk-Images vom konfigurierten Quellpfad.
 
 **Ablauf:**
 1. Libvirt Snapshot (wenn VM läuft)
 2. Rsync der vDisk-Dateien
 3. XML-Export der VM-Konfiguration
 4. Snapshot löschen
+
+**Quellpfad:** Konfigurierbar unter **Einstellungen → Backup → VMs-Quellpfad** (Standard: `/unraid/cache/domains`).
 
 **Wichtig:** VMs sollten gestoppt sein für konsistentes Backup!
 
@@ -87,15 +96,6 @@ Unterstützte Typen:
 - **MongoDB:** `mongodump`
 - **SQLite:** Datei-Kopie
 
-Konfiguration:
-```
-Database Type: MariaDB
-Container: mariadb
-Database: nextcloud
-Username: root
-Password: [verschlüsselt gespeichert]
-```
-
 Details: [Datenbank-Backup](backup-databases.md)
 
 ## Custom Paths
@@ -104,7 +104,7 @@ Sichert beliebige Pfade, die von den Standard-Typen nicht abgedeckt werden.
 
 **Konfiguration:**
 ```
-Source Path: /mnt/host/user/data/mein-ordner
+Source Path: /unraid/user/data/mein-ordner
 Target: Local Backups
 Exclude Patterns: *.tmp, *.log, cache/
 Encryption: ☐ (optional)
@@ -115,7 +115,7 @@ Encryption: ☐ (optional)
 2. Rsync in Target: `custom/<ordnername>/<YYYY-MM-DD>/`
 3. Optional: GPG-Verschlüsselung (tar.gz → .gpg)
 
-> **Hinweis:** Der Pfad muss im Container erreichbar sein. Unraid-Pfade über `/mnt/host/user/...` angeben.
+> **Hinweis:** Der Pfad muss im Container erreichbar sein. Unraid-Pfade über `/unraid/user/...` oder `/unraid/cache/...` angeben.
 
 ---
 Zurück: [Jobs erstellen](creating-jobs.md)

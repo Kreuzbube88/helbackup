@@ -49,11 +49,11 @@ hat einen klar definierten Zweck und benötigt nur den minimalen Zugriff:
 | Host-Pfad | Container-Pfad | Modus | Zweck | Benötigt für |
 |-----------|----------------|-------|-------|--------------|
 | `/boot` | `/unraid/boot` | rw | Flash-Drive lesen + restore | Flash-Backup/Restore |
-| `/mnt/user` | `/unraid/user` | rw | Appdata + VM-Images lesen + restore | Appdata, VM, Custom-Path Backups/Restores |
+| `/mnt/user` | `/unraid/user` | rw | Array-Share lesen + restore | Appdata, VM, Custom-Path Backups/Restores |
+| `/mnt/cache` | `/unraid/cache` | rw | Cache-Pool lesen + restore (Appdata/VM-Disks) | Appdata, VM-Backups/Restores |
 | `/var/run/docker.sock` | `/var/run/docker.sock` | rw | Docker-API (Container stop/start, Image-Export) | Appdata, Docker-Image-Backups |
-| `/etc/libvirt` | `/unraid/libvirt` | ro | VM-XML-Definitionen | VM-Backups (optional) |
+| `/etc/libvirt` | `/unraid/libvirt` | rw | VM-XML-Definitionen + restore | VM-Backups (optional) |
 | `/var/run/libvirt/libvirt-sock` | gleich | rw | libvirt-API (Snapshot, dumpxml) | VM-Backups (optional) |
-| `/mnt/cache` | `/mnt/cache` | ro | VM-Disk-Images vom Cache-Pool | VM-Backups (optional) |
 
 Wird ein Backup-Typ nicht benötigt, kann der zugehörige Mount entfernt werden — die
 entsprechenden Job-Typen sind dann in der UI nicht verfügbar. Der Docker-Socket ist der

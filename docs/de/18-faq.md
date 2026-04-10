@@ -91,8 +91,8 @@ A: Nein, aber WebUI ist responsive.
 **Q: Kostet HELBACKUP Geld?**  
 A: Nein, komplett kostenlos und Open Source!
 
-**Q: Meine Appdata liegt nicht auf `/mnt/user/appdata` — was tun?**  
-A: Liegt Appdata auf dem Cache-Laufwerk (`/mnt/cache/appdata`): kein Mount nötig, das Cache-Laufwerk ist bereits eingebunden. Im Datei-Browser auf **"Cache-Laufwerk"** klicken und `appdata` auswählen. Liegt Appdata auf einem anderen Pool: den Pfad als Volume-Mount in `docker-compose.yml` eintragen. Details: [Docker Erweiterte Konfiguration](13-advanced/docker-advanced.md)
+**Q: Meine Appdata liegt nicht am Standard-Pfad — was tun?**  
+A: Standard ist `/unraid/cache/appdata` (Cache-Pool, bereits eingebunden). Liegt Appdata auf dem Array: **Einstellungen → Backup → Appdata-Quellpfad** auf `/unraid/user/appdata` setzen. Liegt Appdata auf einem anderen Pool: den Pfad als Volume-Mount in `docker-compose.yml` eintragen. Details: [Docker Erweiterte Konfiguration](13-advanced/docker-advanced.md)
 
 ---
 *Frage nicht dabei? [Issue öffnen](https://github.com/Kreuzbube88/helbackup/issues)*

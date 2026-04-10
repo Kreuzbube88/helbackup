@@ -19,21 +19,22 @@
 
 **Erforderliche Pfade:**
 
-| Container Path | Host Path | Zweck |
-|---|---|---|
-| `/app/config` | `/mnt/user/appdata/helbackup/config` | Konfiguration |
-| `/app/data` | `/mnt/user/appdata/helbackup/data` | Datenbank |
-| `/app/logs` | `/mnt/user/appdata/helbackup/logs` | Logs |
-| `/var/run/docker.sock` | `/var/run/docker.sock` | Docker API |
-| `/unraid/boot` | `/boot` | Flash Drive Backup |
-| `/mnt/host/user` | `/mnt/user` | Appdata & Restore |
+| Container Path | Host Path | Modus | Zweck |
+|---|---|---|---|
+| `/app/config` | `/mnt/user/appdata/helbackup/config` | rw | Konfiguration |
+| `/app/data` | `/mnt/user/appdata/helbackup/data` | rw | Datenbank |
+| `/app/logs` | `/mnt/user/appdata/helbackup/logs` | rw | Logs |
+| `/var/run/docker.sock` | `/var/run/docker.sock` | rw | Docker API |
+| `/unraid/boot` | `/boot` | rw | Flash-Drive Backup + Restore |
+| `/unraid/user` | `/mnt/user` | rw | Array-Share Zugriff + Restore |
+| `/unraid/cache` | `/mnt/cache` | rw | Cache-Pool Zugriff + Restore |
 
 **Optional — nur für VM-Backups:**
 
-| Container Path | Host Path |
-|---|---|
-| `/unraid/libvirt` | `/etc/libvirt` (Read-Only) |
-| `/var/run/libvirt/libvirt-sock` | `/var/run/libvirt/libvirt-sock` |
+| Container Path | Host Path | Modus |
+|---|---|---|
+| `/unraid/libvirt` | `/etc/libvirt` | rw |
+| `/var/run/libvirt/libvirt-sock` | `/var/run/libvirt/libvirt-sock` | rw |
 
 > **Hinweis:** `privileged: false` — kein privilegierter Container notwendig.
 
@@ -84,11 +85,17 @@ services:
       - /mnt/user/appdata/helbackup/logs:/app/logs
       - /var/run/docker.sock:/var/run/docker.sock
       - /boot:/unraid/boot
-      - /mnt/user:/mnt/host/user
+      - /mnt/user:/unraid/user
+      - /mnt/cache:/unraid/cache
       # Optional — nur für VM-Backups:
-      # - /mnt/cache:/mnt/cache:ro
-      # - /etc/libvirt:/unraid/libvirt:ro
+      # - /etc/libvirt:/unraid/libvirt
       # - /var/run/libvirt/libvirt-sock:/var/run/libvirt/libvirt-sock
+    networks:
+      - br0
+
+networks:
+  br0:
+    external: true
 ```
 
 ```bash
