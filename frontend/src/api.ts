@@ -297,6 +297,11 @@ export const api = {
     }>('POST', '/settings', data),
   },
 
+  mountCheck: () => request<{
+    ok: boolean
+    issues: Array<{ containerPath: string; required: string }>
+  }>('GET', '/mount-check'),
+
   fs: {
     browse: (p: string) => request<{
       path: string

@@ -7,6 +7,7 @@
 import { useEffect, useState } from 'react'
 import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { TriangleAlert } from 'lucide-react'
 import { useStore } from './store/useStore'
 import { useUiStore } from './store/useUiStore'
 import { api } from './api'
@@ -29,9 +30,15 @@ import { OnboardingTour, isOnboardingDone } from './components/onboarding/Onboar
 import { FirstBackupWizard } from './components/onboarding/FirstBackupWizard'
 
 function ProtectedLayout() {
+  const { t } = useTranslation('common')
   const { isAuthenticated, setAuth, logout } = useStore()
   const [showOnboarding, setShowOnboarding] = useState(false)
   const [showFirstWizard, setShowFirstWizard] = useState(false)
+  const [mountIssues, setMountIssues] = useState<Array<{ containerPath: string; required: string }>>([])
+
+  useEffect(() => {
+    api.mountCheck().then(r => { if (!r.ok) setMountIssues(r.issues) }).catch(() => {})
+  }, [])
 
   useEffect(() => {
     if (!isAuthenticated) return
@@ -54,6 +61,25 @@ function ProtectedLayout() {
   return (
     <div className="h-full flex flex-col">
       <Header />
+      {mountIssues.length > 0 && (
+        <div className="flex flex-col gap-1.5 px-4 py-3 border-b border-[var(--status-warning)] bg-[var(--status-warning)]/10 text-[var(--status-warning)] text-xs">
+          <div className="flex items-start gap-2">
+            <TriangleAlert size={14} className="shrink-0 mt-0.5" />
+            <div className="flex flex-col gap-0.5">
+              <span className="font-semibold">{t('mount_warning.title')}</span>
+              <span className="text-[var(--text-secondary)]">{t('mount_warning.description')}</span>
+            </div>
+          </div>
+          <div className="flex flex-wrap gap-x-6 gap-y-0.5 pl-5">
+            {mountIssues.map(issue => (
+              <span key={issue.containerPath} className="font-mono">
+                <span className="text-[var(--text-muted)]">{t('mount_warning.required')} </span>
+                {issue.required}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
       <div className="flex flex-1 overflow-hidden">
         <Sidebar />
         <main className="flex-1 overflow-auto flex">

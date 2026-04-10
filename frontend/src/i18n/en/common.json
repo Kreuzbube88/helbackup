@@ -528,5 +528,11 @@
     "confirm_cleanup_title": "Confirm cleanup",
     "confirm_cleanup_message": "Delete {{count}} backups and free {{space}} GB?",
     "cleanup_success": "Cleanup completed successfully"
+  },
+
+  "mount_warning": {
+    "title": "Missing container mounts detected",
+    "description": "HELBACKUP cannot create or restore backups under these conditions. Add the following volume mounts and restart the container (docker compose up -d):",
+    "required": "Required:"
   }
 }

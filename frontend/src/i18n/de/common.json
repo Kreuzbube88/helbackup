@@ -528,5 +528,11 @@
     "confirm_cleanup_title": "Cleanup bestätigen",
     "confirm_cleanup_message": "{{count}} Backups löschen und {{space}} GB freigeben?",
     "cleanup_success": "Cleanup erfolgreich abgeschlossen"
+  },
+
+  "mount_warning": {
+    "title": "Fehlende Container-Mounts erkannt",
+    "description": "HELBACKUP kann unter diesen Bedingungen keine Backups erstellen oder wiederherstellen. Folgende Volume-Mounts ergänzen und Container neu starten (docker compose up -d):",
+    "required": "Erforderlich:"
   }
 }

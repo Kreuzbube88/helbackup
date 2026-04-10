@@ -1,6 +1,7 @@
-import { useState, type FormEvent } from 'react'
+import { useState, useEffect, type FormEvent } from 'react'
 import { Navigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { TriangleAlert } from 'lucide-react'
 import { useStore } from '../store/useStore'
 import { api, ApiError } from '../api'
 import { Input } from '../components/common/Input'
@@ -9,9 +10,11 @@ import { useToast } from '../components/common/Toast'
 
 export function Login() {
   const { t } = useTranslation('auth')
+  const { t: tc } = useTranslation('common')
   const { isAuthenticated, setAuth } = useStore()
   const { toast } = useToast()
 
+  const [mountIssues, setMountIssues] = useState<Array<{ containerPath: string; required: string }>>([])
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [rememberMe, setRememberMe] = useState(false)
@@ -25,6 +28,10 @@ export function Login() {
   const [recoveryLoading, setRecoveryLoading] = useState(false)
   const [recoveryError, setRecoveryError] = useState('')
   const [recoverySuccess, setRecoverySuccess] = useState(false)
+
+  useEffect(() => {
+    api.mountCheck().then(r => { if (!r.ok) setMountIssues(r.issues) }).catch(() => {})
+  }, [])
 
   if (isAuthenticated) return <Navigate to="/" replace />
 
@@ -85,6 +92,27 @@ export function Login() {
       />
 
       <div className="relative w-full max-w-sm">
+        {/* Mount warning */}
+        {mountIssues.length > 0 && (
+          <div className="mb-6 flex flex-col gap-2 px-4 py-3 border border-[var(--status-warning)] bg-[var(--status-warning)]/10 text-[var(--status-warning)] text-xs">
+            <div className="flex items-start gap-2">
+              <TriangleAlert size={14} className="shrink-0 mt-0.5" />
+              <div className="flex flex-col gap-1">
+                <span className="font-semibold">{tc('mount_warning.title')}</span>
+                <span className="text-[var(--text-secondary)]">{tc('mount_warning.description')}</span>
+              </div>
+            </div>
+            <div className="flex flex-col gap-1 pl-5">
+              {mountIssues.map(issue => (
+                <div key={issue.containerPath} className="font-mono">
+                  <span className="text-[var(--text-muted)]">{tc('mount_warning.required')} </span>
+                  <span>{issue.required}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Logo */}
         <div className="flex flex-col items-center gap-4 mb-10">
           <img
