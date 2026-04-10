@@ -390,10 +390,13 @@ export async function executeAppdataBackup(
       const encryptionPassword = getEncryptionPassword()
 
       if (config.method === 'tar') {
-        const tarFile = path.join(workDir, 'appdata.tar.gz')
-        const encryptedFile = `${tarFile}.gpg`
-        await encryptFileGPG(tarFile, encryptedFile, encryptionPassword)
-        await fs.unlink(tarFile)
+        // Encrypt each .tar.gz in workDir (one per container, or legacy single appdata.tar.gz)
+        const entries = await fs.readdir(workDir)
+        for (const entry of entries.filter(e => e.endsWith('.tar.gz'))) {
+          const tarFile = path.join(workDir, entry)
+          await encryptFileGPG(tarFile, `${tarFile}.gpg`, encryptionPassword)
+          await fs.unlink(tarFile)
+        }
       } else {
         // rsync method: tar the destination directory, then encrypt
         const tarFile = path.join(workDir, 'appdata-rsync.tar.gz')
