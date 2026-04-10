@@ -91,8 +91,10 @@ export async function executeAppdataBackup(
   if (!nasConfig) await fs.mkdir(workDir, { recursive: true })
 
   // Pre-flight: verify source path is accessible BEFORE stopping any containers
+  // Use readdir instead of access/stat — shfs FUSE virtual dirs on Unraid can fail stat/access
+  // even when the path is correctly mounted (cache-only shares in particular)
   try {
-    await fs.access(config.source)
+    await fs.readdir(config.source)
   } catch {
     throw new Error(`Appdata source path not accessible: ${config.source} — check that /mnt/user is mounted as /unraid/user in docker-compose`)
   }
