@@ -222,12 +222,11 @@ async function getStorageInfo() {
           try { cfg = JSON.parse(t.config) as Record<string, unknown> } catch { /* default */ }
           const p = cfg['path'] as string | undefined
           if (p) {
-            const { stdout: duOut } = await execFileAsync('du', ['-sb', p]).catch(() => ({ stdout: '0\t.' }))
-            diskUsed = parseInt(duOut.split('\t')[0]) || 0
-            const { stdout: dfOut } = await execFileAsync('df', ['-B1', p])
+            const { stdout: dfOut } = await execFileAsync('df', ['-B1', p]).catch(() => ({ stdout: '' }))
             const parts = (dfOut.split('\n')[1] ?? '').trim().split(/\s+/).filter(Boolean)
+            diskTotal = parseInt(parts[1] ?? '0') || 0
+            diskUsed = parseInt(parts[2] ?? '0') || 0
             diskAvailable = parseInt(parts[3] ?? '0') || 0
-            diskTotal = diskUsed + diskAvailable
             diskCheckedAt = new Date().toISOString()
           }
         } catch { /* target not accessible */ }
