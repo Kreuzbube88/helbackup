@@ -398,7 +398,9 @@
     "status": "Status",
     "view_logs": "View logs",
     "seconds": "s",
-    "running_label": "running"
+    "running_label": "running",
+    "abort": "Abort",
+    "abort_error": "Failed to abort job"
   },
   "dashboard": {
     "run_now": "Run Backup",

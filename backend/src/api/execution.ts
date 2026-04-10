@@ -87,4 +87,16 @@ export async function executionRoutes(app: FastifyInstance): Promise<void> {
       return reply.send(run)
     }
   )
+
+  // POST /api/executions/:runId/abort — abort a running job
+  app.post<{ Params: { runId: string } }>(
+    '/api/executions/:runId/abort',
+    { preHandler: [app.authenticate] },
+    async (request: FastifyRequest<{ Params: { runId: string } }>, reply: FastifyReply) => {
+      const engine = activeExecutions.get(request.params.runId)
+      if (!engine) return reply.status(404).send({ error: 'Execution not found or already finished' })
+      engine.abort()
+      return reply.status(202).send({ ok: true })
+    }
+  )
 }

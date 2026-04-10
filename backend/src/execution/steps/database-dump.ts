@@ -1,8 +1,7 @@
 import path from 'path'
 import fs from 'fs/promises'
-import { createWriteStream } from 'fs'
-import { spawn } from 'child_process'
-import { inspectContainer } from '../../docker/client.js'
+import { spawn } from 'node:child_process'
+import { inspectContainer, dockerExecToFile, getContainerArchive } from '../../docker/client.js'
 import type { JobExecutionEngine } from '../engine.js'
 
 export type DatabaseType = 'postgres' | 'mysql' | 'mariadb' | 'mongodb' | 'redis' | 'unknown'
@@ -27,115 +26,67 @@ export function detectDatabaseType(containerName: string, image: string): Databa
 }
 
 async function dumpPostgres(containerId: string, outputPath: string, engine: JobExecutionEngine): Promise<void> {
-  return new Promise((resolve, reject) => {
-    engine.log('info', 'system', `Creating PostgreSQL dump for container ${containerId}`)
-
-    const dumpFile = path.join(outputPath, 'postgres_dump.sql')
-    const docker = spawn('docker', ['exec', containerId, 'pg_dumpall', '-U', 'postgres'])
-    const writeStream = createWriteStream(dumpFile)
-
-    docker.stdout.pipe(writeStream)
-
-    let errorOutput = ''
-    docker.stderr.on('data', (data: Buffer) => { errorOutput += data.toString() })
-
-    docker.on('close', async (code: number | null) => {
-      writeStream.close()
-      if (code === 0) {
-        try {
-          const stats = await fs.stat(dumpFile)
-          engine.log('info', 'file', `PostgreSQL dump created: ${dumpFile}`, undefined, {
-            file: { path: dumpFile, size: stats.size, result: 'copied' }
-          })
-          resolve()
-        } catch (statErr: unknown) {
-          reject(statErr)
-        }
-      } else {
-        engine.log('error', 'system', `PostgreSQL dump failed: ${errorOutput}`)
-        reject(new Error(`pg_dumpall failed with code ${code}`))
-      }
-    })
-
-    docker.on('error', reject)
+  engine.log('info', 'system', `Creating PostgreSQL dump for container ${containerId}`)
+  const dumpFile = path.join(outputPath, 'postgres_dump.sql')
+  const { stderr, exitCode } = await dockerExecToFile(
+    containerId, ['pg_dumpall', '-U', 'postgres'], dumpFile
+  )
+  if (exitCode !== 0) {
+    engine.log('error', 'system', `PostgreSQL dump failed: ${stderr}`)
+    throw new Error(`pg_dumpall failed with exit code ${exitCode}`)
+  }
+  const stats = await fs.stat(dumpFile)
+  engine.log('info', 'file', `PostgreSQL dump created: ${dumpFile}`, undefined, {
+    file: { path: dumpFile, size: stats.size, result: 'copied' },
   })
 }
 
 async function dumpMySQL(containerId: string, outputPath: string, engine: JobExecutionEngine): Promise<void> {
-  return new Promise((resolve, reject) => {
-    engine.log('info', 'system', `Creating MySQL dump for container ${containerId}`)
-
-    const dumpFile = path.join(outputPath, 'mysql_dump.sql')
-    const docker = spawn('docker', [
-      'exec', containerId,
-      'sh', '-c', 'mysqldump -u root -p"$MYSQL_ROOT_PASSWORD" --all-databases',
-    ])
-    const writeStream = createWriteStream(dumpFile)
-
-    docker.stdout.pipe(writeStream)
-
-    let errorOutput = ''
-    docker.stderr.on('data', (data: Buffer) => { errorOutput += data.toString() })
-
-    docker.on('close', async (code: number | null) => {
-      writeStream.close()
-      if (code === 0) {
-        try {
-          const stats = await fs.stat(dumpFile)
-          engine.log('info', 'file', `MySQL dump created: ${dumpFile}`, undefined, {
-            file: { path: dumpFile, size: stats.size, result: 'copied' }
-          })
-          resolve()
-        } catch (statErr: unknown) {
-          reject(statErr)
-        }
-      } else {
-        engine.log('error', 'system', `MySQL dump failed: ${errorOutput}`)
-        reject(new Error(`mysqldump failed with code ${code}`))
-      }
-    })
-
-    docker.on('error', reject)
+  engine.log('info', 'system', `Creating MySQL dump for container ${containerId}`)
+  const dumpFile = path.join(outputPath, 'mysql_dump.sql')
+  const { stderr, exitCode } = await dockerExecToFile(
+    containerId,
+    ['sh', '-c', 'mysqldump -u root -p"$MYSQL_ROOT_PASSWORD" --all-databases'],
+    dumpFile
+  )
+  if (exitCode !== 0) {
+    engine.log('error', 'system', `MySQL dump failed: ${stderr}`)
+    throw new Error(`mysqldump failed with exit code ${exitCode}`)
+  }
+  const stats = await fs.stat(dumpFile)
+  engine.log('info', 'file', `MySQL dump created: ${dumpFile}`, undefined, {
+    file: { path: dumpFile, size: stats.size, result: 'copied' },
   })
 }
 
 async function dumpMongoDB(containerId: string, outputPath: string, engine: JobExecutionEngine): Promise<void> {
-  return new Promise((resolve, reject) => {
-    engine.log('info', 'system', `Creating MongoDB dump for container ${containerId}`)
+  engine.log('info', 'system', `Creating MongoDB dump for container ${containerId}`)
 
-    const docker = spawn('docker', ['exec', containerId, 'mongodump', '--out', '/tmp/mongodump'])
+  // Run mongodump inside the container — writes to /tmp/mongodump (stdout not meaningful)
+  const { stderr: dumpStderr, exitCode: dumpExit } = await dockerExecToFile(
+    containerId, ['mongodump', '--out', '/tmp/mongodump'], '/dev/null'
+  )
+  if (dumpExit !== 0) {
+    engine.log('error', 'system', `MongoDB dump failed: ${dumpStderr}`)
+    throw new Error(`mongodump failed with exit code ${dumpExit}`)
+  }
 
-    let errorOutput = ''
-    docker.stderr.on('data', (data: Buffer) => { errorOutput += data.toString() })
+  // Extract via Docker archive API (returns tar stream), unpack with system tar
+  const dumpDir = path.join(outputPath, 'mongodb_dump')
+  await fs.mkdir(dumpDir, { recursive: true })
+  const tarStream = await getContainerArchive(containerId, '/tmp/mongodump')
 
-    docker.on('close', (code: number | null) => {
-      if (code !== 0) {
-        engine.log('error', 'system', `MongoDB dump failed: ${errorOutput}`)
-        reject(new Error(`mongodump failed with code ${code}`))
-        return
-      }
+  await new Promise<void>((resolve, reject) => {
+    const tar = spawn('tar', ['-x', '-C', dumpDir])
+    tarStream.pipe(tar.stdin)
+    tar.on('close', (code: number | null) =>
+      code === 0 ? resolve() : reject(new Error(`tar extract failed with code ${code}`))
+    )
+    tar.on('error', reject)
+  })
 
-      const dumpDir = path.join(outputPath, 'mongodb_dump')
-      const dockerCp = spawn('docker', ['cp', `${containerId}:/tmp/mongodump`, dumpDir])
-
-      let cpError = ''
-      dockerCp.stderr.on('data', (data: Buffer) => { cpError += data.toString() })
-
-      dockerCp.on('close', (cpCode: number | null) => {
-        if (cpCode === 0) {
-          engine.log('info', 'file', `MongoDB dump created: ${dumpDir}`, undefined, {
-            file: { path: dumpDir, size: 0, result: 'copied' }
-          })
-          resolve()
-        } else {
-          reject(new Error(`Failed to copy MongoDB dump: ${cpError}`))
-        }
-      })
-
-      dockerCp.on('error', reject)
-    })
-
-    docker.on('error', reject)
+  engine.log('info', 'file', `MongoDB dump extracted: ${dumpDir}`, undefined, {
+    file: { path: dumpDir, size: 0, result: 'copied' },
   })
 }
 

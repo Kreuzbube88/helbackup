@@ -91,6 +91,7 @@ export class JobExecutionEngine extends EventEmitter {
   private readonly jobId: string
   private readonly jobName: string
   private readonly startedAt: string
+  private _aborted = false
   private sequence = 0
   private backupPaths: Array<{ type: string; path: string; targetId?: string; checksums?: ChecksumEntry[] }> = []
   private summary: Summary = {
@@ -184,6 +185,7 @@ export class JobExecutionEngine extends EventEmitter {
       }
 
       for (const step of steps) {
+        if (this._aborted) break
         const maxAttempts = step.retry?.max_attempts ?? 1
         const backoffType = step.retry?.backoff ?? 'linear'
 
@@ -228,6 +230,22 @@ export class JobExecutionEngine extends EventEmitter {
           )
           this.summary.errors++
         }
+      }
+
+      if (this._aborted) {
+        const duration = this.elapsedSeconds()
+        db.prepare('UPDATE job_history SET status = ?, ended_at = ?, duration_s = ? WHERE id = ?')
+          .run('cancelled', new Date().toISOString(), duration, this.runId)
+        this.saveSummary(duration * 1000)
+        void notificationManager.notify({
+          event: 'backup_failed',
+          jobName: this.jobName,
+          timestamp: new Date().toISOString(),
+          duration,
+          error: 'Job aborted by user',
+        })
+        this.emit('job:cancelled')
+        return
       }
 
       const duration = this.elapsedSeconds()
@@ -452,6 +470,9 @@ export class JobExecutionEngine extends EventEmitter {
   getJobId(): string {
     return this.jobId
   }
+
+  abort(): void { this._aborted = true }
+  isAborted(): boolean { return this._aborted }
 
   private elapsedSeconds(): number {
     return Math.floor((Date.now() - new Date(this.startedAt).getTime()) / 1000)

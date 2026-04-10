@@ -398,7 +398,9 @@
     "status": "Status",
     "view_logs": "Logs anzeigen",
     "seconds": "s",
-    "running_label": "läuft"
+    "running_label": "läuft",
+    "abort": "Abbrechen",
+    "abort_error": "Job konnte nicht abgebrochen werden"
   },
   "dashboard": {
     "run_now": "Backup starten",

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
-import { History, CheckCircle, XCircle, Loader, Ban, ExternalLink } from 'lucide-react'
+import { History, CheckCircle, XCircle, Loader, Ban, ExternalLink, StopCircle } from 'lucide-react'
 import { api, type HistoryEntry } from '../api'
 import { Card } from '../components/common/Card'
 import { Button } from '../components/common/Button'
@@ -37,6 +37,7 @@ export function HistoryPage() {
   const navigate = useNavigate()
   const [entries, setEntries] = useState<HistoryEntry[]>([])
   const [loading, setLoading] = useState(true)
+  const [aborting, setAborting] = useState<Set<string>>(new Set())
 
   useEffect(() => {
     api.history.getAll()
@@ -45,6 +46,15 @@ export function HistoryPage() {
       .finally(() => setLoading(false))
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  const hasRunning = entries.some(e => e.status === 'running')
+  useEffect(() => {
+    if (!hasRunning) return
+    const id = setInterval(() => {
+      api.history.getAll().then(setEntries).catch(() => {})
+    }, 10_000)
+    return () => clearInterval(id)
+  }, [hasRunning])
 
   if (loading) {
     return (
@@ -105,6 +115,29 @@ export function HistoryPage() {
                       <ExternalLink size={12} />
                       {t('history.view_logs')}
                     </Button>
+                    {entry.status === 'running' && (
+                      <Button
+                        variant="danger"
+                        size="sm"
+                        loading={aborting.has(entry.id)}
+                        onClick={async () => {
+                          setAborting(prev => new Set(prev).add(entry.id))
+                          try {
+                            await api.executions.abort(entry.id)
+                            setEntries(prev =>
+                              prev.map(e => e.id === entry.id ? { ...e, status: 'cancelled' as const } : e)
+                            )
+                          } catch {
+                            toast(t('history.abort_error'), 'error')
+                          } finally {
+                            setAborting(prev => { const s = new Set(prev); s.delete(entry.id); return s })
+                          }
+                        }}
+                      >
+                        <StopCircle size={12} />
+                        {t('history.abort')}
+                      </Button>
+                    )}
                   </div>
                 </div>
               </Card>

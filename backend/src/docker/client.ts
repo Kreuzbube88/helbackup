@@ -1,4 +1,6 @@
 import { Pool } from 'undici'
+import { createWriteStream } from 'node:fs'
+import { Readable } from 'node:stream'
 
 const dockerPool = new Pool('http://localhost', {
   socketPath: '/var/run/docker.sock',
@@ -93,4 +95,92 @@ export async function saveImage(imageName: string, destFile: string): Promise<vo
   })
   if (statusCode !== 200) throw new Error(`Docker API error saving image: ${statusCode}`)
   await pipeline(body, createWriteStream(destFile))
+}
+
+export async function dockerExecToFile(
+  containerId: string,
+  cmd: string[],
+  destFile: string,
+  env?: string[]
+): Promise<{ stderr: string; exitCode: number }> {
+  // Create exec instance
+  const createRes = await dockerPool.request({
+    path: `/containers/${encodeURIComponent(containerId)}/exec`,
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({
+      AttachStdout: true,
+      AttachStderr: true,
+      Cmd: cmd,
+      ...(env ? { Env: env } : {}),
+    }),
+  })
+  if (createRes.statusCode !== 201) {
+    const errBody = await createRes.body.text()
+    throw new Error(`Docker exec create failed (${createRes.statusCode}): ${errBody}`)
+  }
+  const { Id: execId } = (await createRes.body.json()) as { Id: string }
+
+  // Start exec — returns multiplexed stdout/stderr stream
+  const startRes = await dockerPool.request({
+    path: `/exec/${encodeURIComponent(execId)}/start`,
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ Detach: false, Tty: false }),
+  })
+  if (startRes.statusCode !== 200) {
+    const errBody = await startRes.body.text()
+    throw new Error(`Docker exec start failed (${startRes.statusCode}): ${errBody}`)
+  }
+
+  // Demux: 8-byte frame header [streamType(1B), 0,0,0, payloadSize(4B big-endian)] + payload
+  // streamType 1 = stdout, 2 = stderr
+  const writeStream = createWriteStream(destFile)
+  const stderrChunks: Buffer[] = []
+  const rawStream = Readable.fromWeb
+    ? Readable.fromWeb(startRes.body as unknown as import('stream/web').ReadableStream)
+    : (startRes.body as unknown as Readable)
+
+  await new Promise<void>((resolve, reject) => {
+    let carry = Buffer.alloc(0)
+    rawStream.on('data', (chunk: Buffer) => {
+      let buf = Buffer.concat([carry, chunk])
+      while (buf.length >= 8) {
+        const streamType = buf[0]
+        const frameSize = buf.readUInt32BE(4)
+        if (buf.length < 8 + frameSize) break
+        const payload = buf.subarray(8, 8 + frameSize)
+        if (streamType === 1) writeStream.write(payload)
+        else if (streamType === 2) stderrChunks.push(payload)
+        buf = buf.subarray(8 + frameSize)
+      }
+      carry = buf
+    })
+    rawStream.on('end', () => { writeStream.end(); resolve() })
+    rawStream.on('error', reject)
+    writeStream.on('error', reject)
+  })
+
+  // Fetch exit code
+  const inspectRes = await dockerPool.request({
+    path: `/exec/${encodeURIComponent(execId)}/json`,
+    method: 'GET',
+  })
+  const { ExitCode: exitCode } = (await inspectRes.body.json()) as { ExitCode: number }
+
+  return { stderr: Buffer.concat(stderrChunks).toString('utf8'), exitCode }
+}
+
+export async function getContainerArchive(
+  containerId: string,
+  containerPath: string
+): Promise<Readable> {
+  const { statusCode, body } = await dockerPool.request({
+    path: `/containers/${encodeURIComponent(containerId)}/archive?path=${encodeURIComponent(containerPath)}`,
+    method: 'GET',
+  })
+  if (statusCode !== 200) throw new Error(`Docker archive failed: ${statusCode}`)
+  return Readable.fromWeb
+    ? Readable.fromWeb(body as unknown as import('stream/web').ReadableStream)
+    : (body as unknown as Readable)
 }

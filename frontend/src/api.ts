@@ -215,6 +215,7 @@ export const api = {
 
   executions: {
     get: (runId: string) => request<JobHistoryRun>('GET', `/executions/${runId}`),
+    abort: (runId: string) => request<{ ok: boolean }>('POST', `/executions/${runId}/abort`),
   },
 
   logs: {

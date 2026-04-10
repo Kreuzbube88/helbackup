@@ -54,6 +54,9 @@ export async function executeAppdataBackup(
 
   // CRITICAL: Never stop/include HELBACKUP itself
   const allContainers = await listContainers()
+  const runningBeforeBackup = new Set(
+    allContainers.filter(c => c.State === 'running').map(c => c.Id)
+  )
   const helbackupId = allContainers.find(c =>
     c.Names.some(n => n.toLowerCase().includes('helbackup'))
   )?.Id
@@ -145,7 +148,9 @@ export async function executeAppdataBackup(
           container: { id, name, action: 'stop', result: 'pending' }
         })
         await stopContainer(id)
-        stopped.push(id)
+        if (runningBeforeBackup.has(id)) {
+          stopped.push(id)
+        }
         engine.log('info', 'container', `Stopped: ${name}`, undefined, {
           container: { id, name, action: 'stop', result: 'success' }
         })
