@@ -276,18 +276,18 @@ export const api = {
   settings: {
     get: () => request<{
       logRetentionDays: number
-      appdataSourcePaths: string[]
+      appdataSourcePath: string
       flashSourcePath: string
       rsyncBwlimitKb: number
     }>('GET', '/settings'),
     update: (data: {
       logRetentionDays?: number
-      appdataSourcePaths?: string[]
+      appdataSourcePath?: string
       flashSourcePath?: string
       rsyncBwlimitKb?: number
     }) => request<{
       logRetentionDays: number
-      appdataSourcePaths: string[]
+      appdataSourcePath: string
       flashSourcePath: string
       rsyncBwlimitKb: number
     }>('POST', '/settings', data),

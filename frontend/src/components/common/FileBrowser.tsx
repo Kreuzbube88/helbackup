@@ -32,14 +32,24 @@ export function FileBrowser({ open, onClose, onSelect, initialPath = '/unraid/us
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const browse = useCallback((path: string) => {
+  const browse = useCallback((path: string, fallbackAttempt = false) => {
     setLoading(true)
     setError(null)
     api.fs.browse(path)
       .then(r => { setResult(r); setCurrentPath(r.path) })
-      .catch(e => setError(e instanceof Error ? e.message : String(e)))
+      .catch(() => {
+        // If initial path doesn't exist, try the parent directory automatically
+        if (!fallbackAttempt) {
+          const parent = path.replace(/\/[^/]+\/?$/, '') || '/unraid/user'
+          if (parent !== path) {
+            browse(parent, true)
+            return
+          }
+        }
+        setError(t('file_browser.error_not_found'))
+      })
       .finally(() => setLoading(false))
-  }, [])
+  }, [t])
 
   useEffect(() => {
     if (open) browse(initialPath)

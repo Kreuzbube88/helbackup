@@ -12,9 +12,8 @@
   },
   "backup": {
     "title": "Backup Settings",
-    "appdata_paths_label": "Default Appdata Paths",
-    "appdata_paths_hint": "Used as the default source for new Appdata jobs",
-    "add_path": "Add path",
+    "appdata_path_label": "Appdata Source Path",
+    "appdata_path_hint": "Default source path for new Appdata jobs (default: /unraid/user/appdata)",
     "browse": "Browse",
     "flash_source_label": "Flash Source Path",
     "flash_source_hint": "Default path for flash drive backups (default: /unraid/boot)",

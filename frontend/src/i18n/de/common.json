@@ -30,7 +30,8 @@
     "select_btn": "Diesen Ordner auswählen",
     "go_up": "Übergeordnetes Verzeichnis",
     "loading": "Lädt…",
-    "empty": "Keine Unterverzeichnisse"
+    "empty": "Keine Unterverzeichnisse",
+    "error_not_found": "Verzeichnis nicht gefunden"
   },
   "success": "Erfolgreich",
   "api_tokens": {

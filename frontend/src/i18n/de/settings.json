@@ -12,9 +12,8 @@
   },
   "backup": {
     "title": "Backup-Einstellungen",
-    "appdata_paths_label": "Standard-Appdata-Pfade",
-    "appdata_paths_hint": "Wird als Standardquelle für neue Appdata-Jobs verwendet",
-    "add_path": "Pfad hinzufügen",
+    "appdata_path_label": "Appdata-Quellpfad",
+    "appdata_path_hint": "Standardquellpfad für neue Appdata-Jobs (Standard: /unraid/user/appdata)",
     "browse": "Durchsuchen",
     "flash_source_label": "Flash-Quellpfad",
     "flash_source_hint": "Standardpfad für Flash-Drive-Backups (Standard: /unraid/boot)",

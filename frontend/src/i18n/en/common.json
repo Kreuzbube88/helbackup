@@ -30,7 +30,8 @@
     "select_btn": "Select This Folder",
     "go_up": "Go up",
     "loading": "Loading…",
-    "empty": "No subdirectories"
+    "empty": "No subdirectories",
+    "error_not_found": "Directory not found"
   },
   "success": "Success",
   "nav": {

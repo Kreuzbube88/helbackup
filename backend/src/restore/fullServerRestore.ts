@@ -2,7 +2,7 @@ import { type RestorePlan, type RestoreItem } from './restorePlan.js'
 import { logger } from '../utils/logger.js'
 import { notificationManager } from '../notifications/notificationManager.js'
 import { executeRsync } from '../tools/rsync.js'
-import { getSettingString, getSettingJson } from '../utils/settings.js'
+import { getSettingString } from '../utils/settings.js'
 import { spawn } from 'child_process'
 import path from 'path'
 import fs from 'fs/promises'
@@ -97,8 +97,7 @@ async function restoreItem(item: RestoreItem, backupPath: string): Promise<void>
       // Find the container subdirectory under backupPath/appdata/
       const appdataBase = path.join(backupPath, 'appdata')
       const sourceDir = await resolveContainerDir(appdataBase, containerName)
-      const appdataPaths = getSettingJson<string[]>('appdata_source_paths', ['/unraid/user/appdata'])
-      const appdataRestoreBase = appdataPaths[0] ?? '/unraid/user/appdata'
+      const appdataRestoreBase = getSettingString('appdata_source_path', '/unraid/user/appdata')
       const targetDir = path.join(appdataRestoreBase, containerName)
       await fs.mkdir(targetDir, { recursive: true })
       logger.info(`[restore] appdata: ${sourceDir}/ → ${targetDir}`)
