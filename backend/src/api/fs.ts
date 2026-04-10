@@ -55,8 +55,15 @@ export async function fsRoutes(app: FastifyInstance): Promise<void> {
         const results = await Promise.allSettled(
           names.map(async name => {
             const entryPath = path.join(resolved, name)
-            const st = await fsNode.stat(entryPath)
-            return st.isDirectory() ? { name, path: entryPath } : null
+            try {
+              const st = await fsNode.stat(entryPath)
+              return st.isDirectory() ? { name, path: entryPath } : null
+            } catch {
+              // Shfs/FUSE: readdir may return entries that stat cannot resolve
+              // (e.g. cache-only shares on Unraid). Include optimistically —
+              // the client will receive an error on navigation if truly inaccessible.
+              return { name, path: entryPath }
+            }
           })
         )
         dirs = results
