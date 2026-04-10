@@ -46,5 +46,25 @@ Start containers after backup: ✅
 
 Wenn "all appdata containers" aktiviert: HELBACKUP stoppt alle Container die Appdata-Daten schreiben.
 
+## Benutzerdefinierte Volume-Mounts für Appdata
+
+Standardmäßig erwartet HELBACKUP Appdata unter `/unraid/user/appdata`.
+Liegt Appdata auf einem anderen Pool (z. B. `/mnt/cache/appdata` oder `/mnt/ssd/dockers`),
+muss das Verzeichnis als zusätzliches Volume in `docker-compose.yml` eingebunden werden.
+
+**Beispiel — docker-compose.yml:**
+```yaml
+volumes:
+  - /mnt/user/appdata/helbackup:/app/config
+  - /mnt/ssd/dockers:/unraid/ssd      # ← eigenen Pool einbinden
+```
+
+Danach in HELBACKUP: **Einstellungen → Backup → Appdata-Quellpfad** auf `/unraid/ssd` setzen.
+
+**Wichtig:**
+- HELBACKUP modifiziert `docker-compose.yml` oder `helbackup.xml` nicht selbst
+- Erlaubte Pfad-Bases im Container: `/unraid/`, `/mnt/`, `/app/`
+- Nach Änderung der `docker-compose.yml`: Container neu starten (`docker compose up -d`)
+
 ---
 Zurück: [Advanced Overview](overview.md)

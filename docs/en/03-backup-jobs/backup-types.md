@@ -41,6 +41,8 @@ Database Dumps: ✅ (optional — dumps databases before stopping containers)
 - `*/cache/*`
 - `*/*.log`
 
+**Source path:** Default is `/mnt/user/appdata`. Configurable under **Settings → Backup → Appdata Source Path**. For paths outside `/unraid/user`, add the corresponding volume mount in `docker-compose.yml` → [Docker Advanced Configuration](../13-advanced/docker-advanced.md).
+
 **Docker Config Export:** All container templates exported as JSON.
 
 **Database Dumps (optional):** When enabled, HELBACKUP detects database containers (MariaDB, PostgreSQL, MongoDB) and dumps them before stopping. Supported types: MariaDB/MySQL, PostgreSQL, MongoDB, Redis. Enable via "Database Dumps" checkbox in the Appdata step config.

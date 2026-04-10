@@ -91,5 +91,8 @@ A: No, but the WebUI is responsive.
 **Q: Does HELBACKUP cost money?**  
 A: No, completely free and open source!
 
+**Q: My Appdata is not at `/mnt/user/appdata` — what do I do?**  
+A: Add the path as a volume mount in `docker-compose.yml` (e.g. `/mnt/cache/appdata:/unraid/cache`). Then set **Settings → Backup → Appdata Source Path** to the new path. Details: [Docker Advanced Configuration](13-advanced/docker-advanced.md)
+
 ---
 *Question not listed? [Open an issue](https://github.com/Kreuzbube88/helbackup/issues)*

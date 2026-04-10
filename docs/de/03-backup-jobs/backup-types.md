@@ -40,6 +40,8 @@ Restart Delay: 5  (Sekunden Wartezeit nach Container-Restart)
 - `*/cache/*`
 - `*/*.log`
 
+**Quellpfad:** Standard ist `/mnt/user/appdata`. Kann unter **Einstellungen → Backup → Appdata-Quellpfad** geändert werden. Für Pfade außerhalb von `/unraid/user` muss ein entsprechendes Volume-Mount in `docker-compose.yml` eingetragen werden → [Docker Erweiterte Konfiguration](../13-advanced/docker-advanced.md).
+
 **Docker Config Export:** Alle Container-Templates werden als JSON exportiert.
 
 ## Virtual Machines (VMs)
