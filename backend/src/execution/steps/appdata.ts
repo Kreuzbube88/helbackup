@@ -45,6 +45,50 @@ export interface AppdataBackupConfig {
   useEncryption: boolean
 }
 
+// Resolve the actual appdata directory paths for a container via Docker inspect.
+// Filters bind mounts containing /appdata/ and translates host paths to container-accessible paths.
+// Falls back to <source>/<containerName> if no appdata binds are found.
+async function resolveAppdataPaths(
+  containerName: string,
+  fallbackSource: string,
+  engine: JobExecutionEngine
+): Promise<string[]> {
+  try {
+    const details = await inspectContainer(containerName)
+    const binds: string[] = details.HostConfig.Binds ?? []
+    const paths: string[] = []
+
+    for (const bind of binds) {
+      const hostPath = bind.split(':')[0]
+      if (!hostPath.includes('/appdata/')) continue
+
+      let containerPath: string | null = null
+      if (hostPath.startsWith('/mnt/cache/')) {
+        containerPath = hostPath.replace('/mnt/cache/', '/unraid/cache/')
+      } else if (hostPath.startsWith('/mnt/user/')) {
+        containerPath = hostPath.replace('/mnt/user/', '/unraid/user/')
+      } else {
+        engine.log('warn', 'system', `Appdata path "${hostPath}" for "${containerName}" is on an unmapped mount — skipping (add a custom volume mount to expose it)`)
+      }
+
+      if (containerPath) paths.push(containerPath)
+    }
+
+    // Remove paths that are subdirectories of another path already in the list
+    const deduped = paths.filter((p, _, arr) =>
+      !arr.some(other => other !== p && p.startsWith(other + '/'))
+    )
+
+    if (deduped.length > 0) return deduped
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err)
+    engine.log('warn', 'system', `Could not inspect container "${containerName}" for appdata paths: ${msg} — falling back to convention`)
+  }
+
+  // Convention fallback: <source>/<containerName>
+  return [path.join(fallbackSource, containerName)]
+}
+
 export async function executeAppdataBackup(
   config: AppdataBackupConfig,
   engine: JobExecutionEngine
@@ -183,25 +227,27 @@ export async function executeAppdataBackup(
   try {
     if (config.method === 'tar') {
       if (containers.length > 0) {
-        // Backup only selected container directories
         let totalFiles = 0
         let totalBytes = 0
         for (const containerName of containers) {
-          const containerSource = path.join(source, containerName)
-          try { await fs.stat(containerSource) } catch {
-            engine.log('warn', 'system', `Appdata dir not found for "${containerName}", skipping`)
-            continue
+          const appdataPaths = await resolveAppdataPaths(containerName, source, engine)
+          for (const appdataPath of appdataPaths) {
+            try { await fs.stat(appdataPath) } catch {
+              engine.log('warn', 'system', `Appdata path not accessible: ${appdataPath}, skipping`)
+              continue
+            }
+            const dirName = path.basename(appdataPath)
+            engine.log('info', 'system', `Creating tar archive for: ${containerName} (${dirName})`)
+            const tarResult = await createTarArchive({
+              source: appdataPath,
+              destination: path.join(workDir, `${dirName}.tar.gz`),
+              compress: true,
+              onProgress: ({ currentFile }) => engine.log('info', 'file', `Archiving: ${currentFile}`),
+            })
+            totalFiles += tarResult.filesProcessed
+            totalBytes += tarResult.archiveSize
+            engine.log('info', 'system', `${containerName} (${dirName}): ${tarResult.filesProcessed} files, ${tarResult.archiveSize} bytes`)
           }
-          engine.log('info', 'system', `Creating tar archive for: ${containerName}`)
-          const tarResult = await createTarArchive({
-            source: containerSource,
-            destination: path.join(workDir, `${containerName}.tar.gz`),
-            compress: true,
-            onProgress: ({ currentFile }) => engine.log('info', 'file', `Archiving: ${currentFile}`),
-          })
-          totalFiles += tarResult.filesProcessed
-          totalBytes += tarResult.archiveSize
-          engine.log('info', 'system', `${containerName}: ${tarResult.filesProcessed} files, ${tarResult.archiveSize} bytes`)
         }
         engine.addTransferred(totalFiles, totalBytes)
         engine.log('info', 'system', `Tar done: ${totalFiles} files total, ${totalBytes} bytes total`)
@@ -230,33 +276,35 @@ export async function executeAppdataBackup(
       const bwLimit = getSettingInt('rsync_bwlimit_kb', 0)
 
       if (containers.length > 0) {
-        // Backup only selected container directories
         let totalFiles = 0
         let totalBytes = 0
         for (const containerName of containers) {
-          const containerSource = path.join(source, containerName)
-          try {
-            await fs.stat(containerSource)
-          } catch {
-            engine.log('warn', 'system', `Appdata dir not found for "${containerName}", skipping`)
-            continue
-          }
-          await fs.mkdir(path.join(workDir, containerName), { recursive: true })
-          engine.log('info', 'system', `Rsyncing appdata: ${containerName}`)
+          const appdataPaths = await resolveAppdataPaths(containerName, source, engine)
           const perContainerExclusions = config.containerSettings?.[containerName]?.exclusions ?? []
-          const result = await executeRsync({
-            source: containerSource + '/',
-            destination: path.join(workDir, containerName),
-            excludePatterns: ['logs/', 'cache/', '*.log', '*.sock', '*.socket', ...perContainerExclusions],
-            ...(bwLimit > 0 ? { bwLimit } : {}),
-            onProgress: (() => { let last = -1; return ({ percent, speed }: { percent: number; speed: string }) => {
-              if (percent < last) last = -1
-              if (Math.floor(percent / 10) > Math.floor(last / 10)) { last = percent; engine.log('info', 'system', `${containerName}: ${percent}% — ${speed}`) }
-            } })(),
-          })
-          totalFiles += result.filesTransferred
-          totalBytes += result.bytesTransferred
-          engine.log('info', 'system', `${containerName}: ${result.filesTransferred} files, ${result.bytesTransferred} bytes`)
+          for (const appdataPath of appdataPaths) {
+            try {
+              await fs.stat(appdataPath)
+            } catch {
+              engine.log('warn', 'system', `Appdata path not accessible: ${appdataPath}, skipping`)
+              continue
+            }
+            const destDir = path.join(workDir, path.basename(appdataPath))
+            await fs.mkdir(destDir, { recursive: true })
+            engine.log('info', 'system', `Rsyncing appdata: ${containerName} (${appdataPath})`)
+            const result = await executeRsync({
+              source: appdataPath + '/',
+              destination: destDir,
+              excludePatterns: ['logs/', 'cache/', '*.log', '*.sock', '*.socket', ...perContainerExclusions],
+              ...(bwLimit > 0 ? { bwLimit } : {}),
+              onProgress: (() => { let last = -1; return ({ percent, speed }: { percent: number; speed: string }) => {
+                if (percent < last) last = -1
+                if (Math.floor(percent / 10) > Math.floor(last / 10)) { last = percent; engine.log('info', 'system', `${containerName} (${path.basename(appdataPath)}): ${percent}% — ${speed}`) }
+              } })(),
+            })
+            totalFiles += result.filesTransferred
+            totalBytes += result.bytesTransferred
+            engine.log('info', 'system', `${containerName} (${path.basename(appdataPath)}): ${result.filesTransferred} files, ${result.bytesTransferred} bytes`)
+          }
         }
         engine.addTransferred(totalFiles, totalBytes)
         engine.log('info', 'system', `Rsync done: ${totalFiles} files total, ${totalBytes} bytes total`)

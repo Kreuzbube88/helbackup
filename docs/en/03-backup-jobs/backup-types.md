@@ -25,7 +25,7 @@ Backs up Unraid boot configuration from `/boot`.
 
 ## Appdata
 
-Backs up Docker container configurations from the configured source path.
+Backs up the appdata directories of selected Docker containers.
 
 **Options:**
 ```
@@ -38,14 +38,18 @@ Database Dumps: ✅ (optional — dumps databases before stopping containers)
 
 `stopDelay` and `restartDelay` are configurable (default: 10s / 5s). Set to `0` to skip the sleep — fine for fast containers, increase for database containers.
 
-**Excluded (automatically):**
-- `*/logs/*`
-- `*/cache/*`
-- `*/*.log`
+**Path resolution via Docker API:** For each selected container, HELBACKUP reads the actual bind-mount paths via `docker inspect` and backs up only the directories that contain `/appdata/` in the host path. This means the backup is not tied to the container name — a container whose appdata lives at a non-standard location (e.g. `/mnt/cache/appdata/my-jellyfin-config`) will be backed up from the correct path.
 
-**Source path:** Configurable under **Settings → Backup → Appdata Source Path** (default: `/unraid/cache/appdata`). For paths outside the pre-mounted volumes, add the corresponding volume mount in `docker-compose.yml` → [Docker Advanced Configuration](../13-advanced/docker-advanced.md).
+**Requirement:** Container appdata must be stored under a path containing `/appdata/` on the host (e.g. `/mnt/cache/appdata/`, `/mnt/user/appdata/`). Bind mounts on unmapped drives are skipped with a warning in the job log. To back up appdata on a non-standard drive, add a corresponding volume mount in `docker-compose.yml` → [Docker Advanced Configuration](../13-advanced/docker-advanced.md).
 
-**Docker Config Export:** All container templates exported as JSON.
+**Excluded (automatically, per container):**
+- `logs/`
+- `cache/`
+- `*.log`
+
+**Fallback source path:** Configurable under **Settings → Backup → Appdata Source Path** (default: `/unraid/cache/appdata`). Used only if Docker inspect returns no `/appdata/` bind mounts for a container.
+
+**Docker Config Export:** All container configs exported as JSON.
 
 **Database Dumps (optional):** When enabled, HELBACKUP detects database containers (MariaDB, PostgreSQL, MongoDB) and dumps them before stopping. Supported types: MariaDB/MySQL, PostgreSQL, MongoDB, Redis. Enable via "Database Dumps" checkbox in the Appdata step config.
 
