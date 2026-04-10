@@ -69,6 +69,24 @@ export function FileBrowser({ open, onClose, onSelect, initialPath = '/unraid/us
       className="max-w-md"
     >
       <div className="flex flex-col gap-3">
+        {/* Quick access */}
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-xs text-[var(--text-muted)]">{t('file_browser.quick_access')}:</span>
+          {([
+            { label: t('file_browser.root_user_share'), path: '/unraid/user' },
+            { label: t('file_browser.root_cache'), path: '/mnt/cache' },
+          ] as { label: string; path: string }[]).map(root => (
+            <button
+              key={root.path}
+              type="button"
+              onClick={() => browse(root.path)}
+              className="text-xs font-mono px-2 py-0.5 border border-[var(--border-default)] text-[var(--text-secondary)] hover:border-[var(--theme-primary)] hover:text-[var(--theme-primary)] transition-colors"
+            >
+              {root.label}
+            </button>
+          ))}
+        </div>
+
         {/* Current path */}
         <div className="font-mono text-xs text-[var(--text-muted)] bg-[var(--bg-primary)] border border-[var(--border-default)] px-3 py-2 truncate">
           {currentPath}

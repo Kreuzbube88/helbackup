@@ -31,7 +31,10 @@
     "go_up": "Übergeordnetes Verzeichnis",
     "loading": "Lädt…",
     "empty": "Keine Unterverzeichnisse",
-    "error_not_found": "Verzeichnis nicht gefunden"
+    "error_not_found": "Verzeichnis nicht gefunden",
+    "quick_access": "Schnellzugriff",
+    "root_user_share": "User Share",
+    "root_cache": "Cache-Laufwerk"
   },
   "success": "Erfolgreich",
   "api_tokens": {

@@ -31,7 +31,10 @@
     "go_up": "Go up",
     "loading": "Loading…",
     "empty": "No subdirectories",
-    "error_not_found": "Directory not found"
+    "error_not_found": "Directory not found",
+    "quick_access": "Quick Access",
+    "root_user_share": "User Share",
+    "root_cache": "Cache Drive"
   },
   "success": "Success",
   "nav": {
