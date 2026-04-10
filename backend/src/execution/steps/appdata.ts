@@ -55,24 +55,27 @@ export async function executeAppdataBackup(
 
   // CRITICAL: Never stop/include HELBACKUP itself
   const allContainers = await listContainers()
+  // containers/stopOrder store names (e.g. "jellyfin"), not Docker IDs — use names throughout
   const runningBeforeBackup = new Set(
-    allContainers.filter(c => c.State === 'running').map(c => c.Id)
+    allContainers
+      .filter(c => c.State === 'running')
+      .map(c => c.Names[0]?.replace('/', '') ?? c.Id)
   )
-  const helbackupId = allContainers.find(c =>
+  const helbackupName = allContainers.find(c =>
     c.Names.some(n => n.toLowerCase().includes('helbackup'))
-  )?.Id
+  )?.Names[0]?.replace('/', '')
 
   // Use local copies to avoid mutating the caller's config object on retry
-  const containers = helbackupId
-    ? (config.containers ?? []).filter(id => id !== helbackupId)
+  const containers = helbackupName
+    ? (config.containers ?? []).filter(name => name !== helbackupName)
     : [...(config.containers ?? [])]
   // Fallback: old jobs may not have stopOrder — use containers as default order
   const rawStopOrder = (config.stopOrder ?? []).length > 0 ? (config.stopOrder ?? []) : (config.containers ?? [])
-  const stopOrder = helbackupId
-    ? rawStopOrder.filter(id => id !== helbackupId)
+  const stopOrder = helbackupName
+    ? rawStopOrder.filter(name => name !== helbackupName)
     : [...rawStopOrder]
 
-  if (helbackupId) {
+  if (helbackupName) {
     engine.log('info', 'system', 'HELBACKUP container excluded from backup scope')
   }
 
@@ -179,17 +182,43 @@ export async function executeAppdataBackup(
 
   try {
     if (config.method === 'tar') {
-      engine.log('info', 'system', 'Creating tar archive...')
-      const tarResult = await createTarArchive({
-        source: source,
-        destination: path.join(workDir, 'appdata.tar.gz'),
-        compress: true,
-        onProgress: ({ currentFile }) => engine.log('info', 'file', `Archiving: ${currentFile}`),
-      })
-      engine.addTransferred(tarResult.filesProcessed, tarResult.archiveSize)
-      engine.log('info', 'system', `Tar archive created: ${tarResult.filesProcessed} files, ${tarResult.archiveSize} bytes`)
+      if (containers.length > 0) {
+        // Backup only selected container directories
+        let totalFiles = 0
+        let totalBytes = 0
+        for (const containerName of containers) {
+          const containerSource = path.join(source, containerName)
+          try { await fs.stat(containerSource) } catch {
+            engine.log('warn', 'system', `Appdata dir not found for "${containerName}", skipping`)
+            continue
+          }
+          engine.log('info', 'system', `Creating tar archive for: ${containerName}`)
+          const tarResult = await createTarArchive({
+            source: containerSource,
+            destination: path.join(workDir, `${containerName}.tar.gz`),
+            compress: true,
+            onProgress: ({ currentFile }) => engine.log('info', 'file', `Archiving: ${currentFile}`),
+          })
+          totalFiles += tarResult.filesProcessed
+          totalBytes += tarResult.archiveSize
+          engine.log('info', 'system', `${containerName}: ${tarResult.filesProcessed} files, ${tarResult.archiveSize} bytes`)
+        }
+        engine.addTransferred(totalFiles, totalBytes)
+        engine.log('info', 'system', `Tar done: ${totalFiles} files total, ${totalBytes} bytes total`)
+      } else {
+        // Legacy: no containers configured — backup entire appdata
+        engine.log('info', 'system', 'Creating tar archive (full appdata)...')
+        const tarResult = await createTarArchive({
+          source: source,
+          destination: path.join(workDir, 'appdata.tar.gz'),
+          compress: true,
+          onProgress: ({ currentFile }) => engine.log('info', 'file', `Archiving: ${currentFile}`),
+        })
+        engine.addTransferred(tarResult.filesProcessed, tarResult.archiveSize)
+        engine.log('info', 'system', `Tar archive created: ${tarResult.filesProcessed} files, ${tarResult.archiveSize} bytes`)
+      }
     } else {
-      // Verify source exists and is not empty before rsync
+      // Verify source exists before rsync
       try {
         const entries = await fs.readdir(source)
         engine.log('info', 'system', `Starting rsync: ${source} → ${destPath} (${entries.length} top-level entries)`)
@@ -198,29 +227,60 @@ export async function executeAppdataBackup(
         throw new Error(`Appdata source path not accessible: ${source} — ${msg}`)
       }
 
-      // Collect global + per-container exclusions
-      const containerExclusions: string[] = []
-      if (config.containerSettings) {
-        for (const settings of Object.values(config.containerSettings)) {
-          if (settings.exclusions) {
-            containerExclusions.push(...settings.exclusions)
+      const bwLimit = getSettingInt('rsync_bwlimit_kb', 0)
+
+      if (containers.length > 0) {
+        // Backup only selected container directories
+        let totalFiles = 0
+        let totalBytes = 0
+        for (const containerName of containers) {
+          const containerSource = path.join(source, containerName)
+          try {
+            await fs.stat(containerSource)
+          } catch {
+            engine.log('warn', 'system', `Appdata dir not found for "${containerName}", skipping`)
+            continue
+          }
+          await fs.mkdir(path.join(workDir, containerName), { recursive: true })
+          engine.log('info', 'system', `Rsyncing appdata: ${containerName}`)
+          const perContainerExclusions = config.containerSettings?.[containerName]?.exclusions ?? []
+          const result = await executeRsync({
+            source: containerSource + '/',
+            destination: path.join(workDir, containerName),
+            excludePatterns: ['logs/', 'cache/', '*.log', '*.sock', '*.socket', ...perContainerExclusions],
+            ...(bwLimit > 0 ? { bwLimit } : {}),
+            onProgress: (() => { let last = -1; return ({ percent, speed }: { percent: number; speed: string }) => {
+              if (percent < last) last = -1
+              if (Math.floor(percent / 10) > Math.floor(last / 10)) { last = percent; engine.log('info', 'system', `${containerName}: ${percent}% — ${speed}`) }
+            } })(),
+          })
+          totalFiles += result.filesTransferred
+          totalBytes += result.bytesTransferred
+          engine.log('info', 'system', `${containerName}: ${result.filesTransferred} files, ${result.bytesTransferred} bytes`)
+        }
+        engine.addTransferred(totalFiles, totalBytes)
+        engine.log('info', 'system', `Rsync done: ${totalFiles} files total, ${totalBytes} bytes total`)
+      } else {
+        // Legacy: no containers configured — backup entire appdata
+        const containerExclusions: string[] = []
+        if (config.containerSettings) {
+          for (const settings of Object.values(config.containerSettings)) {
+            if (settings.exclusions) containerExclusions.push(...settings.exclusions)
           }
         }
+        const result = await executeRsync({
+          source: source,
+          destination: workDir,
+          excludePatterns: ['*/logs/*', '*/cache/*', '*/*.log', '*.sock', '*.socket', ...containerExclusions],
+          ...(bwLimit > 0 ? { bwLimit } : {}),
+          onProgress: (() => { let last = -1; return ({ percent, speed }: { percent: number; speed: string }) => {
+            if (percent < last) last = -1
+            if (Math.floor(percent / 10) > Math.floor(last / 10)) { last = percent; engine.log('info', 'system', `Progress: ${percent}% — ${speed}`) }
+          } })(),
+        })
+        engine.addTransferred(result.filesTransferred, result.bytesTransferred)
+        engine.log('info', 'system', `Rsync done: ${result.filesTransferred} files, ${result.bytesTransferred} bytes`)
       }
-
-      const bwLimit = getSettingInt('rsync_bwlimit_kb', 0)
-      const result = await executeRsync({
-        source: source,
-        destination: workDir,
-        excludePatterns: ['*/logs/*', '*/cache/*', '*/*.log', '*.sock', '*.socket', ...containerExclusions],
-        ...(bwLimit > 0 ? { bwLimit } : {}),
-        onProgress: (() => { let last = -1; return ({ percent, speed }: { percent: number; speed: string }) => {
-          if (percent < last) last = -1
-          if (Math.floor(percent / 10) > Math.floor(last / 10)) { last = percent; engine.log('info', 'system', `Progress: ${percent}% — ${speed}`) }
-        } })(),
-      })
-      engine.addTransferred(result.filesTransferred, result.bytesTransferred)
-      engine.log('info', 'system', `Rsync done: ${result.filesTransferred} files, ${result.bytesTransferred} bytes`)
     }
 
     // Backup external volumes
