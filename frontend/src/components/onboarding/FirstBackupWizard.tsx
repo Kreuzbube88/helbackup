@@ -118,9 +118,9 @@ export function FirstBackupWizard({ open, onClose, onSuccess }: Props) {
         const base = { id: cryptoUUID(), retry: { max_attempts: 2, backoff: 'linear' as const } }
         switch (type) {
           case 'flash':
-            return { ...base, type: 'flash', config: { source: '/unraid/boot', targetId: target.id, useEncryption: false } }
+            return { ...base, type: 'flash', config: { targetId: target.id, useEncryption: false } }
           case 'appdata':
-            return { ...base, type: 'appdata', config: { source: '/unraid/user/appdata', targetId: target.id, containers: [], stopContainers: true, useDatabaseDumps: false, useEncryption: false } }
+            return { ...base, type: 'appdata', config: { targetId: target.id, containers: [], stopContainers: true, useDatabaseDumps: false, useEncryption: false } }
           case 'vms':
             return { ...base, type: 'vms', config: { vms: [], destination: '/backups/vms', targetId: target.id, includeDisks: false, useEncryption: false } }
           case 'docker_images':

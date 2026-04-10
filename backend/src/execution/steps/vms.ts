@@ -157,7 +157,14 @@ export async function executeVMBackup(
       if (config.includeDisks && vmInfo.diskPaths.length > 0) {
         engine.log('info', 'system', `Backing up ${vmInfo.diskPaths.length} disk(s) for ${vmName}`)
 
-        for (const diskPath of vmInfo.diskPaths) {
+        // Translate host paths to container paths (virsh returns host paths)
+        const containerDiskPaths = vmInfo.diskPaths.map(p =>
+          p.startsWith('/mnt/cache/') ? p.replace('/mnt/cache/', '/unraid/cache/')
+          : p.startsWith('/mnt/user/') ? p.replace('/mnt/user/', '/unraid/user/')
+          : p
+        )
+
+        for (const diskPath of containerDiskPaths) {
           try {
             const diskName = path.basename(diskPath)
             const diskDestPath = path.join(workDir, vmName, diskName)

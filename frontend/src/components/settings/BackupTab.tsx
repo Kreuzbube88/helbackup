@@ -12,12 +12,14 @@ import { api } from '../../api'
 interface BackupSettings {
   appdataSourcePath: string
   flashSourcePath: string
+  vmsSourcePath: string
   rsyncBwlimitKb: number
 }
 
 const DEFAULT: BackupSettings = {
-  appdataSourcePath: '/unraid/user/appdata',
+  appdataSourcePath: '/unraid/cache/appdata',
   flashSourcePath: '/unraid/boot',
+  vmsSourcePath: '/unraid/cache/domains',
   rsyncBwlimitKb: 0,
 }
 
@@ -27,7 +29,7 @@ export function BackupTab() {
   const [settings, setSettings] = useState<BackupSettings>(DEFAULT)
   const [loading, setLoading] = useState(false)
   const [browserOpen, setBrowserOpen] = useState(false)
-  const [browserTarget, setBrowserTarget] = useState<'appdata' | 'flash' | null>(null)
+  const [browserTarget, setBrowserTarget] = useState<'appdata' | 'flash' | 'vms' | null>(null)
 
   const { hasChanges, resetChanges } = useUnsavedChanges(settings)
 
@@ -36,6 +38,7 @@ export function BackupTab() {
       const loaded: BackupSettings = {
         appdataSourcePath: s.appdataSourcePath,
         flashSourcePath: s.flashSourcePath,
+        vmsSourcePath: s.vmsSourcePath,
         rsyncBwlimitKb: s.rsyncBwlimitKb,
       }
       setSettings(loaded)
@@ -51,11 +54,13 @@ export function BackupTab() {
       const res = await api.settings.update({
         appdataSourcePath: settings.appdataSourcePath,
         flashSourcePath: settings.flashSourcePath,
+        vmsSourcePath: settings.vmsSourcePath,
         rsyncBwlimitKb: settings.rsyncBwlimitKb,
       })
       const updated: BackupSettings = {
         appdataSourcePath: res.appdataSourcePath,
         flashSourcePath: res.flashSourcePath,
+        vmsSourcePath: res.vmsSourcePath,
         rsyncBwlimitKb: res.rsyncBwlimitKb,
       }
       setSettings(updated)
@@ -73,6 +78,8 @@ export function BackupTab() {
       setSettings(s => ({ ...s, appdataSourcePath: path }))
     } else if (browserTarget === 'flash') {
       setSettings(s => ({ ...s, flashSourcePath: path }))
+    } else if (browserTarget === 'vms') {
+      setSettings(s => ({ ...s, vmsSourcePath: path }))
     }
     setBrowserTarget(null)
   }
@@ -134,6 +141,28 @@ export function BackupTab() {
             </div>
           </div>
 
+          {/* VMs source path */}
+          <div>
+            <p className="text-sm font-medium text-[var(--text-primary)] mb-1">{t('backup.vms_source_label')}</p>
+            <p className="text-xs text-[var(--text-muted)] mb-2">{t('backup.vms_source_hint')}</p>
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                value={settings.vmsSourcePath}
+                onChange={e => setSettings(s => ({ ...s, vmsSourcePath: e.target.value }))}
+                className="flex-1 font-mono text-xs bg-[var(--bg-secondary)] border border-[var(--border-default)] px-3 py-2 text-[var(--text-primary)] focus:outline-none focus:border-[var(--theme-primary)]"
+              />
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => { setBrowserTarget('vms'); setBrowserOpen(true) }}
+              >
+                {t('backup.browse')}
+              </Button>
+            </div>
+          </div>
+
           {/* Rsync bandwidth limit */}
           <Input
             type="number"
@@ -155,7 +184,7 @@ export function BackupTab() {
         open={browserOpen}
         onClose={() => { setBrowserOpen(false); setBrowserTarget(null) }}
         onSelect={handleBrowserSelect}
-        initialPath={browserTarget === 'flash' ? '/unraid/boot' : '/unraid/user'}
+        initialPath={browserTarget === 'flash' ? '/unraid/boot' : browserTarget === 'vms' ? '/unraid/cache' : '/unraid/cache'}
         title={browserTarget === 'flash' ? t('backup.flash_source_label') : t('backup.appdata_path_label')}
       />
     </>

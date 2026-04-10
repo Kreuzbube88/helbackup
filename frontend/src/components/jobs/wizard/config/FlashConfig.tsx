@@ -1,7 +1,5 @@
-import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Select } from '../../../common/Select'
-import { FileBrowser } from '../../../common/FileBrowser'
 import { EncryptionToggle } from '../shared/EncryptionToggle'
 import { RetentionFields } from '../shared/RetentionFields'
 import { NoTargetNotice } from '../shared/NoTargetNotice'
@@ -9,7 +7,6 @@ import type { Target } from '../../../../api'
 
 export interface FlashStepConfig {
   targetId: string
-  source?: string
   useEncryption: boolean
   retentionDays?: number
   retentionMinimum: number
@@ -24,7 +21,6 @@ interface Props {
 
 export function FlashConfig({ value, onChange, targets }: Props) {
   const { t } = useTranslation('jobs')
-  const [browserOpen, setBrowserOpen] = useState(false)
 
   const targetOptions = targets.map(tgt => ({ value: tgt.id, label: tgt.name }))
 
@@ -40,23 +36,6 @@ export function FlashConfig({ value, onChange, targets }: Props) {
       {!value.targetId && (
         <p className="text-xs text-[var(--status-error)]">{t('validation_needs_target')}</p>
       )}
-
-      {/* Source path */}
-      <div>
-        <p className="text-sm font-medium text-[var(--text-primary)] mb-1">{t('flash_source_path')}</p>
-        <div className="flex items-center gap-2">
-          <span className="flex-1 font-mono text-xs bg-[var(--bg-primary)] border border-[var(--border-default)] px-3 py-2 text-[var(--text-secondary)] truncate">
-            {value.source ?? '/unraid/boot'}
-          </span>
-          <button
-            type="button"
-            onClick={() => setBrowserOpen(true)}
-            className="px-3 py-2 text-xs border border-[var(--border-default)] text-[var(--text-secondary)] hover:border-[var(--theme-primary)] hover:text-[var(--text-primary)] transition-colors"
-          >
-            {t('browse')}
-          </button>
-        </div>
-      </div>
 
       <EncryptionToggle
         value={value.useEncryption}
@@ -88,13 +67,6 @@ export function FlashConfig({ value, onChange, targets }: Props) {
         </div>
       </label>
 
-      <FileBrowser
-        open={browserOpen}
-        onClose={() => setBrowserOpen(false)}
-        onSelect={path => onChange({ ...value, source: path })}
-        initialPath={value.source ?? '/unraid/boot'}
-        title={t('flash_source_path')}
-      />
     </div>
   )
 }

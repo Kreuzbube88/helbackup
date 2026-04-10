@@ -97,7 +97,7 @@ async function restoreItem(item: RestoreItem, backupPath: string): Promise<void>
       // Find the container subdirectory under backupPath/appdata/
       const appdataBase = path.join(backupPath, 'appdata')
       const sourceDir = await resolveContainerDir(appdataBase, containerName)
-      const appdataRestoreBase = getSettingString('appdata_source_path', '/unraid/user/appdata')
+      const appdataRestoreBase = getSettingString('appdata_source_path', '/unraid/cache/appdata')
       const targetDir = path.join(appdataRestoreBase, containerName)
       await fs.mkdir(targetDir, { recursive: true })
       logger.info(`[restore] appdata: ${sourceDir}/ → ${targetDir}`)

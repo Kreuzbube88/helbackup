@@ -6,7 +6,7 @@ import { executeRsync } from '../../tools/rsync.js'
 import { getEncryptionPassword } from '../../utils/encryptionKey.js'
 import { encryptFileGPG } from '../../utils/gpgEncrypt.js'
 import { parseNasConfig, createNasTempDir, transferAndCleanup, finalizeLocalBackup } from './nasTransfer.js'
-import { getSettingInt } from '../../utils/settings.js'
+import { getSettingInt, getSettingString } from '../../utils/settings.js'
 import type { JobExecutionEngine } from '../engine.js'
 import type { TargetRow } from '../../types/rows.js'
 
@@ -15,7 +15,6 @@ interface TargetConfig {
 }
 
 export interface FlashBackupConfig {
-  source: string   // /unraid/boot (mounted /boot)
   targetId: string
   useEncryption: boolean
 }
@@ -25,6 +24,8 @@ export async function executeFlashBackup(
   engine: JobExecutionEngine
 ): Promise<void> {
   engine.log('info', 'system', 'Starting Flash Drive backup')
+
+  const source = getSettingString('flash_source_path', '/unraid/boot')
 
   const target = db.prepare('SELECT * FROM targets WHERE id = ?').get(config.targetId) as TargetRow | undefined
   if (!target) throw new Error(`Target not found: ${config.targetId}`)
@@ -45,7 +46,7 @@ export async function executeFlashBackup(
 
   const bwLimit = getSettingInt('rsync_bwlimit_kb', 0)
   const result = await executeRsync({
-    source: config.source,
+    source: source,
     destination: workDir,
     excludePatterns: ['previous/', 'System Volume Information/', '*.tmp'],
     // Flash drive must be byte-exact — fail on partial/vanished (rsync 23/24)

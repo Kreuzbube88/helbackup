@@ -46,8 +46,8 @@ interface Props {
 
 const TYPE_DEST: Record<string, string> = {
   flash: '/unraid/boot',
-  appdata: '/unraid/user/appdata',
-  vms: '/unraid/user/domains',
+  appdata: '/unraid/cache/appdata',
+  vms: '/unraid/cache/domains',
   docker_images: '/unraid/user',
   system_config: '/unraid/user',
   custom: '/unraid/user',
@@ -57,8 +57,8 @@ function getDefaultDestination(entries: ManifestEntry[], stepType?: string): str
   if (stepType && TYPE_DEST[stepType]) return TYPE_DEST[stepType]
   const paths = entries.map(e => e.path)
   if (paths.some(p => p.includes('/boot') || p.startsWith('boot/'))) return '/unraid/boot'
-  if (paths.some(p => p.includes('appdata'))) return '/unraid/user/appdata'
-  if (paths.some(p => p.includes('domains'))) return '/unraid/user/domains'
+  if (paths.some(p => p.includes('appdata'))) return '/unraid/cache/appdata'
+  if (paths.some(p => p.includes('domains'))) return '/unraid/cache/domains'
   return '/unraid/user'
 }
 

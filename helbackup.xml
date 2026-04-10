@@ -92,12 +92,12 @@
     Description="⚠️ Unraid user array (READ-WRITE for automated restore). PROTECTED: Write operations only allowed during explicit restore sessions with multi-step confirmation!"
     Type="Path" Display="always" Required="true" Mask="false">/mnt/user</Config>
   
-  <Config Name="Cache Drive" Target="/mnt/cache" Default="/mnt/cache" Mode="ro"
-    Description="Unraid cache drive (read-only). Required if app data or VM disks are stored on cache (/mnt/cache/appdata/, /mnt/cache/domains/). Remove if cache is not used."
+  <Config Name="Cache Drive" Target="/unraid/cache" Default="/mnt/cache" Mode="rw"
+    Description="⚠️ Unraid cache drive (READ-WRITE for restore). Required if appdata or VM disks live on cache (/mnt/cache/appdata/, /mnt/cache/domains/). Remove if cache drive is not used."
     Type="Path" Display="always" Required="true" Mask="false">/mnt/cache</Config>
 
-  <Config Name="Libvirt Configs" Target="/unraid/libvirt" Default="/etc/libvirt" Mode="ro"
-    Description="VM configurations (read-only). Required for VM backup and restore. Remove if you don't use virtual machines."
+  <Config Name="Libvirt Configs" Target="/unraid/libvirt" Default="/etc/libvirt" Mode="rw"
+    Description="⚠️ VM configurations (READ-WRITE for restore). Required for VM backup and restore. Remove if you don't use virtual machines."
     Type="Path" Display="always" Required="true" Mask="false">/etc/libvirt</Config>
 
   <Config Name="Libvirt Socket" Target="/var/run/libvirt/libvirt-sock" Default="/var/run/libvirt/libvirt-sock" Mode="rw"

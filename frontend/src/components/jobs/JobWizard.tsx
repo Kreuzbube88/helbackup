@@ -61,7 +61,6 @@ function buildSteps(backupSteps: BackupStepsConfig): unknown[] {
     pushWithRetention({
       id: cryptoUUID(), type: 'flash',
       config: {
-        source: f.source ?? '/unraid/boot',
         targetId: f.targetId,
         useEncryption: f.useEncryption,
       },
@@ -75,7 +74,6 @@ function buildSteps(backupSteps: BackupStepsConfig): unknown[] {
     pushWithRetention({
       id: cryptoUUID(), type: 'appdata',
       config: {
-        source: a.source ?? '/unraid/user/appdata',
         targetId: a.targetId,
         containers: a.containers,
         stopContainers: a.stopContainers,

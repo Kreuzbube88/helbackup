@@ -25,7 +25,7 @@ export async function fsRoutes(app: FastifyInstance): Promise<void> {
     '/api/fs/browse',
     { preHandler: [app.authenticate] },
     async (request: FastifyRequest<{ Querystring: BrowseQuery }>, reply: FastifyReply) => {
-      const rawPath = request.query.path ?? '/unraid/user'
+      const rawPath = request.query.path ?? '/unraid/'
 
       if (!isPathAllowed(rawPath)) {
         return reply.status(403).send({ error: 'Path not allowed' })

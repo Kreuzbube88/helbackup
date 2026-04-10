@@ -6,6 +6,7 @@ interface UpdateSettingsBody {
   logRetentionDays?: number
   appdataSourcePath?: string
   flashSourcePath?: string
+  vmsSourcePath?: string
   rsyncBwlimitKb?: number
 }
 
@@ -16,8 +17,9 @@ export async function settingsRoutes(app: FastifyInstance): Promise<void> {
     async (_request: FastifyRequest, reply: FastifyReply) => {
       return reply.send({
         logRetentionDays: getSettingInt('log_retention_days', 90),
-        appdataSourcePath: getSettingString('appdata_source_path', '/unraid/user/appdata'),
+        appdataSourcePath: getSettingString('appdata_source_path', '/unraid/cache/appdata'),
         flashSourcePath: getSettingString('flash_source_path', '/unraid/boot'),
+        vmsSourcePath: getSettingString('vms_source_path', '/unraid/cache/domains'),
         rsyncBwlimitKb: getSettingInt('rsync_bwlimit_kb', 0),
       })
     }
@@ -34,13 +36,14 @@ export async function settingsRoutes(app: FastifyInstance): Promise<void> {
             logRetentionDays: { type: 'integer', minimum: 1, maximum: 3650 },
             appdataSourcePath: { type: 'string', minLength: 1 },
             flashSourcePath: { type: 'string', minLength: 1 },
+            vmsSourcePath: { type: 'string', minLength: 1 },
             rsyncBwlimitKb: { type: 'integer', minimum: 0, maximum: 1000000 },
           },
         },
       },
     },
     async (request: FastifyRequest<{ Body: UpdateSettingsBody }>, reply: FastifyReply) => {
-      const { logRetentionDays, appdataSourcePath, flashSourcePath, rsyncBwlimitKb } = request.body
+      const { logRetentionDays, appdataSourcePath, flashSourcePath, vmsSourcePath, rsyncBwlimitKb } = request.body
 
       const upsert = db.prepare(
         "INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value"
@@ -55,14 +58,18 @@ export async function settingsRoutes(app: FastifyInstance): Promise<void> {
       if (flashSourcePath !== undefined) {
         upsert.run('flash_source_path', flashSourcePath)
       }
+      if (vmsSourcePath !== undefined) {
+        upsert.run('vms_source_path', vmsSourcePath)
+      }
       if (rsyncBwlimitKb !== undefined) {
         upsert.run('rsync_bwlimit_kb', String(rsyncBwlimitKb))
       }
 
       return reply.send({
         logRetentionDays: getSettingInt('log_retention_days', 90),
-        appdataSourcePath: getSettingString('appdata_source_path', '/unraid/user/appdata'),
+        appdataSourcePath: getSettingString('appdata_source_path', '/unraid/cache/appdata'),
         flashSourcePath: getSettingString('flash_source_path', '/unraid/boot'),
+        vmsSourcePath: getSettingString('vms_source_path', '/unraid/cache/domains'),
         rsyncBwlimitKb: getSettingInt('rsync_bwlimit_kb', 0),
       })
     }

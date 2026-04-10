@@ -25,7 +25,7 @@ interface FileBrowserProps {
   title?: string
 }
 
-export function FileBrowser({ open, onClose, onSelect, initialPath = '/unraid/user', title }: FileBrowserProps) {
+export function FileBrowser({ open, onClose, onSelect, initialPath = '/unraid/', title }: FileBrowserProps) {
   const { t } = useTranslation('common')
   const [currentPath, setCurrentPath] = useState(initialPath)
   const [result, setResult] = useState<BrowseResult | null>(null)
@@ -40,7 +40,7 @@ export function FileBrowser({ open, onClose, onSelect, initialPath = '/unraid/us
       .catch(() => {
         // If initial path doesn't exist, try the parent directory automatically
         if (!fallbackAttempt) {
-          const parent = path.replace(/\/[^/]+\/?$/, '') || '/unraid/user'
+          const parent = path.replace(/\/[^/]+\/?$/, '') || '/unraid/'
           if (parent !== path) {
             browse(parent, true)
             return
@@ -74,7 +74,7 @@ export function FileBrowser({ open, onClose, onSelect, initialPath = '/unraid/us
           <span className="text-xs text-[var(--text-muted)]">{t('file_browser.quick_access')}:</span>
           {([
             { label: t('file_browser.root_user_share'), path: '/unraid/user' },
-            { label: t('file_browser.root_cache'), path: '/mnt/cache' },
+            { label: t('file_browser.root_cache'), path: '/unraid/cache' },
           ] as { label: string; path: string }[]).map(root => (
             <button
               key={root.path}

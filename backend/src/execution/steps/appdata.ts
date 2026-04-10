@@ -9,7 +9,7 @@ import { dumpDatabaseContainers } from './database-dump.js'
 import { getEncryptionPassword } from '../../utils/encryptionKey.js'
 import { encryptFileGPG } from '../../utils/gpgEncrypt.js'
 import { parseNasConfig, createNasTempDir, transferAndCleanup, finalizeLocalBackup } from './nasTransfer.js'
-import { getSettingInt } from '../../utils/settings.js'
+import { getSettingInt, getSettingString } from '../../utils/settings.js'
 import type { JobExecutionEngine } from '../engine.js'
 import type { TargetRow } from '../../types/rows.js'
 
@@ -31,7 +31,6 @@ export interface ExternalVolumeConfig {
 }
 
 export interface AppdataBackupConfig {
-  source: string             // /unraid/user/appdata
   targetId: string
   containers: string[]       // Container IDs to include
   stopContainers: boolean
@@ -51,6 +50,8 @@ export async function executeAppdataBackup(
   engine: JobExecutionEngine
 ): Promise<void> {
   engine.log('info', 'system', 'Starting Appdata backup')
+
+  const source = getSettingString('appdata_source_path', '/unraid/cache/appdata')
 
   // CRITICAL: Never stop/include HELBACKUP itself
   const allContainers = await listContainers()
@@ -97,13 +98,13 @@ export async function executeAppdataBackup(
     let statOk = false
     let readdirOk = false
     let lastErr: unknown
-    try { await fs.stat(config.source); statOk = true } catch { /* try readdir */ }
+    try { await fs.stat(source); statOk = true } catch { /* try readdir */ }
     if (!statOk) {
-      try { await fs.readdir(config.source); readdirOk = true } catch (e) { lastErr = e }
+      try { await fs.readdir(source); readdirOk = true } catch (e) { lastErr = e }
     }
     if (!statOk && !readdirOk) {
       const errMsg = lastErr instanceof Error ? lastErr.message : String(lastErr)
-      throw new Error(`Appdata source path not accessible: ${config.source} (${errMsg}) — check that /mnt/user is mounted as /unraid/user in docker-compose`)
+      throw new Error(`Appdata source path not accessible: ${source} (${errMsg}) — check that /mnt/user is mounted as /unraid/user in docker-compose`)
     }
   }
 
@@ -180,7 +181,7 @@ export async function executeAppdataBackup(
     if (config.method === 'tar') {
       engine.log('info', 'system', 'Creating tar archive...')
       const tarResult = await createTarArchive({
-        source: config.source,
+        source: source,
         destination: path.join(workDir, 'appdata.tar.gz'),
         compress: true,
         onProgress: ({ currentFile }) => engine.log('info', 'file', `Archiving: ${currentFile}`),
@@ -190,11 +191,11 @@ export async function executeAppdataBackup(
     } else {
       // Verify source exists and is not empty before rsync
       try {
-        const entries = await fs.readdir(config.source)
-        engine.log('info', 'system', `Starting rsync: ${config.source} → ${destPath} (${entries.length} top-level entries)`)
+        const entries = await fs.readdir(source)
+        engine.log('info', 'system', `Starting rsync: ${source} → ${destPath} (${entries.length} top-level entries)`)
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : String(err)
-        throw new Error(`Appdata source path not accessible: ${config.source} — ${msg}`)
+        throw new Error(`Appdata source path not accessible: ${source} — ${msg}`)
       }
 
       // Collect global + per-container exclusions
@@ -209,7 +210,7 @@ export async function executeAppdataBackup(
 
       const bwLimit = getSettingInt('rsync_bwlimit_kb', 0)
       const result = await executeRsync({
-        source: config.source,
+        source: source,
         destination: workDir,
         excludePatterns: ['*/logs/*', '*/cache/*', '*/*.log', '*.sock', '*.socket', ...containerExclusions],
         ...(bwLimit > 0 ? { bwLimit } : {}),

@@ -21,8 +21,8 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
       - /boot:/unraid/boot
       - /mnt/user:/unraid/user
-      - /mnt/cache:/mnt/cache:ro
-      - /etc/libvirt:/unraid/libvirt:ro
+      - /mnt/cache:/unraid/cache
+      - /etc/libvirt:/unraid/libvirt
       - /var/run/libvirt/libvirt-sock:/var/run/libvirt/libvirt-sock
     networks:
       - br0
