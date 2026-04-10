@@ -33,13 +33,25 @@ jobs:
             fs.writeFileSync('package.json',JSON.stringify(p,null,2)+'\n');
           "
 
+      - name: Bump frontend package.json version
+        env:
+          INPUT_VERSION: ${{ github.event.inputs.version }}
+        run: |
+          cd frontend
+          node -e "
+            const fs=require('fs');
+            const p=JSON.parse(fs.readFileSync('package.json','utf8'));
+            p.version=process.env.INPUT_VERSION;
+            fs.writeFileSync('package.json',JSON.stringify(p,null,2)+'\n');
+          "
+
       - name: Commit and tag
         env:
           INPUT_VERSION: ${{ github.event.inputs.version }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add backend/package.json
+          git add backend/package.json frontend/package.json
           if ! git diff --staged --quiet; then
             git commit -m "chore: bump version to $INPUT_VERSION"
             git push

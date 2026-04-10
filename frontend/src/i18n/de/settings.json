@@ -1,5 +1,28 @@
 {
   "title": "Einstellungen",
+  "tabs": {
+    "appearance": "Aussehen",
+    "notifications": "Benachrichtigungen",
+    "backup": "Backup",
+    "system": "System"
+  },
+  "appearance": {
+    "scanline_label": "Scanline-Effekt",
+    "scanline_hint": "Animierte Scan-Linie über der Benutzeroberfläche"
+  },
+  "backup": {
+    "title": "Backup-Einstellungen",
+    "appdata_paths_label": "Standard-Appdata-Pfade",
+    "appdata_paths_hint": "Wird als Standardquelle für neue Appdata-Jobs verwendet",
+    "add_path": "Pfad hinzufügen",
+    "browse": "Durchsuchen",
+    "flash_source_label": "Flash-Quellpfad",
+    "flash_source_hint": "Standardpfad für Flash-Drive-Backups (Standard: /unraid/boot)",
+    "bwlimit_label": "Rsync Bandbreitenlimit (KB/s)",
+    "bwlimit_hint": "0 = kein Limit. Empfehlung: 51200 = 50 MB/s",
+    "save": "Speichern",
+    "saved": "Backup-Einstellungen gespeichert"
+  },
   "theme": {
     "label": "Farbschema",
     "description": "Wähle ein Farbschema für die Benutzeroberfläche",

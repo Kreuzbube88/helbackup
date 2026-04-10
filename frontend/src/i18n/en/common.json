@@ -25,6 +25,13 @@
   "unsaved_changes_title": "Discard changes?",
   "loading": "Loading...",
   "error": "Error",
+  "file_browser": {
+    "title": "Select Directory",
+    "select_btn": "Select This Folder",
+    "go_up": "Go up",
+    "loading": "Loading…",
+    "empty": "No subdirectories"
+  },
   "success": "Success",
   "nav": {
     "dashboard": "Dashboard",

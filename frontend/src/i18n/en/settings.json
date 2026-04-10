@@ -1,5 +1,28 @@
 {
   "title": "Settings",
+  "tabs": {
+    "appearance": "Appearance",
+    "notifications": "Notifications",
+    "backup": "Backup",
+    "system": "System"
+  },
+  "appearance": {
+    "scanline_label": "Scanline Effect",
+    "scanline_hint": "Animated scan line overlay across the interface"
+  },
+  "backup": {
+    "title": "Backup Settings",
+    "appdata_paths_label": "Default Appdata Paths",
+    "appdata_paths_hint": "Used as the default source for new Appdata jobs",
+    "add_path": "Add path",
+    "browse": "Browse",
+    "flash_source_label": "Flash Source Path",
+    "flash_source_hint": "Default path for flash drive backups (default: /unraid/boot)",
+    "bwlimit_label": "Rsync Bandwidth Limit (KB/s)",
+    "bwlimit_hint": "0 = no limit. Recommended: 51200 = 50 MB/s",
+    "save": "Save",
+    "saved": "Backup settings saved"
+  },
   "theme": {
     "label": "Color Theme",
     "description": "Choose a color theme for the interface",

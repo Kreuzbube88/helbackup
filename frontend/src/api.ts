@@ -274,9 +274,40 @@ export const api = {
   },
 
   settings: {
-    get: () => request<{ logRetentionDays: number }>('GET', '/settings'),
-    update: (data: { logRetentionDays?: number }) =>
-      request<{ logRetentionDays: number }>('POST', '/settings', data),
+    get: () => request<{
+      logRetentionDays: number
+      appdataSourcePaths: string[]
+      flashSourcePath: string
+      rsyncBwlimitKb: number
+    }>('GET', '/settings'),
+    update: (data: {
+      logRetentionDays?: number
+      appdataSourcePaths?: string[]
+      flashSourcePath?: string
+      rsyncBwlimitKb?: number
+    }) => request<{
+      logRetentionDays: number
+      appdataSourcePaths: string[]
+      flashSourcePath: string
+      rsyncBwlimitKb: number
+    }>('POST', '/settings', data),
+  },
+
+  fs: {
+    browse: (p: string) => request<{
+      path: string
+      parent: string | null
+      parentAllowed: boolean
+      entries: Array<{ name: string; path: string }>
+    }>('GET', `/fs/browse?path=${encodeURIComponent(p)}`),
+  },
+
+  status: {
+    getHealth: async (): Promise<{ status: string; version: string; uptime: number; database: string }> => {
+      const res = await fetch('/health')
+      if (!res.ok) throw new ApiError(res.statusText, res.status)
+      return res.json() as Promise<{ status: string; version: string; uptime: number; database: string }>
+    },
   },
 }
 

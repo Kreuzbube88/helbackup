@@ -1,8 +1,8 @@
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Github, Package, BookOpen, Coffee } from 'lucide-react'
 import { Card } from '../components/common/Card'
-
-const VERSION = '0.1.0'
+import { api } from '../api'
 const GITHUB_URL = 'https://github.com/Kreuzbube88/helbackup'
 const REGISTRY_URL = 'https://github.com/Kreuzbube88/helbackup/pkgs/container/helbackup'
 const CHANGELOG_URL = 'https://github.com/Kreuzbube88/helbackup/releases/latest'
@@ -31,6 +31,11 @@ const LINK_ITEMS = [
 
 export function AboutPage() {
   const { t } = useTranslation('about')
+  const [version, setVersion] = useState('...')
+
+  useEffect(() => {
+    api.status.getHealth().then(h => setVersion(h.version)).catch(() => setVersion('?'))
+  }, [])
 
   return (
     <div className="flex-1 p-6 overflow-auto relative">
@@ -61,7 +66,7 @@ export function AboutPage() {
               className="font-mono text-xs px-2 py-0.5 border border-[var(--theme-accent)] text-[var(--theme-accent)] tracking-widest"
               style={{ boxShadow: '0 0 8px var(--theme-glow)' }}
             >
-              v{VERSION}
+              v{version}
             </span>
           </div>
 

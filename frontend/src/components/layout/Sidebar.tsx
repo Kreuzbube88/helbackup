@@ -1,5 +1,7 @@
+import { useEffect, useState } from 'react'
 import { NavLink } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { api } from '../../api'
 import {
   LayoutDashboard,
   Briefcase,
@@ -66,6 +68,11 @@ function NavGroup({ items, t }: { items: NavItem[]; t: (key: string) => string }
 
 export function Sidebar() {
   const { t } = useTranslation()
+  const [version, setVersion] = useState('...')
+
+  useEffect(() => {
+    api.status.getHealth().then(h => setVersion(h.version)).catch(() => setVersion('?'))
+  }, [])
 
   return (
     <aside className="w-56 bg-[var(--bg-secondary)] border-r border-[var(--border-default)] flex flex-col shrink-0">
@@ -84,7 +91,7 @@ export function Sidebar() {
 
       {/* Version */}
       <div className="px-4 py-3 border-t border-[var(--border-default)]">
-        <span className="text-xs font-mono text-[var(--text-muted)]">v0.1.0</span>
+        <span className="text-xs font-mono text-[var(--text-muted)]">v{version}</span>
       </div>
     </aside>
   )

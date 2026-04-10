@@ -1,6 +1,8 @@
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ArrowUp, ArrowDown } from 'lucide-react'
 import { Select } from '../../../common/Select'
+import { FileBrowser } from '../../../common/FileBrowser'
 import DockerImageSelector from '../../../jobs/DockerImageSelector'
 import { EncryptionToggle } from '../shared/EncryptionToggle'
 import { RetentionFields } from '../shared/RetentionFields'
@@ -9,6 +11,7 @@ import type { Target } from '../../../../api'
 
 export interface AppdataStepConfig {
   targetId: string
+  source?: string
   containers: string[]
   stopContainers: boolean
   stopOrder: string[]
@@ -30,6 +33,7 @@ interface Props {
 
 export function AppdataConfig({ value, onChange, targets }: Props) {
   const { t } = useTranslation('jobs')
+  const [browserOpen, setBrowserOpen] = useState(false)
 
   const targetOptions = targets.map(tgt => ({ value: tgt.id, label: tgt.name }))
 
@@ -69,6 +73,24 @@ export function AppdataConfig({ value, onChange, targets }: Props) {
       {!value.targetId && (
         <p className="text-xs text-[var(--status-error)]">{t('validation_needs_target')}</p>
       )}
+
+      {/* Source path */}
+      <div>
+        <p className="text-sm font-medium text-[var(--text-primary)] mb-1">{t('appdata_source_path')}</p>
+        <p className="text-xs text-[var(--text-muted)] mb-2">{t('appdata_source_path_hint')}</p>
+        <div className="flex items-center gap-2">
+          <span className="flex-1 font-mono text-xs bg-[var(--bg-primary)] border border-[var(--border-default)] px-3 py-2 text-[var(--text-secondary)] truncate">
+            {value.source ?? '/unraid/user/appdata'}
+          </span>
+          <button
+            type="button"
+            onClick={() => setBrowserOpen(true)}
+            className="px-3 py-2 text-xs border border-[var(--border-default)] text-[var(--text-secondary)] hover:border-[var(--theme-primary)] hover:text-[var(--text-primary)] transition-colors"
+          >
+            {t('browse')}
+          </button>
+        </div>
+      </div>
 
       <DockerImageSelector
         value={value.containers}
@@ -229,6 +251,14 @@ export function AppdataConfig({ value, onChange, targets }: Props) {
           <p className="text-xs text-[var(--text-muted)]">{t('step_stop_on_error_hint')}</p>
         </div>
       </label>
+
+      <FileBrowser
+        open={browserOpen}
+        onClose={() => setBrowserOpen(false)}
+        onSelect={path => onChange({ ...value, source: path })}
+        initialPath={value.source ?? '/unraid/user'}
+        title={t('appdata_source_path')}
+      />
     </div>
   )
 }

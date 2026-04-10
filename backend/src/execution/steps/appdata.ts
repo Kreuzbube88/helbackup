@@ -9,6 +9,7 @@ import { dumpDatabaseContainers } from './database-dump.js'
 import { getEncryptionPassword } from '../../utils/encryptionKey.js'
 import { encryptFileGPG } from '../../utils/gpgEncrypt.js'
 import { parseNasConfig, createNasTempDir, transferAndCleanup, finalizeLocalBackup } from './nasTransfer.js'
+import { getSettingInt } from '../../utils/settings.js'
 import type { JobExecutionEngine } from '../engine.js'
 import type { TargetRow } from '../../types/rows.js'
 
@@ -191,10 +192,12 @@ export async function executeAppdataBackup(
         }
       }
 
+      const bwLimit = getSettingInt('rsync_bwlimit_kb', 0)
       const result = await executeRsync({
         source: config.source,
         destination: workDir,
         excludePatterns: ['*/logs/*', '*/cache/*', '*/*.log', '*.sock', '*.socket', ...containerExclusions],
+        ...(bwLimit > 0 ? { bwLimit } : {}),
         onProgress: (() => { let last = -1; return ({ percent, speed }: { percent: number; speed: string }) => {
           if (percent < last) last = -1
           if (Math.floor(percent / 10) > Math.floor(last / 10)) { last = percent; engine.log('info', 'system', `Progress: ${percent}% — ${speed}`) }

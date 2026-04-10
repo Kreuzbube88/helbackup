@@ -2,6 +2,7 @@ import { type RestorePlan, type RestoreItem } from './restorePlan.js'
 import { logger } from '../utils/logger.js'
 import { notificationManager } from '../notifications/notificationManager.js'
 import { executeRsync } from '../tools/rsync.js'
+import { getSettingString, getSettingJson } from '../utils/settings.js'
 import { spawn } from 'child_process'
 import path from 'path'
 import fs from 'fs/promises'
@@ -76,13 +77,13 @@ async function restoreItem(item: RestoreItem, backupPath: string): Promise<void>
 
   switch (item.type) {
     case 'flash': {
-      // Rsync the flash backup directory contents to /boot
+      // Rsync the flash backup directory contents to the configured flash source path
+      const flashDest = getSettingString('flash_source_path', '/unraid/boot')
       const flashDir = path.join(backupPath, parts[0])
-      logger.info(`[restore] flash: ${flashDir}/ → /boot`)
+      logger.info(`[restore] flash: ${flashDir}/ → ${flashDest}`)
       await executeRsync({
         source: flashDir + '/',
-        destination: '/unraid/boot',
-        bwLimit: 51200,
+        destination: flashDest,
         excludePatterns: ['previous/', 'System Volume Information/'],
         onLog: msg => { if (msg.trim()) logger.debug(`[rsync] ${msg.trim()}`) },
       })
@@ -96,7 +97,9 @@ async function restoreItem(item: RestoreItem, backupPath: string): Promise<void>
       // Find the container subdirectory under backupPath/appdata/
       const appdataBase = path.join(backupPath, 'appdata')
       const sourceDir = await resolveContainerDir(appdataBase, containerName)
-      const targetDir = path.join('/unraid/user/appdata', containerName)
+      const appdataPaths = getSettingJson<string[]>('appdata_source_paths', ['/unraid/user/appdata'])
+      const appdataRestoreBase = appdataPaths[0] ?? '/unraid/user/appdata'
+      const targetDir = path.join(appdataRestoreBase, containerName)
       await fs.mkdir(targetDir, { recursive: true })
       logger.info(`[restore] appdata: ${sourceDir}/ → ${targetDir}`)
       await executeRsync({

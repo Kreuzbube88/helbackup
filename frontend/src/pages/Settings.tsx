@@ -1,101 +1,30 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Card } from '../components/common/Card'
-import { ThemeSelector } from '../components/common/ThemeSelector'
-import { Select } from '../components/common/Select'
-import { Button } from '../components/common/Button'
-import { Input } from '../components/common/Input'
-import { useToast } from '../components/common/Toast'
-import { ConfirmModal } from '../components/common/ConfirmModal'
-import { useUnsavedChanges } from '../hooks/useUnsavedChanges'
-import { api } from '../api'
+import { AppearanceTab } from '../components/settings/AppearanceTab'
+import { BackupTab } from '../components/settings/BackupTab'
+import { SystemTab } from '../components/settings/SystemTab'
 import { NotificationSettings } from '../components/notifications/NotificationSettings'
-import { HELBACKUPRestore } from '../components/settings/HELBACKUPRestore'
+import { Card } from '../components/common/Card'
 
-const LANG_OPTIONS = [
-  { value: 'de', label: 'Deutsch' },
-  { value: 'en', label: 'English' },
-]
-
-const EMPTY_PW_FORM = { currentPassword: '', newPassword: '', confirmPassword: '' }
+type Tab = 'appearance' | 'notifications' | 'backup' | 'system'
 
 export function Settings() {
   const { t, i18n } = useTranslation('settings')
-  const { toast } = useToast()
+  const [tab, setTab] = useState<Tab>('appearance')
   const [lang, setLang] = useState(i18n.language.startsWith('de') ? 'de' : 'en')
-
-  const [formData, setFormData] = useState(EMPTY_PW_FORM)
-  const { hasChanges, resetChanges } = useUnsavedChanges(formData)
-
-  const [showPwConfirm, setShowPwConfirm] = useState(false)
-  const [pwLoading, setPwLoading] = useState(false)
-  const [pwError, setPwError] = useState('')
-
-  const [logRetentionDays, setLogRetentionDays] = useState(90)
-  const [systemLoading, setSystemLoading] = useState(false)
-
-  useEffect(() => {
-    api.settings.get().then(s => setLogRetentionDays(s.logRetentionDays)).catch(() => {})
-  }, [])
-
-  // Warn on browser close/refresh when form has unsaved data
-  useEffect(() => {
-    if (!hasChanges) return
-    const handler = (e: BeforeUnloadEvent) => { e.preventDefault() }
-    window.addEventListener('beforeunload', handler)
-    return () => window.removeEventListener('beforeunload', handler)
-  }, [hasChanges])
-
-  async function handleSystemSave(e: React.FormEvent) {
-    e.preventDefault()
-    setSystemLoading(true)
-    try {
-      const res = await api.settings.update({ logRetentionDays })
-      setLogRetentionDays(res.logRetentionDays)
-      toast(t('system.saved'), 'success')
-    } catch {
-      toast(t('common:error'), 'error')
-    } finally {
-      setSystemLoading(false)
-    }
-  }
 
   function handleLangChange(value: string) {
     setLang(value)
     void i18n.changeLanguage(value)
     localStorage.setItem('helbackup_lang', value)
-    toast(t('language.changed'), 'success')
   }
 
-  function handlePwSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    setPwError('')
-    if (formData.newPassword !== formData.confirmPassword) {
-      setPwError(t('account.error_mismatch'))
-      return
-    }
-    if (formData.newPassword.length < 8) {
-      setPwError(t('account.error_too_short'))
-      return
-    }
-    setShowPwConfirm(true)
-  }
-
-  async function handlePasswordChange() {
-    setShowPwConfirm(false)
-    setPwLoading(true)
-    try {
-      await api.auth.changePassword(formData.currentPassword, formData.newPassword)
-      toast(t('account.password_changed'), 'success')
-      setFormData(EMPTY_PW_FORM)
-      resetChanges(EMPTY_PW_FORM)
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : ''
-      setPwError(msg === 'Current password incorrect' ? t('account.error_wrong_current') : msg)
-    } finally {
-      setPwLoading(false)
-    }
-  }
+  const TABS: { id: Tab; label: string }[] = [
+    { id: 'appearance', label: t('tabs.appearance') },
+    { id: 'notifications', label: t('tabs.notifications') },
+    { id: 'backup', label: t('tabs.backup') },
+    { id: 'system', label: t('tabs.system') },
+  ]
 
   return (
     <div className="flex-1 p-6 overflow-auto relative">
@@ -108,96 +37,43 @@ export function Settings() {
         {t('title')}
       </h1>
 
-      <div className="flex flex-col gap-4 relative">
-        <Card>
-          <h2 className="text-sm font-semibold text-[var(--text-secondary)] mb-4 uppercase tracking-wider">
-            {t('general.title')}
-          </h2>
-          <div className="flex flex-col gap-4">
-            <ThemeSelector />
-            <Select
-              label={t('language.label')}
-              options={LANG_OPTIONS}
-              value={lang}
-              onChange={e => handleLangChange(e.target.value)}
-            />
-          </div>
-        </Card>
-
-        <Card>
-          <h2 className="text-sm font-semibold text-[var(--text-secondary)] mb-4 uppercase tracking-wider">
-            {t('account.title')}
-          </h2>
-          <form onSubmit={handlePwSubmit} className="flex flex-col gap-3">
-            <Input
-              type="password"
-              label={t('account.current_password')}
-              value={formData.currentPassword}
-              onChange={e => setFormData(f => ({ ...f, currentPassword: e.target.value }))}
-              required
-            />
-            <Input
-              type="password"
-              label={t('account.new_password')}
-              value={formData.newPassword}
-              onChange={e => setFormData(f => ({ ...f, newPassword: e.target.value }))}
-              required
-            />
-            <Input
-              type="password"
-              label={t('account.confirm_password')}
-              value={formData.confirmPassword}
-              onChange={e => setFormData(f => ({ ...f, confirmPassword: e.target.value }))}
-              error={pwError}
-              required
-            />
-            <Button type="submit" variant="primary" size="sm" loading={pwLoading} className="self-start mt-1">
-              {t('account.change_password')}
-            </Button>
-          </form>
-        </Card>
-        <Card>
-          <h2 className="text-sm font-semibold text-[var(--text-secondary)] mb-6 uppercase tracking-wider">
-            {t('settings:notifications.title', 'Notifications')}
-          </h2>
-          <NotificationSettings />
-        </Card>
-        <Card>
-          <h2 className="text-sm font-semibold text-[var(--text-secondary)] mb-4 uppercase tracking-wider">
-            {t('system.title')}
-          </h2>
-          <form onSubmit={e => { void handleSystemSave(e) }} className="flex flex-col gap-3">
-            <Input
-              type="number"
-              label={t('system.log_retention_label')}
-              value={String(logRetentionDays)}
-              onChange={e => setLogRetentionDays(Math.max(1, parseInt(e.target.value) || 1))}
-              min="1"
-              max="3650"
-              helpText={t('system.log_retention_hint')}
-            />
-            <Button type="submit" variant="primary" size="sm" loading={systemLoading} className="self-start">
-              {t('system.save')}
-            </Button>
-          </form>
-        </Card>
-        <Card>
-          <h2 className="text-sm font-semibold text-[var(--text-secondary)] mb-4 uppercase tracking-wider">
-            {t('helbackup.title')}
-          </h2>
-          <HELBACKUPRestore />
-        </Card>
+      {/* Tab bar */}
+      <div className="relative flex border-b border-[var(--border-default)] mb-6">
+        {TABS.map(({ id, label }) => (
+          <button
+            key={id}
+            type="button"
+            onClick={() => setTab(id)}
+            className={[
+              'px-4 py-2 text-sm font-medium transition-colors',
+              tab === id
+                ? 'border-b-2 border-[var(--theme-primary)] text-[var(--text-primary)] -mb-px'
+                : 'text-[var(--text-muted)] hover:text-[var(--text-secondary)]',
+            ].join(' ')}
+          >
+            {label}
+          </button>
+        ))}
       </div>
 
-      <ConfirmModal
-        open={showPwConfirm}
-        onConfirm={() => { void handlePasswordChange() }}
-        onCancel={() => setShowPwConfirm(false)}
-        title={t('account.password_change_confirm')}
-        message={t('account.password_change_confirm_message')}
-        variant="warning"
-        loading={pwLoading}
-      />
+      <div className="relative flex flex-col gap-4">
+        {tab === 'appearance' && (
+          <AppearanceTab lang={lang} onLangChange={handleLangChange} />
+        )}
+
+        {tab === 'notifications' && (
+          <Card>
+            <h2 className="text-sm font-semibold text-[var(--text-secondary)] mb-6 uppercase tracking-wider">
+              {t('tabs.notifications')}
+            </h2>
+            <NotificationSettings />
+          </Card>
+        )}
+
+        {tab === 'backup' && <BackupTab />}
+
+        {tab === 'system' && <SystemTab />}
+      </div>
     </div>
   )
 }

@@ -8,6 +8,7 @@ import { useEffect, useState } from 'react'
 import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useStore } from './store/useStore'
+import { useUiStore } from './store/useUiStore'
 import { api } from './api'
 import { Header } from './components/layout/Header'
 import { Sidebar } from './components/layout/Sidebar'
@@ -77,6 +78,7 @@ function ProtectedLayout() {
 
 export function App() {
   const { t, i18n } = useTranslation()
+  const scanlineEnabled = useUiStore(s => s.scanlineEnabled)
   const [setupChecking, setSetupChecking] = useState(true)
   const [firstRun, setFirstRun] = useState(false)
 
@@ -108,7 +110,7 @@ export function App() {
 
   return (
     <BrowserRouter>
-      <div className="scanline-overlay" />
+      {scanlineEnabled && <div className="scanline-overlay" />}
       <Routes>
         {firstRun ? (
           <>
