@@ -93,7 +93,7 @@
     Type="Path" Display="always" Required="true" Mask="false">/mnt/user</Config>
   
   <Config Name="Cache Drive" Target="/unraid/cache" Default="/mnt/cache" Mode="rw"
-    Description="⚠️ Unraid cache drive (READ-WRITE for restore). Required if appdata or VM disks live on cache (/mnt/cache/appdata/, /mnt/cache/domains/). Remove if cache drive is not used."
+    Description="⚠️ Unraid cache drive (READ-WRITE for restore). Required if appdata or VM disks live on cache (/mnt/cache/appdata/, /mnt/cache/domains/)."
     Type="Path" Display="always" Required="true" Mask="false">/mnt/cache</Config>
 
   <Config Name="Libvirt Configs" Target="/unraid/libvirt" Default="/etc/libvirt" Mode="rw"
