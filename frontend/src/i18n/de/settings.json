@@ -12,6 +12,7 @@
   },
   "backup": {
     "title": "Backup-Einstellungen",
+    "advanced_warning": "⚠️ Diese Einstellungen müssen in der Regel nicht angepasst werden. Nur ändern, wenn du weißt was du tust — falsche Pfade können Backups und Wiederherstellungen beschädigen.",
     "appdata_path_label": "Appdata-Quellpfad",
     "appdata_path_hint": "Standardquellpfad für neue Appdata-Jobs (Standard: /unraid/user/appdata)",
     "browse": "Durchsuchen",

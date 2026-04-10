@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { TriangleAlert } from 'lucide-react'
 import { Card } from '../common/Card'
 import { Button } from '../common/Button'
 import { Input } from '../common/Input'
@@ -78,6 +79,11 @@ export function BackupTab() {
 
   return (
     <>
+      <div className="flex items-start gap-3 px-4 py-3 border border-[var(--status-warning)] bg-[var(--status-warning)]/10 text-[var(--status-warning)] text-sm">
+        <TriangleAlert size={16} className="shrink-0 mt-0.5" />
+        <span>{t('backup.advanced_warning')}</span>
+      </div>
+
       <Card>
         <h2 className="text-sm font-semibold text-[var(--text-secondary)] mb-4 uppercase tracking-wider">
           {t('backup.title')}

@@ -12,6 +12,7 @@
   },
   "backup": {
     "title": "Backup Settings",
+    "advanced_warning": "⚠️ These settings do not need to be changed under normal circumstances. Only modify them if you know what you are doing — incorrect paths can break backups and restores.",
     "appdata_path_label": "Appdata Source Path",
     "appdata_path_hint": "Default source path for new Appdata jobs (default: /unraid/user/appdata)",
     "browse": "Browse",
