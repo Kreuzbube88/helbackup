@@ -1,5 +1,6 @@
 import path from 'path'
 import fs from 'fs/promises'
+import { createWriteStream } from 'fs'
 import { spawn } from 'node:child_process'
 import { inspectContainer, dockerExecToFile, getContainerArchive } from '../../docker/client.js'
 import type { JobExecutionEngine } from '../engine.js'
@@ -60,12 +61,13 @@ async function dumpMySQL(containerId: string, outputPath: string, engine: JobExe
   })
 }
 
-async function dumpMongoDB(containerId: string, outputPath: string, engine: JobExecutionEngine): Promise<void> {
+async function dumpMongoDB(containerId: string, outputPath: string, engine: JobExecutionEngine, username: string, password: string): Promise<void> {
   engine.log('info', 'system', `Creating MongoDB dump for container ${containerId}`)
 
+  const authArgs = username ? ['--username', username, '--password', password, '--authenticationDatabase', 'admin'] : []
   // Run mongodump inside the container — writes to /tmp/mongodump (stdout not meaningful)
   const { stderr: dumpStderr, exitCode: dumpExit } = await dockerExecToFile(
-    containerId, ['mongodump', '--out', '/tmp/mongodump'], '/dev/null'
+    containerId, ['mongodump', ...authArgs, '--out', '/tmp/mongodump'], '/dev/null'
   )
   if (dumpExit !== 0) {
     engine.log('error', 'system', `MongoDB dump failed: ${dumpStderr}`)
@@ -88,6 +90,36 @@ async function dumpMongoDB(containerId: string, outputPath: string, engine: JobE
 
   engine.log('info', 'file', `MongoDB dump extracted: ${dumpDir}`, undefined, {
     file: { path: dumpDir, size: 0, result: 'copied' },
+  })
+}
+
+async function dumpRedis(containerId: string, outputPath: string, engine: JobExecutionEngine, password: string): Promise<void> {
+  engine.log('info', 'system', `Creating Redis dump for container ${containerId}`)
+  const dumpFile = path.join(outputPath, 'redis_dump.rdb')
+  const authArgs = password ? ['-a', password] : []
+  // Trigger BGSAVE and wait for completion, then export RDB via archive API
+  const { stderr: saveStderr, exitCode: saveExit } = await dockerExecToFile(
+    containerId, ['redis-cli', ...authArgs, 'BGSAVE'], '/dev/null'
+  )
+  if (saveExit !== 0) {
+    engine.log('error', 'system', `Redis BGSAVE failed: ${saveStderr}`)
+    throw new Error(`redis-cli BGSAVE failed with exit code ${saveExit}`)
+  }
+  // Export RDB via Docker archive API — default RDB path is /data/dump.rdb
+  const tarStream = await getContainerArchive(containerId, '/data/dump.rdb')
+  await new Promise<void>((resolve, reject) => {
+    const tar = spawn('tar', ['-xO'])  // extract single file to stdout
+    const out = createWriteStream(dumpFile)
+    tarStream.pipe(tar.stdin)
+    tar.stdout.pipe(out)
+    tar.on('close', (code: number | null) =>
+      code === 0 ? resolve() : reject(new Error(`tar extract failed with code ${code}`))
+    )
+    tar.on('error', reject)
+  })
+  const stats = await fs.stat(dumpFile)
+  engine.log('info', 'file', `Redis dump created: ${dumpFile}`, undefined, {
+    file: { path: dumpFile, size: stats.size, result: 'copied' },
   })
 }
 
@@ -118,12 +150,17 @@ export async function executeDatabaseDump(
       await dumpMySQL(config.containerId, config.outputPath, engine, mysqlPassword)
       break
     }
-    case 'mongodb':
-      await dumpMongoDB(config.containerId, config.outputPath, engine)
+    case 'mongodb': {
+      const mongoUser = getEnvVar(env, 'MONGO_INITDB_ROOT_USERNAME')
+      const mongoPass = getEnvVar(env, 'MONGO_INITDB_ROOT_PASSWORD')
+      await dumpMongoDB(config.containerId, config.outputPath, engine, mongoUser, mongoPass)
       break
-    case 'redis':
-      engine.log('warn', 'system', 'Redis dump not implemented — using filesystem backup')
+    }
+    case 'redis': {
+      const redisPass = getEnvVar(env, 'REDIS_PASSWORD', 'REQUIREPASS')
+      await dumpRedis(config.containerId, config.outputPath, engine, redisPass)
       break
+    }
     default:
       engine.log('warn', 'system', `Unknown database type for dump: ${config.type}`)
   }
