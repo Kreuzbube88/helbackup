@@ -107,6 +107,7 @@ async function restoreItem(item: RestoreItem, backupPath: string): Promise<void>
         bwLimit: 51200,
         onLog: msg => { if (msg.trim()) logger.debug(`[rsync] ${msg.trim()}`) },
       })
+      await ensurePostgresDataDirs(targetDir)
       break
     }
 
@@ -188,6 +189,37 @@ async function resolveContainerDir(appdataBase: string, containerName: string): 
 
 async function exists(p: string): Promise<boolean> {
   return fs.access(p).then(() => true).catch(() => false)
+}
+
+// PostgreSQL requires these dirs to exist in the data directory even if empty.
+// After rsync restore they may be missing if they were empty during backup.
+const PG_REQUIRED_DIRS = [
+  'pg_commit_ts', 'pg_dynshmem', 'pg_notify', 'pg_replslot',
+  'pg_serial', 'pg_snapshots', 'pg_stat', 'pg_stat_tmp',
+  'pg_subtrans', 'pg_tblspc', 'pg_twophase',
+  'pg_logical/mappings', 'pg_logical/snapshots',
+  'pg_multixact/members', 'pg_multixact/offsets',
+]
+
+/** Recursively scan targetDir for PG_VERSION files and ensure all required dirs exist. */
+async function ensurePostgresDataDirs(baseDir: string): Promise<void> {
+  // Walk up to 2 levels deep (containerName/ or containerName/data/)
+  const candidates: string[] = [baseDir]
+  try {
+    const entries = await fs.readdir(baseDir, { withFileTypes: true })
+    for (const e of entries) {
+      if (e.isDirectory()) candidates.push(path.join(baseDir, e.name))
+    }
+  } catch { return }
+
+  for (const dir of candidates) {
+    const pgVersion = path.join(dir, 'PG_VERSION')
+    if (!await exists(pgVersion)) continue
+    logger.info(`[restore] detected PostgreSQL data dir: ${dir} — ensuring required subdirs`)
+    for (const rel of PG_REQUIRED_DIRS) {
+      await fs.mkdir(path.join(dir, rel), { recursive: true })
+    }
+  }
 }
 
 function runCommand(cmd: string, args: string[]): Promise<void> {
