@@ -269,14 +269,20 @@ const PG_REQUIRED_DIRS = [
 
 /** Recursively scan targetDir for PG_VERSION files and ensure all required dirs exist. */
 async function ensurePostgresDataDirs(baseDir: string): Promise<void> {
-  // Walk up to 2 levels deep (containerName/ or containerName/data/)
-  const candidates: string[] = [baseDir]
-  try {
-    const entries = await fs.readdir(baseDir, { withFileTypes: true })
-    for (const e of entries) {
-      if (e.isDirectory()) candidates.push(path.join(baseDir, e.name))
-    }
-  } catch { return }
+  // Walk up to 4 levels deep — covers Alpine (data/PG_VERSION) and
+  // Debian-based images (data/14/main/PG_VERSION)
+  const candidates: string[] = []
+  async function collect(dir: string, depth: number): Promise<void> {
+    candidates.push(dir)
+    if (depth >= 4) return
+    try {
+      const entries = await fs.readdir(dir, { withFileTypes: true })
+      for (const e of entries) {
+        if (e.isDirectory()) await collect(path.join(dir, e.name), depth + 1)
+      }
+    } catch { /* ignore unreadable dirs */ }
+  }
+  try { await collect(baseDir, 0) } catch { return }
 
   for (const dir of candidates) {
     const pgVersion = path.join(dir, 'PG_VERSION')
