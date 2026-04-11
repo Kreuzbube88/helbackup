@@ -82,6 +82,14 @@ export async function executeCustomBackup(
       await encryptFileGPG(tarFile, encryptedFile, encryptionPassword)
       await fs.unlink(tarFile)
 
+      // Remove all unencrypted files — keep only .gpg
+      const cleanEntries = await fs.readdir(workDir)
+      for (const entry of cleanEntries) {
+        if (!entry.endsWith('.gpg')) {
+          await fs.rm(path.join(workDir, entry), { recursive: true, force: true })
+        }
+      }
+
       engine.log('info', 'system', 'Custom backup encrypted')
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err)

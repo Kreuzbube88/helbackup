@@ -153,8 +153,10 @@ export async function generateRestorePlan(
     const containerDeps = detectContainerDependencies(manifest.containerConfigs)
 
     for (const container of manifest.containerConfigs) {
+      // Match rsync structure (appdata/<containerName>/...) OR tar structure (appdata/<date>/<containerName>_*.tar.gz[.gpg])
       const appdataEntry = manifest.entries?.find(e =>
-        e.path.includes(`appdata/${container.name}`)
+        e.path.includes('appdata/') &&
+        (e.path.includes(`/${container.name}/`) || e.path.includes(`/${container.name}_`))
       )
       if (appdataEntry) {
         items.push({

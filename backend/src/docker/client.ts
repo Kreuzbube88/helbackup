@@ -170,6 +170,63 @@ export async function dockerExecToFile(
   return { stderr: Buffer.concat(stderrChunks).toString('utf8'), exitCode }
 }
 
+/** Like dockerExecToFile but returns stdout as a string instead of writing to disk. */
+export async function dockerExecToString(
+  containerId: string,
+  cmd: string[],
+  env?: string[]
+): Promise<{ stdout: string; stderr: string; exitCode: number }> {
+  const createRes = await dockerPool.request({
+    path: `/containers/${encodeURIComponent(containerId)}/exec`,
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ AttachStdout: true, AttachStderr: true, Cmd: cmd, ...(env ? { Env: env } : {}) }),
+  })
+  if (createRes.statusCode !== 201) {
+    const errBody = await createRes.body.text()
+    throw new Error(`Docker exec create failed (${createRes.statusCode}): ${errBody}`)
+  }
+  const { Id: execId } = (await createRes.body.json()) as { Id: string }
+  const startRes = await dockerPool.request({
+    path: `/exec/${encodeURIComponent(execId)}/start`,
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ Detach: false, Tty: false }),
+  })
+  if (startRes.statusCode !== 200) {
+    const errBody = await startRes.body.text()
+    throw new Error(`Docker exec start failed (${startRes.statusCode}): ${errBody}`)
+  }
+  const rawStream = startRes.body as unknown as Readable
+  const stdoutChunks: Buffer[] = []
+  const stderrChunks: Buffer[] = []
+  await new Promise<void>((resolve, reject) => {
+    let carry = Buffer.alloc(0)
+    rawStream.on('data', (chunk: Buffer) => {
+      let buf = Buffer.concat([carry, chunk])
+      while (buf.length >= 8) {
+        const streamType = buf[0]
+        const frameSize = buf.readUInt32BE(4)
+        if (buf.length < 8 + frameSize) break
+        const payload = buf.subarray(8, 8 + frameSize)
+        if (streamType === 1) stdoutChunks.push(payload)
+        else if (streamType === 2) stderrChunks.push(payload)
+        buf = buf.subarray(8 + frameSize)
+      }
+      carry = buf
+    })
+    rawStream.on('end', resolve)
+    rawStream.on('error', reject)
+  })
+  const inspectRes = await dockerPool.request({ path: `/exec/${encodeURIComponent(execId)}/json`, method: 'GET' })
+  const { ExitCode: exitCode } = (await inspectRes.body.json()) as { ExitCode: number }
+  return {
+    stdout: Buffer.concat(stdoutChunks).toString('utf8'),
+    stderr: Buffer.concat(stderrChunks).toString('utf8'),
+    exitCode,
+  }
+}
+
 export async function getContainerArchive(
   containerId: string,
   containerPath: string

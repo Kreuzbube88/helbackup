@@ -416,6 +416,10 @@ export default async function recoveryRoutes(app: FastifyInstance) {
 
         // Delete files
         if (backupPath) {
+          // Validate path from DB before passing to rm -rf
+          if (!isSafePath(backupPath) || !ALLOWED_SCAN_BASES.some(base => path.resolve(backupPath).startsWith(base))) {
+            return reply.status(400).send({ error: `Unsafe backup path rejected: ${backupPath}` });
+          }
           const isLocal = await fs.access(backupPath).then(() => true).catch(() => false);
           if (isLocal) {
             // Use rm -rf via child_process — fs.rm recursive is unreliable on FUSE/shfs

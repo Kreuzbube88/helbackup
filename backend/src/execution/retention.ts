@@ -1,4 +1,5 @@
 import fs from 'fs/promises'
+import { execFile } from 'node:child_process'
 import { db } from '../db/database.js'
 import { logger } from '../utils/logger.js'
 
@@ -63,7 +64,9 @@ export async function applyRetentionPolicy(
         try {
           const parsed = JSON.parse(manifest.manifest) as { backupPath?: string }
           if (parsed.backupPath) {
-            await fs.rm(parsed.backupPath, { recursive: true, force: true })
+            await new Promise<void>((resolve, reject) =>
+              execFile('rm', ['-rf', parsed.backupPath!], err => err ? reject(err) : resolve())
+            )
             logger.info(`Deleted backup files: ${parsed.backupPath}`)
           }
         } catch { /* manifest parse or fs error — still delete DB record */ }

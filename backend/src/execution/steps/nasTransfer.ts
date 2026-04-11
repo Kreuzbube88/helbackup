@@ -119,51 +119,57 @@ export async function transferAndCleanup(
   // After rsync we re-hash on the remote and compare — that catches transit corruption.
   const checksums = await generateChecksums(localDir, engine)
 
-  await executeRsync({
-    source: localDir + '/',
-    destination: partialPath,
-    sshHost: nasConfig.host,
-    sshUser: nasConfig.username,
-    sshPassword: nasConfig.password,
-    sshKey: nasConfig.privateKey,
-    sshPort: nasConfig.port,
-    knownHostsFile: nasConfig.knownHostsFile,
-    // Source is our own staged temp dir — vanished/unreadable files indicate a real problem
-    strict: true,
-    onProgress: (() => {
-      let last = -1
-      return ({ percent, speed }: { percent: number; speed: string }) => {
-        if (percent < last) last = -1  // new file started — reset throttle
-        if (Math.floor(percent / 10) > Math.floor(last / 10)) {
-          last = percent
-          engine.log('info', 'system', `Transfer: ${percent}% — ${speed}`)
+  try {
+    await executeRsync({
+      source: localDir + '/',
+      destination: partialPath,
+      sshHost: nasConfig.host,
+      sshUser: nasConfig.username,
+      sshPassword: nasConfig.password,
+      sshKey: nasConfig.privateKey,
+      sshPort: nasConfig.port,
+      knownHostsFile: nasConfig.knownHostsFile,
+      // Source is our own staged temp dir — vanished/unreadable files indicate a real problem
+      strict: true,
+      onProgress: (() => {
+        let last = -1
+        return ({ percent, speed }: { percent: number; speed: string }) => {
+          if (percent < last) last = -1  // new file started — reset throttle
+          if (Math.floor(percent / 10) > Math.floor(last / 10)) {
+            last = percent
+            engine.log('info', 'system', `Transfer: ${percent}% — ${speed}`)
+          }
         }
-      }
-    })(),
-    onLog: msg => {
-      const line = msg.trim()
-      if (!line.startsWith('ERROR:')) return
-      const content = line.replace(/^ERROR:\s*/, '')
-      // SSH informational warnings — not actual errors
-      if (content.startsWith('Warning:') || content.startsWith('** WARNING:')) return
-      engine.log('error', 'system', content)
-    },
-  })
+      })(),
+      onLog: msg => {
+        const line = msg.trim()
+        if (!line.startsWith('ERROR:')) return
+        const content = line.replace(/^ERROR:\s*/, '')
+        // SSH informational warnings — not actual errors
+        if (content.startsWith('Warning:') || content.startsWith('** WARNING:')) return
+        engine.log('error', 'system', content)
+      },
+    })
 
-  // Verify the bytes that landed in the partial dir on the NAS match what we
-  // hashed locally. Throws on mismatch — local dir is preserved for re-run.
-  await verifyRemoteChecksums(partialPath, checksums, sshCfg, engine)
+    // Verify the bytes that landed in the partial dir on the NAS match what we
+    // hashed locally. Throws on mismatch — local dir is preserved for re-run.
+    await verifyRemoteChecksums(partialPath, checksums, sshCfg, engine)
 
-  // Atomically promote .partial → final (rm old same-day dir first if present)
-  const publishResult = await executeSSHCommand(
-    sshCfg,
-    `rm -rf '${escFinal}' && mv '${escPartial}' '${escFinal}'`
-  )
-  if (!publishResult.success) {
-    throw new Error(`Failed to publish remote backup (rename .partial → final): ${publishResult.error ?? 'unknown error'}`)
+    // Atomically promote .partial → final (rm old same-day dir first if present)
+    const publishResult = await executeSSHCommand(
+      sshCfg,
+      `rm -rf '${escFinal}' && mv '${escPartial}' '${escFinal}'`
+    )
+    if (!publishResult.success) {
+      throw new Error(`Failed to publish remote backup (rename .partial → final): ${publishResult.error ?? 'unknown error'}`)
+    }
+  } finally {
+    // Always clean up the local staging dir — whether transfer succeeded or failed
+    await new Promise<void>(resolve =>
+      execFile('rm', ['-rf', localDir], () => resolve())
+    )
   }
 
-  await fs.rm(localDir, { recursive: true, force: true })
   engine.log('info', 'system', 'NAS transfer complete (verified + committed)')
   return checksums
 }

@@ -279,6 +279,7 @@ export async function executeAppdataBackup(
       if (containers.length > 0) {
         let totalFiles = 0
         let totalBytes = 0
+        const mountErrors: string[] = []
         for (const containerName of containers) {
           const appdataPaths = await resolveAppdataPaths(containerName, source, engine)
           const perContainerExclusions = config.containerSettings?.[containerName]?.exclusions ?? []
@@ -292,24 +293,33 @@ export async function executeAppdataBackup(
             const destDir = path.join(workDir, containerName, path.basename(appdataPath))
             await fs.mkdir(destDir, { recursive: true })
             engine.log('info', 'system', `Rsyncing appdata: ${containerName} (${appdataPath})`)
-            const result = await executeRsync({
-              source: appdataPath + '/',
-              destination: destDir,
-              excludePatterns: ['logs/', 'cache/', '*.log', '*.sock', '*.socket', ...perContainerExclusions],
-              ...(bwLimit > 0 ? { bwLimit } : {}),
-              onRegisterProcess: p => engine.registerChildProcess(p),
-              onProgress: (() => { let last = -1; return ({ percent, speed }: { percent: number; speed: string }) => {
-                if (percent < last) last = -1
-                if (Math.floor(percent / 10) > Math.floor(last / 10)) { last = percent; engine.log('info', 'system', `${containerName} (${path.basename(appdataPath)}): ${percent}% — ${speed}`) }
-              } })(),
-            })
-            totalFiles += result.filesTransferred
-            totalBytes += result.bytesTransferred
-            engine.log('info', 'system', `${containerName} (${path.basename(appdataPath)}): ${result.filesTransferred} files, ${result.bytesTransferred} bytes`)
+            try {
+              const result = await executeRsync({
+                source: appdataPath + '/',
+                destination: destDir,
+                excludePatterns: ['logs/', 'cache/', '*.log', '*.sock', '*.socket', ...perContainerExclusions],
+                ...(bwLimit > 0 ? { bwLimit } : {}),
+                onRegisterProcess: p => engine.registerChildProcess(p),
+                onProgress: (() => { let last = -1; return ({ percent, speed }: { percent: number; speed: string }) => {
+                  if (percent < last) last = -1
+                  if (Math.floor(percent / 10) > Math.floor(last / 10)) { last = percent; engine.log('info', 'system', `${containerName} (${path.basename(appdataPath)}): ${percent}% — ${speed}`) }
+                } })(),
+              })
+              totalFiles += result.filesTransferred
+              totalBytes += result.bytesTransferred
+              engine.log('info', 'system', `${containerName} (${path.basename(appdataPath)}): ${result.filesTransferred} files, ${result.bytesTransferred} bytes`)
+            } catch (err: unknown) {
+              const msg = err instanceof Error ? err.message : String(err)
+              engine.log('error', 'system', `Rsync failed for ${containerName} (${appdataPath}): ${msg}`)
+              mountErrors.push(`${containerName}:${path.basename(appdataPath)}`)
+            }
           }
         }
         engine.addTransferred(totalFiles, totalBytes)
         engine.log('info', 'system', `Rsync done: ${totalFiles} files total, ${totalBytes} bytes total`)
+        if (mountErrors.length > 0) {
+          throw new Error(`Rsync failed for ${mountErrors.length} mount(s): ${mountErrors.join(', ')}`)
+        }
       } else {
         // Legacy: no containers configured — backup entire appdata
         const containerExclusions: string[] = []
@@ -393,7 +403,19 @@ export async function executeAppdataBackup(
       const encryptionPassword = getEncryptionPassword()
 
       if (config.method === 'tar') {
-        // Encrypt each .tar.gz in workDir (one per container, or legacy single appdata.tar.gz)
+        // Pack containers.json into a separate metadata archive so it survives encryption cleanup
+        const metaJson = path.join(workDir, 'containers.json')
+        const metaTar = path.join(workDir, '_metadata.tar.gz')
+        const metaExists = await fs.access(metaJson).then(() => true).catch(() => false)
+        if (metaExists) {
+          await new Promise<void>((resolve, reject) => {
+            const tar = spawn('tar', ['-czf', metaTar, '-C', workDir, 'containers.json'])
+            tar.on('close', code => code === 0 ? resolve() : reject(new Error(`metadata tar failed: ${code}`)))
+            tar.on('error', reject)
+          })
+          await fs.unlink(metaJson)
+        }
+        // Encrypt each .tar.gz in workDir (one per container + _metadata)
         const entries = await fs.readdir(workDir)
         for (const entry of entries.filter(e => e.endsWith('.tar.gz'))) {
           const tarFile = path.join(workDir, entry)

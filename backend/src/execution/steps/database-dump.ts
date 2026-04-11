@@ -2,7 +2,7 @@ import path from 'path'
 import fs from 'fs/promises'
 import { createWriteStream } from 'fs'
 import { spawn } from 'node:child_process'
-import { inspectContainer, dockerExecToFile, getContainerArchive } from '../../docker/client.js'
+import { inspectContainer, dockerExecToFile, dockerExecToString, getContainerArchive } from '../../docker/client.js'
 import type { JobExecutionEngine } from '../engine.js'
 
 export type DatabaseType = 'postgres' | 'mysql' | 'mariadb' | 'mongodb' | 'redis' | 'unknown'
@@ -110,7 +110,12 @@ async function dumpRedis(containerId: string, outputPath: string, engine: JobExe
   engine.log('info', 'system', `Creating Redis dump for container ${containerId}`)
   const dumpFile = path.join(outputPath, 'redis_dump.rdb')
   const authArgs = password ? ['-a', password] : []
-  // Trigger BGSAVE and wait for completion, then export RDB via archive API
+
+  // Get LASTSAVE timestamp before triggering BGSAVE so we can detect completion
+  const { stdout: lastSaveBefore } = await dockerExecToString(containerId, ['redis-cli', ...authArgs, 'LASTSAVE'])
+  const tsBefore = parseInt(lastSaveBefore.trim(), 10)
+
+  // Trigger background save — returns immediately, save runs in background
   const { stderr: saveStderr, exitCode: saveExit } = await dockerExecToFile(
     containerId, ['redis-cli', ...authArgs, 'BGSAVE'], '/dev/null'
   )
@@ -118,6 +123,17 @@ async function dumpRedis(containerId: string, outputPath: string, engine: JobExe
     engine.log('error', 'system', `Redis BGSAVE failed: ${saveStderr}`)
     throw new Error(`redis-cli BGSAVE failed with exit code ${saveExit}`)
   }
+
+  // Poll LASTSAVE until timestamp advances (max 30s) — confirms RDB is fully written
+  const deadline = Date.now() + 30_000
+  while (Date.now() < deadline) {
+    await new Promise(r => setTimeout(r, 1000))
+    const { stdout: lastSaveNow } = await dockerExecToString(containerId, ['redis-cli', ...authArgs, 'LASTSAVE'])
+    const tsNow = parseInt(lastSaveNow.trim(), 10)
+    if (!isNaN(tsBefore) && !isNaN(tsNow) && tsNow > tsBefore) break
+    engine.log('info', 'system', 'Redis: waiting for BGSAVE to complete...')
+  }
+
   // Export RDB via Docker archive API — default RDB path is /data/dump.rdb
   const tarStream = await getContainerArchive(containerId, '/data/dump.rdb')
   await new Promise<void>((resolve, reject) => {

@@ -245,10 +245,9 @@ export async function executeVMBackup(
           engine.log('info', 'system', `Encrypted: ${entry}`)
         } else if (stat.isDirectory()) {
           // Tar+encrypt VM disk directories (vdisks can be large)
-          const { spawn: spawnProc } = await import('child_process')
           const tarFile = `${entryPath}.tar.gz`
           await new Promise<void>((resolve, reject) => {
-            const tar = spawnProc('tar', ['-czf', tarFile, '-C', workDir, entry])
+            const tar = spawn('tar', ['-czf', tarFile, '-C', workDir, entry])
             tar.on('close', code => code === 0 ? resolve() : reject(new Error(`tar failed with code ${code}`)))
             tar.on('error', reject)
           })

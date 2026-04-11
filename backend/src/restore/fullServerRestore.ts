@@ -3,9 +3,12 @@ import { logger } from '../utils/logger.js'
 import { notificationManager } from '../notifications/notificationManager.js'
 import { executeRsync } from '../tools/rsync.js'
 import { getSettingString } from '../utils/settings.js'
+import { decryptFileGPG } from '../utils/gpgEncrypt.js'
+import { getEncryptionPassword } from '../utils/encryptionKey.js'
 import { spawn } from 'child_process'
 import path from 'path'
 import fs from 'fs/promises'
+import os from 'os'
 
 export async function executeFullServerRestore(
   backupId: string,
@@ -111,14 +114,26 @@ async function restoreItem(item: RestoreItem, backupPath: string): Promise<void>
           onLog: msg => { if (msg.trim()) logger.debug(`[rsync] ${msg.trim()}`) },
         })
       } else {
-        // Tar mode: find all <containerName>_*.tar.gz files (may be in a date subdir)
-        const tarFiles = await findContainerTarFiles(appdataBase, containerName)
+        // Tar mode: find all <containerName>_*.tar.gz[.gpg] files (may be in a date subdir)
+        const { files: tarFiles, encrypted } = await findContainerTarFiles(appdataBase, containerName)
         if (tarFiles.length === 0) {
           throw new Error(`No backup data found for container "${containerName}" under ${appdataBase}`)
         }
-        for (const tarFile of tarFiles) {
-          logger.info(`[restore] appdata (tar): extracting ${path.basename(tarFile)} → ${targetDir}`)
-          await extractTarArchive(tarFile, targetDir)
+        const tmpDir = encrypted ? await fs.mkdtemp(path.join(os.tmpdir(), 'helbackup-restore-')) : null
+        try {
+          for (const tarFile of tarFiles) {
+            let extractFrom = tarFile
+            if (encrypted && tmpDir) {
+              const decrypted = path.join(tmpDir, path.basename(tarFile).replace(/\.gpg$/, ''))
+              logger.info(`[restore] appdata (tar+enc): decrypting ${path.basename(tarFile)}`)
+              await decryptFileGPG(tarFile, decrypted, getEncryptionPassword())
+              extractFrom = decrypted
+            }
+            logger.info(`[restore] appdata (tar): extracting ${path.basename(extractFrom)} → ${targetDir}`)
+            await extractTarArchive(extractFrom, targetDir)
+          }
+        } finally {
+          if (tmpDir) await fs.rm(tmpDir, { recursive: true, force: true })
         }
       }
 
@@ -198,8 +213,8 @@ async function resolveContainerDirOptional(appdataBase: string, containerName: s
   return null
 }
 
-/** Find all tar.gz files belonging to a container (format: containerName_*.tar.gz). */
-async function findContainerTarFiles(appdataBase: string, containerName: string): Promise<string[]> {
+/** Find all tar.gz[.gpg] files belonging to a container (format: containerName_*.tar.gz[.gpg]). */
+async function findContainerTarFiles(appdataBase: string, containerName: string): Promise<{ files: string[]; encrypted: boolean }> {
   const prefix = `${containerName}_`
   const searchDirs: string[] = [appdataBase]
 
@@ -214,12 +229,15 @@ async function findContainerTarFiles(appdataBase: string, containerName: string)
   for (const dir of searchDirs) {
     try {
       const files = await fs.readdir(dir)
-      const matches = files.filter(f => f.startsWith(prefix) && f.endsWith('.tar.gz'))
-      if (matches.length > 0) return matches.map(f => path.join(dir, f))
+      // Check unencrypted first, then encrypted
+      const plain = files.filter(f => f.startsWith(prefix) && f.endsWith('.tar.gz'))
+      if (plain.length > 0) return { files: plain.map(f => path.join(dir, f)), encrypted: false }
+      const enc = files.filter(f => f.startsWith(prefix) && f.endsWith('.tar.gz.gpg'))
+      if (enc.length > 0) return { files: enc.map(f => path.join(dir, f)), encrypted: true }
     } catch { /* ok */ }
   }
 
-  return []
+  return { files: [], encrypted: false }
 }
 
 /** Extract a tar.gz archive into destDir (archive contains the dir itself, e.g. config/...). */

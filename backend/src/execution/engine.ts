@@ -196,6 +196,7 @@ export class JobExecutionEngine extends EventEmitter {
 
         let lastErr: unknown
         for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+          if (this._aborted) break
           try {
             await this.executeStep(step)
             this.emit('step:complete', { stepId: step.id })
