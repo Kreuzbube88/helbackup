@@ -250,6 +250,7 @@ export class JobExecutionEngine extends EventEmitter {
         return
       }
 
+      this._workDirs.clear()  // steps cleaned up their own dirs; drop references
       const duration = this.elapsedSeconds()
       const finalStatus = this.summary.errors > 0 ? 'failed' : 'success'
       db.prepare(

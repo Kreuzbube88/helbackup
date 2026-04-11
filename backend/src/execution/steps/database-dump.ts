@@ -51,7 +51,7 @@ async function dumpMySQL(containerId: string, outputPath: string, engine: JobExe
   const cmd = rootPassword
     ? ['mysqldump', '-u', 'root', `--password=${rootPassword}`, '--all-databases']
     : appUser && appDatabase
-      ? ['mysqldump', '-u', appUser, `--password=${appPassword}`, appDatabase]
+      ? ['mysqldump', '-u', appUser, ...(appPassword ? [`--password=${appPassword}`] : []), appDatabase]
       : null
 
   if (!cmd) {
@@ -129,6 +129,7 @@ async function dumpRedis(containerId: string, outputPath: string, engine: JobExe
       code === 0 ? resolve() : reject(new Error(`tar extract failed with code ${code}`))
     )
     tar.on('error', reject)
+    out.on('error', reject)
   })
   const stats = await fs.stat(dumpFile)
   engine.log('info', 'file', `Redis dump created: ${dumpFile}`, undefined, {
