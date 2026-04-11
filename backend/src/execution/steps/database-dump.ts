@@ -43,14 +43,27 @@ async function dumpPostgres(containerId: string, outputPath: string, engine: Job
   })
 }
 
-async function dumpMySQL(containerId: string, outputPath: string, engine: JobExecutionEngine, password: string): Promise<void> {
+async function dumpMySQL(containerId: string, outputPath: string, engine: JobExecutionEngine, rootPassword: string, appUser: string, appPassword: string, appDatabase: string): Promise<void> {
   engine.log('info', 'system', `Creating MySQL dump for container ${containerId}`)
   const dumpFile = path.join(outputPath, 'mysql_dump.sql')
-  const { stderr, exitCode } = await dockerExecToFile(
-    containerId,
-    ['mysqldump', '-u', 'root', `--password=${password}`, '--all-databases'],
-    dumpFile
-  )
+
+  // Prefer root + all-databases; fall back to app user + specific DB if no root password
+  const cmd = rootPassword
+    ? ['mysqldump', '-u', 'root', `--password=${rootPassword}`, '--all-databases']
+    : appUser && appDatabase
+      ? ['mysqldump', '-u', appUser, `--password=${appPassword}`, appDatabase]
+      : null
+
+  if (!cmd) {
+    engine.log('warn', 'system', 'MySQL: no usable credentials found (MYSQL_ROOT_PASSWORD or MYSQL_USER+MYSQL_DATABASE required) — skipping dump')
+    return
+  }
+
+  if (!rootPassword) {
+    engine.log('info', 'system', `MySQL: no root password — dumping database "${appDatabase}" as user "${appUser}"`)
+  }
+
+  const { stderr, exitCode } = await dockerExecToFile(containerId, cmd, dumpFile)
   if (exitCode !== 0) {
     engine.log('error', 'system', `MySQL dump failed: ${stderr}`)
     throw new Error(`mysqldump failed with exit code ${exitCode}`)
@@ -146,8 +159,11 @@ export async function executeDatabaseDump(
     }
     case 'mysql':
     case 'mariadb': {
-      const mysqlPassword = getEnvVar(env, 'MYSQL_ROOT_PASSWORD', 'MARIADB_ROOT_PASSWORD')
-      await dumpMySQL(config.containerId, config.outputPath, engine, mysqlPassword)
+      const rootPassword = getEnvVar(env, 'MYSQL_ROOT_PASSWORD', 'MARIADB_ROOT_PASSWORD')
+      const appUser = getEnvVar(env, 'MYSQL_USER', 'MARIADB_USER')
+      const appPassword = getEnvVar(env, 'MYSQL_PASSWORD', 'MARIADB_PASSWORD')
+      const appDatabase = getEnvVar(env, 'MYSQL_DATABASE', 'MARIADB_DATABASE')
+      await dumpMySQL(config.containerId, config.outputPath, engine, rootPassword, appUser, appPassword, appDatabase)
       break
     }
     case 'mongodb': {
