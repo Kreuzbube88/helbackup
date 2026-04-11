@@ -1,0 +1,64 @@
+name: Sync Docs to Wiki
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'docs/en/**'
+      - '.github/wiki/**'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  sync-wiki:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Clone wiki
+        run: |
+          git clone https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.wiki.git wiki
+
+      - name: Flatten docs/en → wiki (section-filename.md)
+        run: |
+          # Remove all previously synced pages (keep _Sidebar, _Footer, Home)
+          find wiki -maxdepth 1 -name "*.md" \
+            ! -name "_Sidebar.md" \
+            ! -name "_Footer.md" \
+            ! -name "Home.md" \
+            -delete
+
+          find docs/en -name "*.md" | while read f; do
+            parent_raw=$(basename "$(dirname "$f")")
+            filename=$(basename "$f")
+
+            # Strip leading NN- from parent dir name
+            section=$(echo "$parent_raw" | sed 's/^[0-9]*-//')
+
+            # Root-level files (directly in docs/en/) → use filename as-is
+            if [ "$section" = "en" ]; then
+              out="wiki/$filename"
+            else
+              out="wiki/${section}-${filename}"
+            fi
+
+            cp "$f" "$out"
+          done
+
+      - name: Copy sidebar and footer
+        run: |
+          cp .github/wiki/_Sidebar.md wiki/_Sidebar.md
+          cp .github/wiki/_Footer.md  wiki/_Footer.md 2>/dev/null || true
+          cp .github/wiki/Home.md     wiki/Home.md
+
+      - name: Commit and push
+        run: |
+          cd wiki
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git diff --staged --quiet && echo "No changes." || \
+            git commit -m "sync: update wiki from docs/en @ ${{ github.sha }}" && git push
