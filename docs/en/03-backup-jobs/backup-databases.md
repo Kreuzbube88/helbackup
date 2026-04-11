@@ -9,8 +9,8 @@ Database dumps are a feature of the **Appdata** backup step. Enable the "Databas
 | MariaDB | mysqldump | mariadb, linuxserver/mariadb |
 | MySQL | mysqldump | mysql |
 | PostgreSQL | pg_dumpall | postgres, linuxserver/postgres |
-| Redis | (filesystem backup) | redis |
 | MongoDB | mongodump | mongo |
+| Redis | BGSAVE + RDB export | redis |
 
 ## Enable Database Dumps
 
@@ -21,43 +21,57 @@ In the Job Wizard → Backup Types → Appdata:
 
 HELBACKUP will detect database containers from your selected container list and dump them before stopping.
 
-## PostgreSQL / MariaDB
+## Credentials
 
-HELBACKUP connects to the container and runs `pg_dumpall` (PostgreSQL) or `mysqldump --all-databases` (MariaDB/MySQL) using credentials from the container's environment variables.
+Credentials are read **automatically from the container's environment variables** — no manual configuration required.
+
+| Database | Environment Variables |
+|----------|----------------------|
+| MySQL/MariaDB | `MYSQL_ROOT_PASSWORD` (all DBs) — or fallback to `MYSQL_USER` + `MYSQL_PASSWORD` + `MYSQL_DATABASE` (single app DB) |
+| PostgreSQL | `POSTGRES_USER` (fallback: `postgres`) |
+| MongoDB | `MONGO_INITDB_ROOT_USERNAME` + `MONGO_INITDB_ROOT_PASSWORD` |
+| Redis | `REDIS_PASSWORD` or `REQUIREPASS` |
+
+> If no root password is set (e.g. BookStack MySQL), HELBACKUP automatically falls back to the app user and backs up only the configured database.
 
 ## What Gets Stored?
 
-Backup contains:
+Dumps are stored inside the Appdata backup directory:
 ```
-backup_2024-01-15/
-└── databases/
-    ├── nextcloud_dump.sql.gz
-    ├── immich_dump.sql.gz
-    └── manifest.json
+appdata/2024-01-15/
+└── database-dumps/
+    ├── <containerId>/
+    │   ├── mysql_dump.sql       (MySQL/MariaDB)
+    │   ├── postgres_dump.sql    (PostgreSQL)
+    │   ├── mongodb_dump/        (MongoDB — directory)
+    │   └── redis_dump.rdb       (Redis)
 ```
 
 ## Restore a Database
 
-1. Recovery → Select backup
-2. Restore Type: "Database Only"
-3. Select target container
-4. "Start Restore"
+Database dumps are staged at `/tmp/db-restore/` during the restore wizard. Import them manually into the running container:
 
-HELBACKUP executes:
 ```bash
-# MariaDB
-mysql -u root -p nextcloud < dump.sql
+# MySQL / MariaDB
+docker exec -i <container> mysql -u root -p<password> < mysql_dump.sql
 
 # PostgreSQL
-psql -U postgres immich < dump.sql
+docker exec -i <container> psql -U <user> < postgres_dump.sql
+
+# MongoDB
+docker cp mongodb_dump/ <container>:/tmp/
+docker exec <container> mongorestore /tmp/mongodb_dump/
+
+# Redis
+docker cp redis_dump.rdb <container>:/data/dump.rdb
+docker restart <container>
 ```
 
 ## Best Practices
 
-- Always use `--single-transaction` for InnoDB (no lock needed)
-- Passwords stored encrypted in DB
-- Dumps compressed (gzip): 60-80% smaller
+- Enable container stop before dump for consistency
 - Daily database backups recommended
+- Test restore on a separate instance before relying on it in production
 
 ---
 Back: [Backup Types](backup-types.md)

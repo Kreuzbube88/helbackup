@@ -25,9 +25,9 @@
 | `/app/data` | `/mnt/user/appdata/helbackup/data` | rw | Datenbank |
 | `/app/logs` | `/mnt/user/appdata/helbackup/logs` | rw | Logs |
 | `/var/run/docker.sock` | `/var/run/docker.sock` | rw | Docker API |
-| `/unraid/boot` | `/boot` | rw | Flash-Drive Backup + Restore |
-| `/unraid/user` | `/mnt/user` | rw | Array-Share Zugriff + Restore |
-| `/unraid/cache` | `/mnt/cache` | rw | Cache-Pool Zugriff + Restore |
+| `/unraid/boot` | `/boot` | **rw** | Flash-Drive Backup + Restore |
+| `/unraid/user` | `/mnt/user` | **rw** | Array-Share Zugriff + Restore |
+| `/unraid/cache` | `/mnt/cache` | **rw** | Cache-Pool Zugriff + Restore — **erforderlich für Appdata** |
 
 **Optional — nur für VM-Backups:**
 
@@ -84,11 +84,11 @@ services:
       - /mnt/user/appdata/helbackup/data:/app/data
       - /mnt/user/appdata/helbackup/logs:/app/logs
       - /var/run/docker.sock:/var/run/docker.sock
-      - /boot:/unraid/boot
-      - /mnt/user:/unraid/user
-      - /mnt/cache:/unraid/cache
+      - /boot:/unraid/boot:rw
+      - /mnt/user:/unraid/user:rw
+      - /mnt/cache:/unraid/cache:rw
       # Optional — nur für VM-Backups:
-      # - /etc/libvirt:/unraid/libvirt
+      # - /etc/libvirt:/unraid/libvirt:rw
       # - /var/run/libvirt/libvirt-sock:/var/run/libvirt/libvirt-sock
     networks:
       - br0

@@ -71,8 +71,9 @@ Nach Bestätigung wird der Restore **im Hintergrund** gestartet. Der Wizard zeig
 
 1. History-Logs prüfen (Verlauf → letzter Eintrag)
 2. Unraid neu starten
-3. Container prüfen: Alle gestartet?
-4. Daten stichprobenartig testen
+3. **Docker Container manuell neu installieren** — Der Appdata-Restore stellt nur die Container-Daten wieder her (Dateien in `/appdata/<name>/`). Die Docker Container selbst werden **nicht** neu erstellt. Jeden Container über Community Apps oder Compose-Dateien neu installieren und starten — die wiederhergestellten Daten liegen bereits bereit.
+4. Container prüfen: Alle gestartet und Daten vollständig?
+5. Datenbank-Dumps bei Bedarf importieren (siehe [Datenbank-Backups](../03-backup-jobs/backup-databases.md))
 
 ---
 Zurück: [Recovery Overview](overview.md)

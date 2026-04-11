@@ -71,8 +71,9 @@ After confirmation the restore runs **in the background**. The wizard shows a co
 
 1. Check history logs (History → last entry)
 2. Restart Unraid
-3. Verify containers: all started?
-4. Spot-check data
+3. **Reinstall Docker containers manually** — Appdata restore only recovers the container data (files in `/appdata/<name>/`). It does **not** recreate the Docker containers themselves. Reinstall each container via Community Apps or your compose files, then start them. The restored data will already be in place.
+4. Verify containers are running and data is intact
+5. Import database dumps if needed (see [Database Backups](../03-backup-jobs/backup-databases.md))
 
 ---
 Back: [Recovery Overview](overview.md)
