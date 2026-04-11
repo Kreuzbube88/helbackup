@@ -137,9 +137,8 @@ export async function dockerExecToFile(
   // streamType 1 = stdout, 2 = stderr
   const writeStream = createWriteStream(destFile)
   const stderrChunks: Buffer[] = []
-  const rawStream = Readable.fromWeb
-    ? Readable.fromWeb(startRes.body as unknown as import('stream/web').ReadableStream)
-    : (startRes.body as unknown as Readable)
+  // undici BodyReadable is already a Node.js Readable — cast directly, never use Readable.fromWeb
+  const rawStream = startRes.body as unknown as Readable
 
   await new Promise<void>((resolve, reject) => {
     let carry = Buffer.alloc(0)
@@ -180,7 +179,5 @@ export async function getContainerArchive(
     method: 'GET',
   })
   if (statusCode !== 200) throw new Error(`Docker archive failed: ${statusCode}`)
-  return Readable.fromWeb
-    ? Readable.fromWeb(body as unknown as import('stream/web').ReadableStream)
-    : (body as unknown as Readable)
+  return body as unknown as Readable
 }
