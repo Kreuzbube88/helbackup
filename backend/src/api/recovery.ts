@@ -7,6 +7,7 @@ import fs from 'fs/promises';
 import path from 'path';
 import os from 'os';
 import { randomUUID } from 'crypto';
+import { execFile } from 'node:child_process';
 
 const ALLOWED_SCAN_BASES = ['/app/data/', '/app/config/', '/unraid/', '/mnt/']
 
@@ -417,7 +418,10 @@ export default async function recoveryRoutes(app: FastifyInstance) {
         if (backupPath) {
           const isLocal = await fs.access(backupPath).then(() => true).catch(() => false);
           if (isLocal) {
-            await fs.rm(backupPath, { recursive: true, force: true });
+            // Use rm -rf via child_process — fs.rm recursive is unreliable on FUSE/shfs
+            await new Promise<void>((resolve, reject) =>
+              execFile('rm', ['-rf', backupPath], err => err ? reject(err) : resolve())
+            );
             logger.info(`[delete-backup] Deleted local path: ${backupPath}`);
           } else if (targetId) {
             // NAS path — delete via SSH

@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Button } from '../common/Button';
 import { Card } from '../common/Card';
 import { Input } from '../common/Input';
+import { useToast } from '../common/Toast';
 import { recovery as recoveryApi } from '../../api';
 import { formatBytes } from '../../utils/format';
 import UnlockBackupDialog from '../encryption/UnlockBackupDialog';
@@ -75,6 +76,7 @@ function detectBackupTypes(entries: ManifestEntry[], stepPaths?: Array<{ type: s
 
 export default function ManifestBrowser({ manifests, onSelect, onFullServerRestore, onRefresh }: Props) {
   const { t } = useTranslation();
+  const { toast } = useToast();
   const [pendingEncrypted, setPendingEncrypted] = useState<Manifest | null>(null);
   const [unlockedSessions, setUnlockedSessions] = useState<Map<string, string>>(new Map());
   const [dbRestoreManifest, setDbRestoreManifest] = useState<Manifest | null>(null);
@@ -113,7 +115,7 @@ export default function ManifestBrowser({ manifests, onSelect, onFullServerResto
       setDeleteConfirmStep(1);
       onRefresh();
     } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : String(err));
+      toast(err instanceof Error ? err.message : String(err), 'error');
     } finally {
       setDeleting(false);
     }

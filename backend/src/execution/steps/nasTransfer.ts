@@ -1,6 +1,7 @@
 import os from 'os'
 import path from 'path'
 import fs from 'fs/promises'
+import { execFile } from 'node:child_process'
 import { executeRsync } from '../../tools/rsync.js'
 import { executeSSHCommand } from '../../nas/ssh.js'
 import { generateChecksums, verifyRemoteChecksums } from '../verification.js'
@@ -67,7 +68,10 @@ export async function finalizeLocalBackup(
       // so both jobs' data coexist in the same date directory.
       engine.log('info', 'system', 'Destination exists — merging into existing backup directory')
       await fs.cp(workDir, destPath, { recursive: true })
-      await fs.rm(workDir, { recursive: true, force: true })
+      // Use rm -rf — fs.rm recursive is unreliable on FUSE/shfs
+      await new Promise<void>((resolve, reject) =>
+        execFile('rm', ['-rf', workDir], err => err ? reject(err) : resolve())
+      )
     } else {
       // Fast path: atomic rename (single filesystem operation)
       await fs.rename(workDir, destPath)
