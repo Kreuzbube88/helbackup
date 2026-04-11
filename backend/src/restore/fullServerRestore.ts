@@ -94,19 +94,34 @@ async function restoreItem(item: RestoreItem, backupPath: string): Promise<void>
     case 'appdata': {
       // item.name = "Container: {containerName}"
       const containerName = item.name.replace('Container: ', '')
-      // Find the container subdirectory under backupPath/appdata/
       const appdataBase = path.join(backupPath, 'appdata')
-      const sourceDir = await resolveContainerDir(appdataBase, containerName)
       const appdataRestoreBase = getSettingString('appdata_source_path', '/unraid/cache/appdata')
       const targetDir = path.join(appdataRestoreBase, containerName)
       await fs.mkdir(targetDir, { recursive: true })
-      logger.info(`[restore] appdata: ${sourceDir}/ → ${targetDir}`)
-      await executeRsync({
-        source: sourceDir + '/',
-        destination: targetDir,
-        bwLimit: 51200,
-        onLog: msg => { if (msg.trim()) logger.debug(`[rsync] ${msg.trim()}`) },
-      })
+
+      // Detect backup mode: rsync leaves a containerName/ dir, tar leaves containerName_*.tar.gz files
+      const sourceDir = await resolveContainerDirOptional(appdataBase, containerName)
+      if (sourceDir) {
+        // Rsync mode
+        logger.info(`[restore] appdata (rsync): ${sourceDir}/ → ${targetDir}`)
+        await executeRsync({
+          source: sourceDir + '/',
+          destination: targetDir,
+          bwLimit: 51200,
+          onLog: msg => { if (msg.trim()) logger.debug(`[rsync] ${msg.trim()}`) },
+        })
+      } else {
+        // Tar mode: find all <containerName>_*.tar.gz files (may be in a date subdir)
+        const tarFiles = await findContainerTarFiles(appdataBase, containerName)
+        if (tarFiles.length === 0) {
+          throw new Error(`No backup data found for container "${containerName}" under ${appdataBase}`)
+        }
+        for (const tarFile of tarFiles) {
+          logger.info(`[restore] appdata (tar): extracting ${path.basename(tarFile)} → ${targetDir}`)
+          await extractTarArchive(tarFile, targetDir)
+        }
+      }
+
       await ensurePostgresDataDirs(targetDir)
       break
     }
@@ -166,13 +181,11 @@ async function restoreItem(item: RestoreItem, backupPath: string): Promise<void>
   }
 }
 
-/** Resolve the actual container directory under appdataBase, handling optional date subdir. */
-async function resolveContainerDir(appdataBase: string, containerName: string): Promise<string> {
-  // First try: {appdataBase}/{containerName}
+/** Find container rsync dir — returns null if not found (use for mode detection). */
+async function resolveContainerDirOptional(appdataBase: string, containerName: string): Promise<string | null> {
   const direct = path.join(appdataBase, containerName)
   if (await exists(direct)) return direct
 
-  // Second try: {appdataBase}/{dateDir}/{containerName}
   try {
     const entries = await fs.readdir(appdataBase, { withFileTypes: true })
     for (const entry of entries) {
@@ -180,11 +193,46 @@ async function resolveContainerDir(appdataBase: string, containerName: string): 
       const candidate = path.join(appdataBase, entry.name, containerName)
       if (await exists(candidate)) return candidate
     }
-  } catch {
-    // appdataBase may not exist if backup had no appdata
+  } catch { /* appdataBase may not exist */ }
+
+  return null
+}
+
+/** Find all tar.gz files belonging to a container (format: containerName_*.tar.gz). */
+async function findContainerTarFiles(appdataBase: string, containerName: string): Promise<string[]> {
+  const prefix = `${containerName}_`
+  const searchDirs: string[] = [appdataBase]
+
+  // Also search one level of date subdirs
+  try {
+    const entries = await fs.readdir(appdataBase, { withFileTypes: true })
+    for (const e of entries) {
+      if (e.isDirectory()) searchDirs.push(path.join(appdataBase, e.name))
+    }
+  } catch { /* ok */ }
+
+  for (const dir of searchDirs) {
+    try {
+      const files = await fs.readdir(dir)
+      const matches = files.filter(f => f.startsWith(prefix) && f.endsWith('.tar.gz'))
+      if (matches.length > 0) return matches.map(f => path.join(dir, f))
+    } catch { /* ok */ }
   }
 
-  throw new Error(`Container dir not found for "${containerName}" under ${appdataBase}`)
+  return []
+}
+
+/** Extract a tar.gz archive into destDir (archive contains the dir itself, e.g. config/...). */
+async function extractTarArchive(tarFile: string, destDir: string): Promise<void> {
+  await new Promise<void>((resolve, reject) => {
+    const proc = spawn('tar', ['-xzf', tarFile, '-C', destDir])
+    let stderr = ''
+    proc.stderr.on('data', (d: Buffer) => { stderr += d.toString() })
+    proc.on('close', code =>
+      code === 0 ? resolve() : reject(new Error(`tar extract failed (code ${code}): ${stderr.trim()}`))
+    )
+    proc.on('error', reject)
+  })
 }
 
 async function exists(p: string): Promise<boolean> {
