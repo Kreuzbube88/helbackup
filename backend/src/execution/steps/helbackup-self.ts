@@ -33,6 +33,7 @@ export async function executeHELBACKUPSelfBackup(
   const destPath = path.join(targetConfig.path, 'helbackup', new Date().toISOString().split('T')[0])
   const workDir = nasConfig ? await createNasTempDir('helbackup') : destPath + '.partial'
   if (!nasConfig) await fs.mkdir(workDir, { recursive: true })
+  engine.registerWorkDir(workDir)
 
   // Export DB + SSH keys + metadata.json into workDir as helbackup-export.tar.gz
   const tarPath = await exportHELBACKUP(workDir, engine)

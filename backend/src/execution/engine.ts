@@ -93,6 +93,7 @@ export class JobExecutionEngine extends EventEmitter {
   private readonly startedAt: string
   private _aborted = false
   private _childProcesses = new Set<import('child_process').ChildProcess>()
+  private _workDirs = new Set<string>()
   private sequence = 0
   private backupPaths: Array<{ type: string; path: string; targetId?: string; checksums?: ChecksumEntry[] }> = []
   private summary: Summary = {
@@ -478,12 +479,25 @@ export class JobExecutionEngine extends EventEmitter {
       try { proc.kill('SIGTERM') } catch { /* already gone */ }
     }
     this._childProcesses.clear()
+    // Clean up staging dirs so no partial data accumulates on disk
+    for (const dir of this._workDirs) {
+      execFile('rm', ['-rf', dir], () => { /* best-effort */ })
+    }
+    this._workDirs.clear()
   }
   isAborted(): boolean { return this._aborted }
 
   registerChildProcess(proc: import('child_process').ChildProcess): void {
     this._childProcesses.add(proc)
     proc.on('close', () => this._childProcesses.delete(proc))
+  }
+
+  registerWorkDir(dir: string): void {
+    this._workDirs.add(dir)
+  }
+
+  unregisterWorkDir(dir: string): void {
+    this._workDirs.delete(dir)
   }
 
   private elapsedSeconds(): number {

@@ -137,6 +137,7 @@ export async function executeAppdataBackup(
   const destPath = path.join(targetConfig.path, 'appdata', new Date().toISOString().split('T')[0])
   const workDir = nasConfig ? await createNasTempDir('appdata') : destPath + '.partial'
   if (!nasConfig) await fs.mkdir(workDir, { recursive: true })
+  engine.registerWorkDir(workDir)
 
   // Pre-flight: verify source path is accessible BEFORE stopping any containers
   // Shfs/FUSE on Unraid (cache-only shares) can fail stat or readdir individually

@@ -41,6 +41,7 @@ export async function executeFlashBackup(
   const destPath = path.join(targetConfig.path, 'flash', new Date().toISOString().split('T')[0])
   const workDir = nasConfig ? await createNasTempDir('flash') : destPath + '.partial'
   if (!nasConfig) await fs.mkdir(workDir, { recursive: true })
+  engine.registerWorkDir(workDir)
 
   engine.log('info', 'system', `Destination: ${destPath}`)
 

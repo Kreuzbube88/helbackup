@@ -48,6 +48,7 @@ export async function executeDockerImageExport(
   const destPath = path.join(targetConfig.path, 'docker-images', new Date().toISOString().split('T')[0])
   const workDir = nasConfig ? await createNasTempDir('docker-images') : destPath + '.partial'
   if (!nasConfig) await fs.mkdir(workDir, { recursive: true })
+  engine.registerWorkDir(workDir)
 
   engine.log('info', 'system', `Exporting ${config.images.length} Docker images to ${destPath}`)
 
