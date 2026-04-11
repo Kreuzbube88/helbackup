@@ -59,8 +59,19 @@ export async function finalizeLocalBackup(
 ): Promise<void> {
   engine.log('info', 'system', `Publishing backup: ${workDir} → ${destPath}`)
   try {
-    await fs.rm(destPath, { recursive: true, force: true })
-    await fs.rename(workDir, destPath)
+    let destExists = false
+    try { await fs.stat(destPath); destExists = true } catch { /* new directory */ }
+
+    if (destExists) {
+      // Same-day run from a different job — merge contents rather than replacing,
+      // so both jobs' data coexist in the same date directory.
+      engine.log('info', 'system', 'Destination exists — merging into existing backup directory')
+      await fs.cp(workDir, destPath, { recursive: true })
+      await fs.rm(workDir, { recursive: true, force: true })
+    } else {
+      // Fast path: atomic rename (single filesystem operation)
+      await fs.rename(workDir, destPath)
+    }
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err)
     throw new Error(`Atomic backup publish failed (${workDir} → ${destPath}): ${msg}`)
