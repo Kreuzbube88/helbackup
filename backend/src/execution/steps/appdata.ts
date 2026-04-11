@@ -241,7 +241,7 @@ export async function executeAppdataBackup(
             engine.log('info', 'system', `Creating tar archive for: ${containerName} (${dirName})`)
             const tarResult = await createTarArchive({
               source: appdataPath,
-              destination: path.join(workDir, `${dirName}.tar.gz`),
+              destination: path.join(workDir, `${containerName}_${dirName}.tar.gz`),
               compress: true,
               onProgress: ({ currentFile }) => engine.log('info', 'file', `Archiving: ${currentFile}`),
             })
@@ -289,7 +289,7 @@ export async function executeAppdataBackup(
               engine.log('warn', 'system', `Appdata path not accessible: ${appdataPath}, skipping`)
               continue
             }
-            const destDir = path.join(workDir, path.basename(appdataPath))
+            const destDir = path.join(workDir, containerName, path.basename(appdataPath))
             await fs.mkdir(destDir, { recursive: true })
             engine.log('info', 'system', `Rsyncing appdata: ${containerName} (${appdataPath})`)
             const result = await executeRsync({
