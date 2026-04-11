@@ -10,6 +10,7 @@ export interface DatabaseDumpConfig {
   containerId: string
   type: DatabaseType
   outputPath: string
+  envVars?: string[]  // Container env vars (KEY=VALUE) for credential extraction
 }
 
 export function detectDatabaseType(containerName: string, image: string): DatabaseType {
@@ -25,11 +26,11 @@ export function detectDatabaseType(containerName: string, image: string): Databa
   return 'unknown'
 }
 
-async function dumpPostgres(containerId: string, outputPath: string, engine: JobExecutionEngine): Promise<void> {
+async function dumpPostgres(containerId: string, outputPath: string, engine: JobExecutionEngine, pgUser: string): Promise<void> {
   engine.log('info', 'system', `Creating PostgreSQL dump for container ${containerId}`)
   const dumpFile = path.join(outputPath, 'postgres_dump.sql')
   const { stderr, exitCode } = await dockerExecToFile(
-    containerId, ['pg_dumpall', '-U', 'postgres'], dumpFile
+    containerId, ['pg_dumpall', '-U', pgUser], dumpFile
   )
   if (exitCode !== 0) {
     engine.log('error', 'system', `PostgreSQL dump failed: ${stderr}`)
@@ -41,12 +42,12 @@ async function dumpPostgres(containerId: string, outputPath: string, engine: Job
   })
 }
 
-async function dumpMySQL(containerId: string, outputPath: string, engine: JobExecutionEngine): Promise<void> {
+async function dumpMySQL(containerId: string, outputPath: string, engine: JobExecutionEngine, password: string): Promise<void> {
   engine.log('info', 'system', `Creating MySQL dump for container ${containerId}`)
   const dumpFile = path.join(outputPath, 'mysql_dump.sql')
   const { stderr, exitCode } = await dockerExecToFile(
     containerId,
-    ['sh', '-c', 'mysqldump -u root -p"$MYSQL_ROOT_PASSWORD" --all-databases'],
+    ['mysqldump', '-u', 'root', `--password=${password}`, '--all-databases'],
     dumpFile
   )
   if (exitCode !== 0) {
@@ -90,20 +91,33 @@ async function dumpMongoDB(containerId: string, outputPath: string, engine: JobE
   })
 }
 
+function getEnvVar(envVars: string[], ...keys: string[]): string {
+  for (const key of keys) {
+    const val = envVars.find(e => e.startsWith(`${key}=`))?.slice(key.length + 1)
+    if (val) return val
+  }
+  return ''
+}
+
 export async function executeDatabaseDump(
   config: DatabaseDumpConfig,
   engine: JobExecutionEngine
 ): Promise<void> {
   await fs.mkdir(config.outputPath, { recursive: true })
+  const env = config.envVars ?? []
 
   switch (config.type) {
-    case 'postgres':
-      await dumpPostgres(config.containerId, config.outputPath, engine)
+    case 'postgres': {
+      const pgUser = getEnvVar(env, 'POSTGRES_USER') || 'postgres'
+      await dumpPostgres(config.containerId, config.outputPath, engine, pgUser)
       break
+    }
     case 'mysql':
-    case 'mariadb':
-      await dumpMySQL(config.containerId, config.outputPath, engine)
+    case 'mariadb': {
+      const mysqlPassword = getEnvVar(env, 'MYSQL_ROOT_PASSWORD', 'MARIADB_ROOT_PASSWORD')
+      await dumpMySQL(config.containerId, config.outputPath, engine, mysqlPassword)
       break
+    }
     case 'mongodb':
       await dumpMongoDB(config.containerId, config.outputPath, engine)
       break
@@ -134,7 +148,7 @@ export async function dumpDatabaseContainers(
 
       const dumpPath = path.join(destPath, 'database-dumps', containerId)
 
-      await executeDatabaseDump({ containerId, type: dbType, outputPath: dumpPath }, engine)
+      await executeDatabaseDump({ containerId, type: dbType, outputPath: dumpPath, envVars: details.Config.Env }, engine)
       engine.log('info', 'system', `Database dump completed for ${details.Name} (${dbType})`)
     } catch (error: unknown) {
       const msg = error instanceof Error ? error.message : String(error)

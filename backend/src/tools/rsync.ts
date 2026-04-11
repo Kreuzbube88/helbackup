@@ -4,6 +4,7 @@ import { logger } from '../utils/logger.js'
 export interface RsyncOptions {
   source: string
   destination: string
+  onRegisterProcess?: (proc: import('child_process').ChildProcess) => void
   sshUser?: string
   sshHost?: string
   sshKey?: string
@@ -83,6 +84,7 @@ export async function executeRsync(options: RsyncOptions): Promise<RsyncResult> 
 
     const spawnEnv = options.sshPassword ? { ...process.env, SSHPASS: options.sshPassword } : process.env
     const rsync = spawn('rsync', args, { env: spawnEnv })
+    if (options.onRegisterProcess) options.onRegisterProcess(rsync)
     let bytesTransferred = 0
     let lastOutput = ''
 

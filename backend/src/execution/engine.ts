@@ -92,6 +92,7 @@ export class JobExecutionEngine extends EventEmitter {
   private readonly jobName: string
   private readonly startedAt: string
   private _aborted = false
+  private _childProcesses = new Set<import('child_process').ChildProcess>()
   private sequence = 0
   private backupPaths: Array<{ type: string; path: string; targetId?: string; checksums?: ChecksumEntry[] }> = []
   private summary: Summary = {
@@ -471,8 +472,19 @@ export class JobExecutionEngine extends EventEmitter {
     return this.jobId
   }
 
-  abort(): void { this._aborted = true }
+  abort(): void {
+    this._aborted = true
+    for (const proc of this._childProcesses) {
+      try { proc.kill('SIGTERM') } catch { /* already gone */ }
+    }
+    this._childProcesses.clear()
+  }
   isAborted(): boolean { return this._aborted }
+
+  registerChildProcess(proc: import('child_process').ChildProcess): void {
+    this._childProcesses.add(proc)
+    proc.on('close', () => this._childProcesses.delete(proc))
+  }
 
   private elapsedSeconds(): number {
     return Math.floor((Date.now() - new Date(this.startedAt).getTime()) / 1000)

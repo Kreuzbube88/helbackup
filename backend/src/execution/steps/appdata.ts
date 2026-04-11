@@ -296,6 +296,7 @@ export async function executeAppdataBackup(
               destination: destDir,
               excludePatterns: ['logs/', 'cache/', '*.log', '*.sock', '*.socket', ...perContainerExclusions],
               ...(bwLimit > 0 ? { bwLimit } : {}),
+              onRegisterProcess: p => engine.registerChildProcess(p),
               onProgress: (() => { let last = -1; return ({ percent, speed }: { percent: number; speed: string }) => {
                 if (percent < last) last = -1
                 if (Math.floor(percent / 10) > Math.floor(last / 10)) { last = percent; engine.log('info', 'system', `${containerName} (${path.basename(appdataPath)}): ${percent}% — ${speed}`) }
@@ -321,6 +322,7 @@ export async function executeAppdataBackup(
           destination: workDir,
           excludePatterns: ['*/logs/*', '*/cache/*', '*/*.log', '*.sock', '*.socket', ...containerExclusions],
           ...(bwLimit > 0 ? { bwLimit } : {}),
+          onRegisterProcess: p => engine.registerChildProcess(p),
           onProgress: (() => { let last = -1; return ({ percent, speed }: { percent: number; speed: string }) => {
             if (percent < last) last = -1
             if (Math.floor(percent / 10) > Math.floor(last / 10)) { last = percent; engine.log('info', 'system', `Progress: ${percent}% — ${speed}`) }
