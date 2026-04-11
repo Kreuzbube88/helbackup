@@ -136,7 +136,17 @@ Ein Neustart ist erforderlich, damit Flash-Drive-Änderungen wirksam werden.
 ```
 Recovery → Appdata-Backup auswählen → Container auswählen → Wiederherstellen
 ```
-HELBACKUP synchronisiert die Appdata zurück nach `/mnt/user/appdata/<container>`.
+HELBACKUP synchronisiert die Appdata-Verzeichnisse zurück an ihren ursprünglichen Speicherort. Die Container-Daten (Konfigurationsdateien, Datenbanken etc.) sind danach vorhanden — **die Container selbst werden jedoch nicht automatisch neu erstellt**.
+
+> **Wichtig:** Die Appdata-Wiederherstellung stellt nur die Daten wieder her — nicht die Docker-Container-Definition. Nach der Wiederherstellung taucht der Container im Unraid Docker-Tab nicht auf, bis er neu installiert wurde.
+
+**So werden die Container wiederhergestellt:**
+
+1. **Wenn du auch das Flash-Drive-Backup wiederhergestellt hast** (empfohlen): Die Docker-Templates sind bereits nach `/boot/config/plugins/dockerMan/templates-user/my-<name>.xml` wiederhergestellt. Im Unraid Docker-Tab erscheint der Container als gespeichertes Template. Einfach auf **Anwenden/Starten** klicken — der Container startet und findet seine Daten direkt im wiederhergestellten Appdata-Verzeichnis.
+
+2. **Wenn kein Flash-Drive-Backup wiederhergestellt wurde**: Jeden Container manuell über die Unraid Community Apps oder den Docker-Tab neu installieren und wie zuvor konfigurieren. Beim Start findet der Container seine Konfigurationsdaten bereits in der Appdata — eine Neukonfiguration innerhalb der App ist nicht notwendig.
+
+Die `containers.json`-Datei, die in jedem Appdata-Backup enthalten ist, beinhaltet den vollständigen `docker inspect`-Output für jeden Container (Image, Umgebungsvariablen, Volume-Bindings, Port-Mappings, Netzwerkmodus) — sie dient als Referenz, falls Container manuell neu erstellt werden müssen.
 
 ### VMs
 ```

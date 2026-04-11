@@ -138,8 +138,17 @@ A reboot is required to apply Flash Drive changes.
 ```
 Recovery → select Appdata backup → choose containers → Restore
 ```
-HELBACKUP rsyncs the appdata back to `/mnt/user/appdata/<container>`.
-Recreate containers via the Docker tab afterwards (configs are in the backup).
+HELBACKUP rsyncs the appdata directories back to their original locations. The container data (config files, databases, etc.) will be in place — but **the containers themselves are not recreated automatically**.
+
+> **Important:** Restoring appdata only restores the data — not the Docker container definition. After restoring, the container will not appear in Unraid's Docker tab until it is reinstalled.
+
+**How to get containers back:**
+
+1. **If you also restored the Flash Drive backup** (recommended): The Docker templates are already restored to `/boot/config/plugins/dockerMan/templates-user/my-<name>.xml`. Go to Unraid → Docker tab → the container should appear as a saved template. Click **Apply/Start** — the container will start and immediately find its data in the restored appdata directory.
+
+2. **If you did not restore the Flash Drive**: Reinstall each container manually via Unraid Community Apps or the Docker tab. Configure it exactly as before. When the container starts, it will find its config data already in appdata — no reconfiguration needed inside the app.
+
+The `containers.json` file included in every appdata backup contains the full `docker inspect` output for each container (image, env vars, volume binds, port mappings, network mode) — use it as a reference if you need to recreate containers manually.
 
 ### VMs
 ```
