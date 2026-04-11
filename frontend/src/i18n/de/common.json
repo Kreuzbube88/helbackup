@@ -531,8 +531,8 @@
   },
 
   "mount_warning": {
-    "title": "Fehlende Container-Mounts erkannt",
-    "description": "HELBACKUP kann unter diesen Bedingungen keine Backups erstellen oder wiederherstellen. Folgende Volume-Mounts ergänzen und Container neu starten (docker compose up -d):",
-    "required": "Erforderlich:"
+    "title": "KRITISCH — Container-Mounts fehlen",
+    "description": "HELBACKUP kann keine Backups erstellen oder wiederherstellen. Fehlende Volumes ergänzen und Container neu starten (docker compose up -d). Alle Mounts müssen read-write (rw) sein — nicht read-only (ro)!",
+    "required": "Zu volumes hinzufügen:"
   }
 }

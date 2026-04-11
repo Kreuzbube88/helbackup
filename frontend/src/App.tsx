@@ -62,20 +62,18 @@ function ProtectedLayout() {
     <div className="h-full flex flex-col">
       <Header />
       {mountIssues.length > 0 && (
-        <div className="flex flex-col gap-1.5 px-4 py-3 border-b border-[var(--status-warning)] bg-[var(--status-warning)]/10 text-[var(--status-warning)] text-xs">
-          <div className="flex items-start gap-2">
-            <TriangleAlert size={14} className="shrink-0 mt-0.5" />
-            <div className="flex flex-col gap-0.5">
-              <span className="font-semibold">{t('mount_warning.title')}</span>
-              <span className="text-[var(--text-secondary)]">{t('mount_warning.description')}</span>
-            </div>
+        <div className="flex flex-col gap-2 px-5 py-3 border-b border-[var(--status-warning)] border-l-4 border-l-[var(--status-warning)] bg-[var(--status-warning)]/20">
+          <div className="flex items-center gap-2">
+            <TriangleAlert size={18} className="shrink-0 text-[var(--status-warning)]" />
+            <span className="font-bold text-sm text-[var(--status-warning)] uppercase tracking-wide">{t('mount_warning.title')}</span>
           </div>
-          <div className="flex flex-wrap gap-x-6 gap-y-0.5 pl-5">
+          <p className="text-xs text-[var(--text-secondary)] pl-[26px]">{t('mount_warning.description')}</p>
+          <div className="flex flex-col gap-1 pl-[26px]">
             {mountIssues.map(issue => (
-              <span key={issue.containerPath} className="font-mono">
-                <span className="text-[var(--text-muted)]">{t('mount_warning.required')} </span>
+              <code key={issue.containerPath} className="text-xs font-mono text-[var(--status-warning)] bg-[var(--bg-primary)] px-2 py-0.5 self-start">
+                <span className="text-[var(--text-muted)] mr-1">{t('mount_warning.required')}</span>
                 {issue.required}
-              </span>
+              </code>
             ))}
           </div>
         </div>

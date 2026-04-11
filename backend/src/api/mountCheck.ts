@@ -35,10 +35,10 @@ export async function mountCheckRoutes(app: FastifyInstance): Promise<void> {
       ])
 
       if (!cacheOk) {
-        issues.push({ containerPath: '/unraid/cache', required: '/mnt/cache:/unraid/cache' })
+        issues.push({ containerPath: '/unraid/cache', required: '/mnt/cache:/unraid/cache:rw' })
       }
       if (!userOk) {
-        issues.push({ containerPath: '/unraid/user', required: '/mnt/user:/unraid/user' })
+        issues.push({ containerPath: '/unraid/user', required: '/mnt/user:/unraid/user:rw' })
       }
 
       return reply.send({ ok: issues.length === 0, issues })

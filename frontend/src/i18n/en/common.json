@@ -531,8 +531,8 @@
   },
 
   "mount_warning": {
-    "title": "Missing container mounts detected",
-    "description": "HELBACKUP cannot create or restore backups under these conditions. Add the following volume mounts and restart the container (docker compose up -d):",
-    "required": "Required:"
+    "title": "CRITICAL — Container mounts missing",
+    "description": "HELBACKUP cannot create or restore backups. Add the missing volumes and restart the container (docker compose up -d). All mounts must be read-write (rw) — not read-only (ro)!",
+    "required": "Add to volumes:"
   }
 }
