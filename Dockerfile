@@ -38,6 +38,7 @@ LABEL org.opencontainers.image.source="https://github.com/Kreuzbube88/helbackup"
 # Runtime backend deps
 COPY --from=backend-deps /app/node_modules ./node_modules
 # Compiled backend
+COPY --from=backend-build /app/package.json ./package.json
 COPY --from=backend-build /app/dist ./dist
 # Compiled frontend (served as static files)
 COPY --from=frontend-build /app/frontend/dist ./frontend/dist
