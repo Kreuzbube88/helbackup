@@ -1,5 +1,6 @@
 import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify'
 import { v4 as uuidv4 } from 'uuid'
+import cronParser from 'cron-parser'
 import { db } from '../db/database.js'
 import { scheduleJob, cancelJob } from '../scheduler/index.js'
 import type { JobRow } from '../types/rows.js'
@@ -123,6 +124,14 @@ export async function jobsRoutes(app: FastifyInstance): Promise<void> {
       const validationError = validateJobSteps(steps)
       if (validationError) return reply.status(400).send({ error: validationError })
 
+      if (schedule) {
+        try {
+          cronParser.parseExpression(schedule)
+        } catch {
+          return reply.status(400).send({ error: 'Invalid cron expression' })
+        }
+      }
+
       const id = uuidv4()
       db.prepare(
         'INSERT INTO jobs (id, name, schedule, steps, enabled, catch_up_on_start, pre_backup_script, post_backup_script) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
@@ -146,6 +155,14 @@ export async function jobsRoutes(app: FastifyInstance): Promise<void> {
       if (steps !== undefined) {
         const validationError = validateJobSteps(steps)
         if (validationError) return reply.status(400).send({ error: validationError })
+      }
+
+      if (schedule) {
+        try {
+          cronParser.parseExpression(schedule)
+        } catch {
+          return reply.status(400).send({ error: 'Invalid cron expression' })
+        }
       }
 
       const updates: string[] = []

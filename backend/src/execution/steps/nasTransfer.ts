@@ -120,6 +120,7 @@ export async function transferAndCleanup(
   // After rsync we re-hash on the remote and compare — that catches transit corruption.
   const checksums = await generateChecksums(localDir, engine)
 
+  let shouldCleanLocalDir = true  // rsync failure: clean (no useful data yet)
   try {
     await executeRsync({
       source: localDir + '/',
@@ -151,6 +152,7 @@ export async function transferAndCleanup(
         engine.log('error', 'system', content)
       },
     })
+    shouldCleanLocalDir = false  // after rsync: keep on verify/publish failure for retry
 
     // Verify the bytes that landed in the partial dir on the NAS match what we
     // hashed locally. Throws on mismatch — local dir is preserved for re-run.
@@ -164,11 +166,18 @@ export async function transferAndCleanup(
     if (!publishResult.success) {
       throw new Error(`Failed to publish remote backup (rename .partial → final): ${publishResult.error ?? 'unknown error'}`)
     }
+
+    // Publish succeeded — clean up local staging dir
+    await new Promise<void>(resolve => execFile('rm', ['-rf', localDir], () => resolve()))
+    shouldCleanLocalDir = false  // already cleaned
+  } catch (err) {
+    // On any failure: remove remote .partial to avoid leaving incomplete data
+    await executeSSHCommand(sshCfg, `rm -rf '${escPartial}'`).catch(() => {})
+    throw err
   } finally {
-    // Always clean up the local staging dir — whether transfer succeeded or failed
-    await new Promise<void>(resolve =>
-      execFile('rm', ['-rf', localDir], () => resolve())
-    )
+    if (shouldCleanLocalDir) {
+      await new Promise<void>(resolve => execFile('rm', ['-rf', localDir], () => resolve()))
+    }
   }
 
   engine.log('info', 'system', 'NAS transfer complete (verified + committed)')

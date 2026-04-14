@@ -99,9 +99,17 @@ export async function createManifest(
     engine.log('info', 'system', 'Manifest encrypted')
   }
 
-  db.prepare(
-    'INSERT INTO manifest (backup_id, job_id, manifest, created_at) VALUES (?, ?, ?, ?)'
-  ).run(manifest.backupId, jobId, JSON.stringify(manifest), manifest.timestamp)
+  try {
+    db.prepare(
+      'INSERT INTO manifest (backup_id, job_id, manifest, created_at) VALUES (?, ?, ?, ?)'
+    ).run(manifest.backupId, jobId, JSON.stringify(manifest), manifest.timestamp)
+  } catch (dbErr) {
+    // Compensating: remove orphaned disk files
+    await fs.unlink(manifestPath).catch(() => {})
+    await fs.unlink(`${manifestPath}.gpg`).catch(() => {})
+    await fs.unlink(path.join(backupPath, 'manifest-envelope.json')).catch(() => {})
+    throw dbErr
+  }
 
   engine.log('info', 'system', `Manifest created: ${entries.length} files`)
   return manifest

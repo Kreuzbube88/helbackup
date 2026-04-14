@@ -262,8 +262,21 @@ export class JobExecutionEngine extends EventEmitter {
       backupDurationHistogram.observe({ job_name: this.jobName }, duration)
 
       if (this.backupPaths.length > 0) {
+        const MANIFEST_TIMEOUT_MS = 10 * 60 * 1000 // 10 minutes
         try {
-          await createJobManifest(this.jobId, this.runId, this.backupPaths, this)
+          let timeoutHandle: ReturnType<typeof setTimeout> | undefined
+          const timeoutPromise = new Promise<never>((_, reject) => {
+            timeoutHandle = setTimeout(
+              () => reject(new Error('Manifest creation timed out after 10 minutes')),
+              MANIFEST_TIMEOUT_MS
+            )
+          })
+          await Promise.race([
+            createJobManifest(this.jobId, this.runId, this.backupPaths, this).finally(() => {
+              clearTimeout(timeoutHandle)
+            }),
+            timeoutPromise,
+          ])
         } catch (err) {
           this.log('warn', 'system', `Manifest creation failed: ${err instanceof Error ? err.message : String(err)}`)
         }
