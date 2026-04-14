@@ -248,16 +248,17 @@ export default async function recoveryRoutes(app: FastifyInstance) {
 
         let restoreCommand = '';
 
+        const escapedPath = shellEscape(dumpEntry.path);
         switch (databaseType) {
           case 'postgres':
-            restoreCommand = `docker exec -i ${containerId} psql -U postgres < ${dumpEntry.path}`;
+            restoreCommand = `docker exec -i ${containerId} psql -U postgres < ${escapedPath}`;
             break;
           case 'mysql':
           case 'mariadb':
-            restoreCommand = `docker exec -i ${containerId} sh -c 'mysql -u root -p"$MYSQL_ROOT_PASSWORD"' < ${dumpEntry.path}`;
+            restoreCommand = `docker exec -i ${containerId} sh -c 'mysql -u root -p"$MYSQL_ROOT_PASSWORD"' < ${escapedPath}`;
             break;
           case 'mongodb':
-            restoreCommand = `docker exec ${containerId} mongorestore --dir ${dumpEntry.path}`;
+            restoreCommand = `docker exec ${containerId} mongorestore --dir ${escapedPath}`;
             break;
           default:
             return reply.status(400).send({ error: 'Unsupported database type' });

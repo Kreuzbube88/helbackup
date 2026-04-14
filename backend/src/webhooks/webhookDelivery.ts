@@ -33,6 +33,14 @@ function nextRetryDelay(retryCount: number): number {
   return 30 * 60 * 1000
 }
 
+export async function testWebhookDelivery(webhookId: number): Promise<void> {
+  await attemptDelivery(webhookId, {
+    event: 'backup_success',
+    timestamp: new Date().toISOString(),
+    data: { message: 'Test webhook delivery from HELBACKUP' },
+  })
+}
+
 async function attemptDelivery(webhookId: number, event: WebhookEvent, deliveryId?: number): Promise<void> {
   const webhook = db
     .prepare('SELECT * FROM webhooks WHERE id = ? AND enabled = 1')
@@ -85,7 +93,7 @@ async function attemptDelivery(webhookId: number, event: WebhookEvent, deliveryI
 
       const currentCount = (row?.retry_count ?? 0) + 1
       if (currentCount < 3) {
-        const nextAt = new Date(Date.now() + nextRetryDelay(currentCount + 1)).toISOString()
+        const nextAt = new Date(Date.now() + nextRetryDelay(currentCount)).toISOString()
         db.prepare(
           'UPDATE webhook_deliveries SET response_status = ?, response_body = ?, retry_count = ?, next_retry_at = ? WHERE id = ?'
         ).run(0, msg, currentCount, nextAt, deliveryId)

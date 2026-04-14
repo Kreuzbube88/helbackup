@@ -60,6 +60,10 @@ export async function applyRetentionPolicy(
 
     if (policy.deleteOlderThanDays && ageDays > policy.deleteOlderThanDays) {
       try {
+        // Delete DB record first — if file deletion fails after this, files linger
+        // on disk (storage leak) but the manifest never points to missing data.
+        db.prepare('DELETE FROM manifest WHERE id = ?').run(manifest.id)
+
         // Delete backup files on disk if backupPath exists
         try {
           const parsed = JSON.parse(manifest.manifest) as { backupPath?: string }
@@ -69,9 +73,11 @@ export async function applyRetentionPolicy(
             )
             logger.info(`Deleted backup files: ${parsed.backupPath}`)
           }
-        } catch { /* manifest parse or fs error — still delete DB record */ }
+        } catch (fsErr: unknown) {
+          const msg = fsErr instanceof Error ? fsErr.message : String(fsErr)
+          logger.warn(`Backup files could not be deleted for ${manifest.backup_id}: ${msg}`)
+        }
 
-        db.prepare('DELETE FROM manifest WHERE id = ?').run(manifest.id)
         logger.info(`Deleted old backup: ${manifest.backup_id} (${ageDays.toFixed(1)} days old)`)
         deleted++
       } catch (error: unknown) {

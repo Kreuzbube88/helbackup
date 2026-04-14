@@ -119,7 +119,7 @@ export class JobExecutionEngine extends EventEmitter {
 
     db.prepare(
       'INSERT INTO job_history (id, job_id, status, started_at) VALUES (?, ?, ?, ?)'
-    ).run(this.runId, jobId, dryRun ? 'dry-run' : 'running', this.startedAt)
+    ).run(this.runId, jobId, 'running', this.startedAt)
 
     logger.info({ runId: this.runId }, 'Job execution started')
   }

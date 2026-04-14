@@ -1,7 +1,7 @@
 import { FastifyInstance } from 'fastify'
 import { db } from '../db/database.js'
 import { successResponse, errorResponse, ErrorCodes } from '../utils/apiResponse.js'
-import { deliverWebhook } from '../webhooks/webhookDelivery.js'
+import { deliverWebhook, testWebhookDelivery } from '../webhooks/webhookDelivery.js'
 import { logger } from '../utils/logger.js'
 
 const VALID_EVENTS = [
@@ -92,11 +92,7 @@ export async function webhookRoutes(app: FastifyInstance): Promise<void> {
     async (request, reply) => {
       try {
         const webhookId = Number(request.params.id)
-        await deliverWebhook(webhookId, {
-          event: 'test',
-          timestamp: new Date().toISOString(),
-          data: { message: 'Test webhook delivery from HELBACKUP' },
-        })
+        await testWebhookDelivery(webhookId)
         return successResponse(reply, { sent: true })
       } catch (error: unknown) {
         return errorResponse(reply, ErrorCodes.INTERNAL_ERROR, error instanceof Error ? error.message : String(error), 500)

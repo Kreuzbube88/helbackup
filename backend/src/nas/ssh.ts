@@ -250,7 +250,7 @@ export async function deployPublicKey(config: SSHConfig, publicKey: string): Pro
       })
     })
 
-    conn.on('error', reject)
+    conn.on('error', (err) => { conn.end(); reject(err) })
 
     conn.connect({
       host: config.host,
