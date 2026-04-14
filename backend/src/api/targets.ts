@@ -21,6 +21,18 @@ interface UpdateTargetBody {
 const VALID_TYPES = ['nas', 'local']
 const SENSITIVE_KEYS = new Set(['password', 'ssh_key', 'api_key', 'token', 'client_secret', 'secret'])
 
+function validateTargetConfig(type: string, config: Record<string, unknown>): string | null {
+  if (type === 'nas') {
+    if (!config.host || typeof config.host !== 'string') return 'NAS target requires host'
+    if (!config.username || typeof config.username !== 'string') return 'NAS target requires username'
+    if (!config.path || typeof config.path !== 'string') return 'NAS target requires path'
+  }
+  if (type === 'local') {
+    if (!config.path || typeof config.path !== 'string') return 'Local target requires path'
+  }
+  return null
+}
+
 function sanitizeConfig(config: Record<string, unknown>): Record<string, unknown> {
   const result: Record<string, unknown> = {}
   for (const [k, v] of Object.entries(config)) {
@@ -92,6 +104,9 @@ export async function targetsRoutes(app: FastifyInstance): Promise<void> {
         return reply.status(400).send({ error: `Invalid type. Must be one of: ${VALID_TYPES.join(', ')}` })
       }
 
+      const configError = validateTargetConfig(type, config)
+      if (configError) return reply.status(400).send({ error: configError })
+
       const id = uuidv4()
       db.prepare(
         'INSERT INTO targets (id, name, type, config, enabled) VALUES (?, ?, ?, ?, ?)'
@@ -122,6 +137,10 @@ export async function targetsRoutes(app: FastifyInstance): Promise<void> {
         updates.push('type = ?'); values.push(type)
       }
       if (config !== undefined) {
+        const effectiveType = type ?? existing.type
+        const configError = validateTargetConfig(effectiveType, config)
+        if (configError) return reply.status(400).send({ error: configError })
+
         let existingConfig: Record<string, unknown> = {}
         try { existingConfig = JSON.parse(existing.config) as Record<string, unknown> } catch { /* default empty */ }
         const merged = mergeSensitiveKeys(config, existingConfig)
