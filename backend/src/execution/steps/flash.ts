@@ -53,6 +53,7 @@ export async function executeFlashBackup(
     // Flash drive must be byte-exact — fail on partial/vanished (rsync 23/24)
     strict: true,
     ...(bwLimit > 0 ? { bwLimit } : {}),
+    onRegisterProcess: p => engine.registerChildProcess(p),
     onProgress: (() => { let last = -1; return ({ percent, speed }: { percent: number; speed: string }) => {
       if (percent < last) last = -1
       if (Math.floor(percent / 10) > Math.floor(last / 10)) { last = percent; engine.log('info', 'system', `Progress: ${percent}% — ${speed}`) }

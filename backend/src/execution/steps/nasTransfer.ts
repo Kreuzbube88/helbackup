@@ -133,6 +133,7 @@ export async function transferAndCleanup(
       knownHostsFile: nasConfig.knownHostsFile,
       // Source is our own staged temp dir — vanished/unreadable files indicate a real problem
       strict: true,
+      onRegisterProcess: p => engine.registerChildProcess(p),
       onProgress: (() => {
         let last = -1
         return ({ percent, speed }: { percent: number; speed: string }) => {

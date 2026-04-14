@@ -101,6 +101,8 @@ async function dumpMongoDB(containerId: string, outputPath: string, engine: JobE
     tar.on('error', reject)
   })
 
+  await dockerExecToFile(containerId, ['rm', '-rf', '/tmp/mongodump'], '/dev/null').catch(() => {})
+
   engine.log('info', 'file', `MongoDB dump extracted: ${dumpDir}`, undefined, {
     file: { path: dumpDir, size: 0, result: 'copied' },
   })

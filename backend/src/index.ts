@@ -32,6 +32,7 @@ import { gfsRetentionRoutes } from './api/gfsRetention.js'
 import { restoreWizardRoutes } from './api/restoreWizard.js'
 import { verificationRoutes } from './api/verification.js'
 import { notificationManager } from './notifications/notificationManager.js'
+import { closeDockerPool } from './docker/client.js'
 import { tokenRoutes } from './api/tokens.js'
 import { webhookRoutes } from './api/webhooks.js'
 import { statusRoutesV1 } from './api/v1/status.js'
@@ -220,6 +221,7 @@ const shutdown = async (signal: string, exitCode = 0): Promise<void> => {
   logger.info(`${signal} received, shutting down gracefully`)
   try {
     stopScheduler()
+    await closeDockerPool()
     await app.close()
   } catch (err) {
     logger.error({ err }, 'Error during graceful shutdown')

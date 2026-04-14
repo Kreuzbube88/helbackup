@@ -176,6 +176,7 @@ export async function executeVMBackup(
             await executeRsync({
               source: diskPath,
               destination: diskDestPath,
+              onRegisterProcess: p => engine.registerChildProcess(p),
               onProgress: (() => { let last = -1; return (data: { percent: number; speed: string; transferred: string }) => {
                 if (data.percent < last) last = -1
                 if (Math.floor(data.percent / 10) > Math.floor(last / 10)) {

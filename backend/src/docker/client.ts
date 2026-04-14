@@ -227,6 +227,10 @@ export async function dockerExecToString(
   }
 }
 
+export async function closeDockerPool(): Promise<void> {
+  await dockerPool.close()
+}
+
 export async function getContainerArchive(
   containerId: string,
   containerPath: string

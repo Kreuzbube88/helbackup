@@ -3,6 +3,7 @@ import cronParser from 'cron-parser'
 import { randomUUID } from 'crypto'
 import { db } from '../db/database.js'
 import { logger } from '../utils/logger.js'
+import { processWebhookRetries } from '../webhooks/webhookDelivery.js'
 import { JobExecutionEngine, type JobStep } from '../execution/engine.js'
 import { activeExecutions } from '../execution/active.js'
 import type { JobRow, TargetRow } from '../types/rows.js'
@@ -28,6 +29,13 @@ export function initScheduler(): void {
 
   // Auto-create a default (disabled) self-backup job on first boot if none exists
   maybeCreateDefaultSelfBackupJob()
+
+  // Webhook retry — every 5 minutes
+  schedule.scheduleJob('*/5 * * * *', () => {
+    processWebhookRetries().catch(err => {
+      logger.error({ err }, 'Webhook retry processing failed')
+    })
+  })
 
   // Nightly log retention — runs at 04:00 every day
   schedule.scheduleJob('0 4 * * *', () => {

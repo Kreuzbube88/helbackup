@@ -78,6 +78,7 @@ export async function executeSystemConfigBackup(
               destination: itemDestPath,
               // System config must be byte-exact — fail on partial/vanished (rsync 23/24)
               strict: true,
+              onRegisterProcess: p => engine.registerChildProcess(p),
               onProgress: (() => { let last = -1; return (data: { percent: number }) => {
                 if (Math.floor(data.percent / 10) > Math.floor(last / 10)) { last = data.percent; engine.log('debug', 'system', `Progress: ${data.percent}%`) }
               } })(),

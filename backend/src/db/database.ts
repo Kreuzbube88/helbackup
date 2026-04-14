@@ -83,6 +83,7 @@ async function initDb(): Promise<Database.Database> {
     )`,
     // Resilience: catch-up on scheduler init after container downtime
     "ALTER TABLE jobs ADD COLUMN catch_up_on_start INTEGER NOT NULL DEFAULT 0",
+    "ALTER TABLE webhook_deliveries ADD COLUMN next_retry_at TEXT",
     // Dashboard: cached remote disk usage (populated after each backup job + on target save)
     `CREATE TABLE IF NOT EXISTS target_disk_usage (
       target_id TEXT PRIMARY KEY,

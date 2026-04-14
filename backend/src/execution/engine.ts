@@ -286,24 +286,22 @@ export class JobExecutionEngine extends EventEmitter {
         `Backup completed: ${this.summary.filesCopied} files copied, ${this.summary.errors} errors`
       )
 
-      // Per-step retention policies (only after a successful run)
-      if (finalStatus === 'success') {
-        for (const step of steps) {
-          const cfg = step.config as { retentionDays?: number; retentionMinimum?: number }
-          if (typeof cfg.retentionDays === 'number' && cfg.retentionDays > 0) {
-            try {
-              const result = await applyRetentionPolicy(this.jobId, {
-                deleteOlderThanDays: cfg.retentionDays,
-                keepMinimum: cfg.retentionMinimum ?? 3,
-                stepType: step.type,
-              })
-              this.log('info', 'system',
-                `Retention (${step.type}): deleted ${result.deleted}, kept ${result.kept}`
-              )
-            } catch (err) {
-              const msg = err instanceof Error ? err.message : String(err)
-              this.log('warn', 'system', `Retention policy failed for ${step.type}: ${msg}`)
-            }
+      // Per-step retention policies (always run — prevents disk fill on repeated failures)
+      for (const step of steps) {
+        const cfg = step.config as { retentionDays?: number; retentionMinimum?: number }
+        if (typeof cfg.retentionDays === 'number' && cfg.retentionDays > 0) {
+          try {
+            const result = await applyRetentionPolicy(this.jobId, {
+              deleteOlderThanDays: cfg.retentionDays,
+              keepMinimum: cfg.retentionMinimum ?? 3,
+              stepType: step.type,
+            })
+            this.log('info', 'system',
+              `Retention (${step.type}): deleted ${result.deleted}, kept ${result.kept}`
+            )
+          } catch (err) {
+            const msg = err instanceof Error ? err.message : String(err)
+            this.log('warn', 'system', `Retention policy failed for ${step.type}: ${msg}`)
           }
         }
       }
@@ -342,8 +340,8 @@ export class JobExecutionEngine extends EventEmitter {
             details: { available_bytes: available, total_bytes: total },
           })
         }
-      } catch {
-        // /mnt/user may not be mounted in dev — non-critical
+      } catch (err) {
+        logger.debug(`Disk space check failed: ${err instanceof Error ? err.message : String(err)}`)
       }
 
     } catch (err: unknown) {

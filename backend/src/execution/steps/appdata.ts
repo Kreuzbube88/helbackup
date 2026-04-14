@@ -359,6 +359,7 @@ export async function executeAppdataBackup(
             await executeRsync({
               source: volumePath,
               destination: volumeDestPath,
+              onRegisterProcess: p => engine.registerChildProcess(p),
               onProgress: (() => { let last = -1; return ({ percent }: { percent: number }) => {
                 if (percent < last) last = -1
                 if (Math.floor(percent / 10) > Math.floor(last / 10)) { last = percent; engine.log('info', 'system', `External volume progress: ${percent}%`) }

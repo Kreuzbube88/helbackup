@@ -53,6 +53,7 @@ export async function executeCustomBackup(
     source: config.sourcePath,
     destination: workDir,
     excludePatterns: config.excludePatterns ?? [],
+    onRegisterProcess: p => engine.registerChildProcess(p),
     onProgress: (() => { let last = -1; return ({ percent, speed }: { percent: number; speed: string }) => {
       if (percent < last) last = -1
       if (Math.floor(percent / 10) > Math.floor(last / 10)) { last = percent; engine.log('info', 'system', `Progress: ${percent}% — ${speed}`) }
