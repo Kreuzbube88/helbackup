@@ -11,6 +11,7 @@ export interface DockerImageExportConfig {
   destination: string
   targetId: string
   useEncryption: boolean
+  dryRun?: boolean
 }
 
 async function exportDockerImage(
@@ -31,6 +32,11 @@ export async function executeDockerImageExport(
   config: DockerImageExportConfig,
   engine: JobExecutionEngine
 ): Promise<void> {
+  // TODO: full dry-run support (simulate docker save without writing)
+  if (config.dryRun) {
+    engine.log('info', 'system', 'dry-run: skipped Docker image export step')
+    return
+  }
   engine.log('info', 'system', 'Starting Docker image export')
 
   const { db } = await import('../../db/database.js')

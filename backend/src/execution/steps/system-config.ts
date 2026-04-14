@@ -12,6 +12,8 @@ export interface SystemConfigBackupConfig {
   targetId: string
   includeItems: string[]
   useEncryption: boolean
+  bwlimitKb?: number
+  dryRun?: boolean
 }
 
 const CONFIG_PATHS: Record<string, string> = {
@@ -73,11 +75,16 @@ export async function executeSystemConfigBackup(
           const stats = await fs.stat(sourcePath)
 
           if (stats.isDirectory()) {
+            const { getSettingInt } = await import('../../utils/settings.js')
+            // Per-step limit takes precedence over global setting
+            const bwLimit = config.bwlimitKb ?? getSettingInt('rsync_bwlimit_kb', 0)
             const rsyncResult = await executeRsync({
               source: sourcePath,
               destination: itemDestPath,
               // System config must be byte-exact — fail on partial/vanished (rsync 23/24)
               strict: true,
+              ...(bwLimit > 0 ? { bwLimit } : {}),
+              ...(config.dryRun ? { dryRun: true } : {}),
               onRegisterProcess: p => engine.registerChildProcess(p),
               onProgress: (() => { let last = -1; return (data: { percent: number }) => {
                 if (Math.floor(data.percent / 10) > Math.floor(last / 10)) { last = data.percent; engine.log('debug', 'system', `Progress: ${data.percent}%`) }

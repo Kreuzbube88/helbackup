@@ -26,6 +26,8 @@ export interface RsyncOptions {
    * When absent, StrictHostKeyChecking=no is used (current default).
    */
   knownHostsFile?: string
+  /** When true, passes --dry-run to rsync — simulates transfer without writing any files. */
+  dryRun?: boolean
   onProgress?: (data: { percent: number; transferred: string; speed: string }) => void
   onLog?: (message: string) => void
 }
@@ -40,6 +42,10 @@ export interface RsyncResult {
 export async function executeRsync(options: RsyncOptions): Promise<RsyncResult> {
   return new Promise((resolve, reject) => {
     const args: string[] = ['-av', '--progress', '--stats']
+
+    if (options.dryRun) {
+      args.push('--dry-run')
+    }
 
     if (options.bwLimit) {
       args.push(`--bwlimit=${options.bwLimit}`)

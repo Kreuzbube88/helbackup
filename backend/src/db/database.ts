@@ -92,6 +92,16 @@ async function initDb(): Promise<Database.Database> {
       available_bytes INTEGER NOT NULL,
       checked_at TEXT NOT NULL
     )`,
+    // Phase 7: audit log
+    `CREATE TABLE IF NOT EXISTS audit_log (
+      id TEXT PRIMARY KEY,
+      timestamp TEXT NOT NULL,
+      action TEXT NOT NULL,
+      actor TEXT,
+      resource_type TEXT,
+      resource_id TEXT,
+      details TEXT
+    )`,
   ]) {
     try { db.exec(sql) } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err)

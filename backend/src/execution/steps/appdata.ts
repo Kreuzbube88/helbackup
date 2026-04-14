@@ -43,6 +43,8 @@ export interface AppdataBackupConfig {
   externalVolumes?: ExternalVolumeConfig[]
   containerSettings?: Record<string, ContainerBackupSettings>
   useEncryption: boolean
+  bwlimitKb?: number
+  dryRun?: boolean
 }
 
 // Resolve the actual appdata directory paths for a container via Docker inspect.
@@ -274,7 +276,9 @@ export async function executeAppdataBackup(
         throw new Error(`Appdata source path not accessible: ${source} — ${msg}`)
       }
 
-      const bwLimit = getSettingInt('rsync_bwlimit_kb', 0)
+      // Per-step limit takes precedence over global setting
+      const bwLimit = config.bwlimitKb ?? getSettingInt('rsync_bwlimit_kb', 0)
+      if (config.dryRun) engine.log('info', 'system', 'dry-run mode: rsync will simulate transfer without writing files')
 
       if (containers.length > 0) {
         let totalFiles = 0
@@ -299,6 +303,7 @@ export async function executeAppdataBackup(
                 destination: destDir,
                 excludePatterns: ['logs/', 'cache/', '*.log', '*.sock', '*.socket', ...perContainerExclusions],
                 ...(bwLimit > 0 ? { bwLimit } : {}),
+                ...(config.dryRun ? { dryRun: true } : {}),
                 onRegisterProcess: p => engine.registerChildProcess(p),
                 onProgress: (() => { let last = -1; return ({ percent, speed }: { percent: number; speed: string }) => {
                   if (percent < last) last = -1
@@ -333,6 +338,7 @@ export async function executeAppdataBackup(
           destination: workDir,
           excludePatterns: ['*/logs/*', '*/cache/*', '*/*.log', '*.sock', '*.socket', ...containerExclusions],
           ...(bwLimit > 0 ? { bwLimit } : {}),
+          ...(config.dryRun ? { dryRun: true } : {}),
           onRegisterProcess: p => engine.registerChildProcess(p),
           onProgress: (() => { let last = -1; return ({ percent, speed }: { percent: number; speed: string }) => {
             if (percent < last) last = -1

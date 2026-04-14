@@ -28,6 +28,8 @@ export interface JobStep {
   retry?: { max_attempts: number; backoff: 'linear' | 'exponential' }
   /** When true (default), a step failure aborts the remaining steps. Set false to continue on error. */
   stop_on_error?: boolean
+  /** Per-step bandwidth limit for rsync transfers in KB/s. Overrides the global rsync_bwlimit_kb setting. */
+  bwlimitKb?: number
 }
 
 export type LogLevel = 'debug' | 'info' | 'warn' | 'error'
@@ -92,6 +94,7 @@ export class JobExecutionEngine extends EventEmitter {
   private readonly jobName: string
   private readonly startedAt: string
   private _aborted = false
+  private _dryRun = false
   private _childProcesses = new Set<import('child_process').ChildProcess>()
   private _workDirs = new Set<string>()
   private sequence = 0
@@ -105,17 +108,18 @@ export class JobExecutionEngine extends EventEmitter {
     warnings: 0,
   }
 
-  constructor(jobId: string) {
+  constructor(jobId: string, dryRun = false) {
     super()
     this.runId = randomUUID()
     this.jobId = jobId
+    this._dryRun = dryRun
     this.startedAt = new Date().toISOString()
     const jobRow = db.prepare('SELECT name FROM jobs WHERE id = ?').get(jobId) as Pick<JobRow, 'name'> | undefined
     this.jobName = jobRow?.name ?? jobId
 
     db.prepare(
       'INSERT INTO job_history (id, job_id, status, started_at) VALUES (?, ?, ?, ?)'
-    ).run(this.runId, jobId, 'running', this.startedAt)
+    ).run(this.runId, jobId, dryRun ? 'dry-run' : 'running', this.startedAt)
 
     logger.info({ runId: this.runId }, 'Job execution started')
   }
@@ -380,40 +384,47 @@ export class JobExecutionEngine extends EventEmitter {
   }
 
   private async executeStep(step: JobStep): Promise<void> {
+    // Merge step-level overrides into config so step functions can read them
+    const cfg: Record<string, unknown> = {
+      ...step.config,
+      ...(step.bwlimitKb != null ? { bwlimitKb: step.bwlimitKb } : {}),
+      ...(this._dryRun ? { dryRun: true } : {}),
+    }
+
     switch (step.type) {
       case 'flash': {
         const { executeFlashBackup } = await import('./steps/flash.js')
-        await executeFlashBackup(step.config as unknown as Parameters<typeof executeFlashBackup>[0], this)
+        await executeFlashBackup(cfg as unknown as Parameters<typeof executeFlashBackup>[0], this)
         break
       }
       case 'appdata': {
         const { executeAppdataBackup } = await import('./steps/appdata.js')
-        await executeAppdataBackup(step.config as unknown as Parameters<typeof executeAppdataBackup>[0], this)
+        await executeAppdataBackup(cfg as unknown as Parameters<typeof executeAppdataBackup>[0], this)
         break
       }
       case 'vms': {
         const { executeVMBackup } = await import('./steps/vms.js')
-        await executeVMBackup(step.config as unknown as Parameters<typeof executeVMBackup>[0], this)
+        await executeVMBackup(cfg as unknown as Parameters<typeof executeVMBackup>[0], this)
         break
       }
       case 'docker_images': {
         const { executeDockerImageExport } = await import('./steps/docker-images.js')
-        await executeDockerImageExport(step.config as unknown as Parameters<typeof executeDockerImageExport>[0], this)
+        await executeDockerImageExport(cfg as unknown as Parameters<typeof executeDockerImageExport>[0], this)
         break
       }
       case 'system_config': {
         const { executeSystemConfigBackup } = await import('./steps/system-config.js')
-        await executeSystemConfigBackup(step.config as unknown as Parameters<typeof executeSystemConfigBackup>[0], this)
+        await executeSystemConfigBackup(cfg as unknown as Parameters<typeof executeSystemConfigBackup>[0], this)
         break
       }
       case 'custom': {
         const { executeCustomBackup } = await import('./steps/custom.js')
-        await executeCustomBackup(step.config as unknown as Parameters<typeof executeCustomBackup>[0], this)
+        await executeCustomBackup(cfg as unknown as Parameters<typeof executeCustomBackup>[0], this)
         break
       }
       case 'helbackup_self': {
         const { executeHELBACKUPSelfBackup } = await import('./steps/helbackup-self.js')
-        await executeHELBACKUPSelfBackup(step.config as unknown as Parameters<typeof executeHELBACKUPSelfBackup>[0], this)
+        await executeHELBACKUPSelfBackup(cfg as unknown as Parameters<typeof executeHELBACKUPSelfBackup>[0], this)
         break
       }
       default:
@@ -485,6 +496,8 @@ export class JobExecutionEngine extends EventEmitter {
   getJobId(): string {
     return this.jobId
   }
+
+  isDryRun(): boolean { return this._dryRun }
 
   abort(): void {
     this._aborted = true

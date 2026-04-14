@@ -5,6 +5,10 @@ import { activeExecutions } from '../execution/active.js'
 import { logger } from '../utils/logger.js'
 import type { JobRow } from '../types/rows.js'
 
+interface ExecuteBody {
+  dryRun?: boolean
+}
+
 interface JobHistoryRow {
   id: string
   job_id: string
@@ -22,10 +26,10 @@ interface JobHistoryRow {
 
 export async function executionRoutes(app: FastifyInstance): Promise<void> {
   // POST /api/jobs/:id/execute — trigger manual execution
-  app.post<{ Params: { id: string } }>(
+  app.post<{ Params: { id: string }; Body: ExecuteBody }>(
     '/api/jobs/:id/execute',
     { preHandler: [app.authenticate] },
-    async (request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) => {
+    async (request: FastifyRequest<{ Params: { id: string }; Body: ExecuteBody }>, reply: FastifyReply) => {
       const job = db.prepare('SELECT * FROM jobs WHERE id = ?').get(request.params.id) as JobRow | undefined
       if (!job) return reply.status(404).send({ error: 'Job not found' })
 
@@ -48,7 +52,8 @@ export async function executionRoutes(app: FastifyInstance): Promise<void> {
         return reply.status(500).send({ error: 'Invalid job steps' })
       }
 
-      const engine = new JobExecutionEngine(job.id)
+      const dryRun = request.body?.dryRun === true
+      const engine = new JobExecutionEngine(job.id, dryRun)
       const runId = engine.getRunId()
       activeExecutions.set(runId, engine)
 
@@ -67,7 +72,7 @@ export async function executionRoutes(app: FastifyInstance): Promise<void> {
         }
       })()
 
-      return reply.status(202).send({ runId })
+      return reply.status(202).send({ runId, dryRun })
     }
   )
 

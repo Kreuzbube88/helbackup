@@ -7,6 +7,7 @@ import type { TargetRow } from '../../types/rows.js'
 interface PaginationQuery {
   limit?: string
   offset?: string
+  jobId?: string
 }
 
 interface CountRow { count: number }
@@ -40,6 +41,7 @@ export async function backupsRoutesV1(app: FastifyInstance): Promise<void> {
     async (request, reply) => {
       const limit = Math.min(Number(request.query.limit ?? 50), 200)
       const offset = Number(request.query.offset ?? 0)
+      const jobId = request.query.jobId ?? null
 
       const rows = db
         .prepare(`
@@ -52,10 +54,11 @@ export async function backupsRoutesV1(app: FastifyInstance): Promise<void> {
             m.manifest
           FROM manifest m
           LEFT JOIN jobs j ON j.id = m.job_id
+          ${jobId ? 'WHERE m.job_id = ?' : ''}
           ORDER BY m.created_at DESC
           LIMIT ? OFFSET ?
         `)
-        .all(limit, offset) as ManifestRow[]
+        .all(...(jobId ? [jobId, limit, offset] : [limit, offset])) as ManifestRow[]
 
       const getTarget = db.prepare('SELECT name, type FROM targets WHERE id = ?')
 
@@ -90,7 +93,9 @@ export async function backupsRoutesV1(app: FastifyInstance): Promise<void> {
         }
       })
 
-      const total = (db.prepare('SELECT COUNT(*) as count FROM manifest').get() as CountRow).count
+      const total = jobId
+        ? (db.prepare('SELECT COUNT(*) as count FROM manifest WHERE job_id = ?').get(jobId) as CountRow).count
+        : (db.prepare('SELECT COUNT(*) as count FROM manifest').get() as CountRow).count
 
       return successResponse(reply, { backups, pagination: { total, limit, offset } })
     }

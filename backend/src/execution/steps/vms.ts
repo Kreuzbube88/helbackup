@@ -14,6 +14,7 @@ export interface VMBackupConfig {
   targetId: string
   includeDisks: boolean
   useEncryption: boolean
+  dryRun?: boolean
 }
 
 interface VMInfo {
@@ -98,6 +99,11 @@ export async function executeVMBackup(
   config: VMBackupConfig,
   engine: JobExecutionEngine
 ): Promise<void> {
+  // TODO: full dry-run support (snapshot + vDisk rsync simulation)
+  if (config.dryRun) {
+    engine.log('info', 'system', 'dry-run: skipped VM backup step')
+    return
+  }
   engine.log('info', 'system', 'Starting VM backup')
 
   const { db } = await import('../../db/database.js')

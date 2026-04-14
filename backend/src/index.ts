@@ -46,6 +46,8 @@ import { healthRoutes } from './api/health.js'
 import { settingsRoutes } from './api/settings.js'
 import { fsRoutes } from './api/fs.js'
 import { mountCheckRoutes } from './api/mountCheck.js'
+import { auditRoutes } from './api/audit.js'
+import { auditLog } from './utils/audit.js'
 
 declare module 'fastify' {
   interface FastifyInstance {
@@ -187,6 +189,7 @@ await app.register(healthRoutes)
 await app.register(settingsRoutes)
 await app.register(fsRoutes)
 await app.register(mountCheckRoutes)
+await app.register(auditRoutes)
 
 // Serve React SPA in production
 const distPath = path.join(__dirname, '../frontend/dist')
@@ -211,6 +214,34 @@ app.setNotFoundHandler(async (request, reply) => {
 
 app.addHook('onError', async (_request, _reply, error) => {
   logger.error(error)
+})
+
+// Audit log for mutating API requests
+app.addHook('onResponse', async (request, reply) => {
+  const method = request.method
+  if (!['POST', 'PUT', 'DELETE'].includes(method)) return
+  if (!request.url.startsWith('/api/')) return
+  // Skip audit-log endpoint itself to avoid recursion
+  if (request.url.startsWith('/api/audit-log')) return
+
+  let actor: string | null = null
+  try {
+    const user = request.user as { sub?: string } | undefined
+    actor = user?.sub ?? null
+  } catch { /* JWT not verified on this request — actor stays null */ }
+
+  const routerPath = (request.routeOptions as { url?: string } | undefined)?.url ?? request.url
+  const resourceId = (request.params as Record<string, string> | undefined)?.id ?? ''
+
+  try {
+    auditLog(
+      `${method} ${routerPath}`,
+      actor,
+      routerPath.split('/')[3] ?? 'unknown',
+      resourceId,
+      { status: reply.statusCode }
+    )
+  } catch { /* never let audit log failures break responses */ }
 })
 
 // Graceful shutdown
