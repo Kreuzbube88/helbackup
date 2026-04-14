@@ -17,7 +17,7 @@ interface EncryptionConfigRow {
 export function generateEncryptionRecoveryKey(): string {
   const blocks = ['HLBK', 'ENC']
   for (let i = 0; i < 4; i++) {
-    blocks.push(crypto.randomBytes(2).toString('hex').toUpperCase())
+    blocks.push(crypto.randomBytes(4).toString('hex').toUpperCase())
   }
   return blocks.join('-')
 }

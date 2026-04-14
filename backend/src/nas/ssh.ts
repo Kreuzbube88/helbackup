@@ -2,6 +2,13 @@ import { Client } from 'ssh2'
 import fs from 'fs/promises'
 import { logger } from '../utils/logger.js'
 
+function sanitizeError(msg: string): string {
+  return msg
+    .replace(/\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b/g, '[ip]')
+    .replace(/\/app\/config\/ssh\/\S+/g, '[ssh-path]')
+    .replace(/(?:user|username|login)[:=]\s*\S+/gi, '[user]=[redacted]')
+}
+
 export interface SSHConfig {
   host: string
   port?: number
@@ -96,7 +103,7 @@ export async function executeSSHCommand(
             const tail = output.trim().split('\n').slice(-3).join(' | ').trim()
             const detail = errorOutput.trim() || tail || `Exit code: ${code ?? 'null'}`
             logger.warn(`SSH command exited with code ${code ?? 'null'}: ${command} — ${detail}`)
-            settle(() => resolve({ success: false, error: detail }))
+            settle(() => resolve({ success: false, error: sanitizeError(detail) }))
           }
         })
 
