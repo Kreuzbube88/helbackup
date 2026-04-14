@@ -1,4 +1,3 @@
-import os from 'os'
 import path from 'path'
 import fs from 'fs/promises'
 import { execFile } from 'node:child_process'
@@ -45,7 +44,9 @@ export async function parseNasConfig(target: { type: string; config: string }): 
 }
 
 export async function createNasTempDir(prefix: string): Promise<string> {
-  return fs.mkdtemp(path.join(os.tmpdir(), `helbackup-${prefix}-`))
+  const stagingBase = '/app/data/staging'
+  await fs.mkdir(stagingBase, { recursive: true })
+  return fs.mkdtemp(path.join(stagingBase, `helbackup-${prefix}-`))
 }
 
 /**

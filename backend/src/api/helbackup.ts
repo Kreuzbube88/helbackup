@@ -4,7 +4,6 @@ import { decryptFileGPG } from '../utils/gpgEncrypt.js'
 import { logger } from '../utils/logger.js'
 import fs from 'fs/promises'
 import path from 'path'
-import os from 'os'
 import { randomUUID } from 'crypto'
 import { spawn } from 'child_process'
 
@@ -35,7 +34,7 @@ export default async function helbackupRoutes(app: FastifyInstance) {
     async (request, reply) => {
       const { fileData, encryptionPassword } = request.body
       const restoreId = randomUUID()
-      const tmpDir = path.join(os.tmpdir(), `helbackup-restore-${restoreId}`)
+      const tmpDir = path.join('/app/data/staging', `helbackup-restore-${restoreId}`)
 
       try {
         await fs.mkdir(tmpDir, { recursive: true })

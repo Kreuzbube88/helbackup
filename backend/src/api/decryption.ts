@@ -63,7 +63,8 @@ export async function decryptionRoutes(app: FastifyInstance): Promise<void> {
       }
 
       const encryptedManifest = path.join(backupPath, 'manifest.json.gpg')
-      const tempManifest = `/tmp/manifest-${randomUUID()}.json`
+      await fs.mkdir('/app/data/staging', { recursive: true })
+      const tempManifest = `/app/data/staging/manifest-${randomUUID()}.json`
 
       try {
         await decryptFileGPG(encryptedManifest, tempManifest, password)
@@ -95,7 +96,8 @@ export async function decryptionRoutes(app: FastifyInstance): Promise<void> {
       }
 
       const encryptedArchive = path.join(backupPath, 'backup-archive.tar.gz.gpg')
-      const tempArchive = `/tmp/backup-${randomUUID()}.tar.gz`
+      await fs.mkdir('/app/data/staging', { recursive: true })
+      const tempArchive = `/app/data/staging/backup-${randomUUID()}.tar.gz`
 
       try {
         await decryptFileGPG(encryptedArchive, tempArchive, password)

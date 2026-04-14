@@ -26,7 +26,7 @@ function getSshKeyEncryptionPassword(): string {
 export async function exportHELBACKUP(destPath: string, engine: JobExecutionEngine): Promise<string> {
   engine.log('info', 'system', 'Exporting HELBACKUP configuration...')
 
-  const exportDir = '/tmp/helbackup-export'
+  const exportDir = '/app/data/staging/helbackup-export'
   await fs.mkdir(exportDir, { recursive: true })
 
   // ACID-safe DB snapshot while running

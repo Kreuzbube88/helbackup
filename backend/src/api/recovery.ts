@@ -5,7 +5,6 @@ import { executeRsync } from '../tools/rsync.js';
 import { logger } from '../utils/logger.js';
 import fs from 'fs/promises';
 import path from 'path';
-import os from 'os';
 import { randomUUID } from 'crypto';
 import { execFile } from 'node:child_process';
 
@@ -351,7 +350,8 @@ export default async function recoveryRoutes(app: FastifyInstance) {
         }
 
         // Write file list to temp file for rsync --files-from
-        const tmpFile = path.join(os.tmpdir(), `helbackup-restore-${randomUUID()}.txt`);
+        await fs.mkdir('/app/data/staging', { recursive: true });
+        const tmpFile = path.join('/app/data/staging', `helbackup-restore-${randomUUID()}.txt`);
         try {
           await fs.writeFile(tmpFile, files.join('\n'), 'utf-8');
 

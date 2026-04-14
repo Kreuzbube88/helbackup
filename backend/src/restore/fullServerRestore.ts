@@ -8,7 +8,6 @@ import { getEncryptionPassword } from '../utils/encryptionKey.js'
 import { spawn } from 'child_process'
 import path from 'path'
 import fs from 'fs/promises'
-import os from 'os'
 
 export async function executeFullServerRestore(
   backupId: string,
@@ -119,7 +118,8 @@ async function restoreItem(item: RestoreItem, backupPath: string): Promise<void>
         if (tarFiles.length === 0) {
           throw new Error(`No backup data found for container "${containerName}" under ${appdataBase}`)
         }
-        const tmpDir = encrypted ? await fs.mkdtemp(path.join(os.tmpdir(), 'helbackup-restore-')) : null
+        await fs.mkdir('/app/data/staging', { recursive: true })
+        const tmpDir = encrypted ? await fs.mkdtemp(path.join('/app/data/staging', 'helbackup-restore-')) : null
         try {
           for (const tarFile of tarFiles) {
             let extractFrom = tarFile
@@ -143,8 +143,8 @@ async function restoreItem(item: RestoreItem, backupPath: string): Promise<void>
 
     case 'vm': {
       // Copy XML to temp, define with virsh
-      const xmlDest = path.join('/tmp/restore-vms', path.basename(absItemPath))
-      await fs.mkdir('/tmp/restore-vms', { recursive: true })
+      const xmlDest = path.join('/app/data/staging/restore-vms', path.basename(absItemPath))
+      await fs.mkdir('/app/data/staging/restore-vms', { recursive: true })
       await fs.copyFile(absItemPath, xmlDest)
       await runCommand('virsh', ['define', xmlDest])
       logger.info(`[restore] vm: defined from ${xmlDest}`)
@@ -160,7 +160,7 @@ async function restoreItem(item: RestoreItem, backupPath: string): Promise<void>
     case 'system-config': {
       // Rsync config backup to /tmp/restore-config — admin applies manually
       const configDir = path.join(backupPath, parts[0])
-      const tempDest = '/tmp/restore-config'
+      const tempDest = '/app/data/staging/restore-config'
       await fs.mkdir(tempDest, { recursive: true })
       logger.info(`[restore] system-config: ${configDir}/ → ${tempDest}`)
       await executeRsync({
@@ -168,13 +168,13 @@ async function restoreItem(item: RestoreItem, backupPath: string): Promise<void>
         destination: tempDest,
         onLog: msg => { if (msg.trim()) logger.debug(`[rsync] ${msg.trim()}`) },
       })
-      logger.info('[restore] system-config: files staged at /tmp/restore-config — apply manually as needed')
+      logger.info('[restore] system-config: files staged at /app/data/staging/restore-config — apply manually as needed')
       break
     }
 
     case 'database': {
       // Copy dump to /tmp/db-restore for manual import
-      const dumpDest = path.join('/tmp/db-restore', path.basename(path.dirname(absItemPath)))
+      const dumpDest = path.join('/app/data/staging/db-restore', path.basename(path.dirname(absItemPath)))
       await fs.mkdir(dumpDest, { recursive: true })
       const stat = await fs.stat(absItemPath)
       if (stat.isDirectory()) {
