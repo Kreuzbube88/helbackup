@@ -10,6 +10,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { logger } from './utils/logger.js'
+import { APP_VERSION } from './utils/version.js'
 import { authRoutes } from './api/auth.js'
 import { setupRoutes } from './api/setup.js'
 import { jobsRoutes } from './api/jobs.js'
@@ -115,7 +116,7 @@ await app.register(swagger, {
     info: {
       title: 'HELBACKUP API',
       description: 'Backup automation API for Unraid',
-      version: '1.0.0',
+      version: APP_VERSION,
     },
     components: {
       securitySchemes: {

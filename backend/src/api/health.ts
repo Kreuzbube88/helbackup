@@ -1,5 +1,6 @@
 import type { FastifyInstance } from 'fastify'
 import { db } from '../db/database.js'
+import { APP_VERSION } from '../utils/version.js'
 
 const startedAt = Date.now()
 
@@ -22,7 +23,7 @@ export async function healthRoutes(app: FastifyInstance): Promise<void> {
       status,
       uptime,
       database: dbStatus,
-      version: process.env.npm_package_version ?? '1.0.0',
+      version: APP_VERSION,
     })
   })
 }

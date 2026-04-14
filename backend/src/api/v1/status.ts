@@ -2,6 +2,7 @@ import { FastifyInstance } from 'fastify'
 import { successResponse } from '../../utils/apiResponse.js'
 import { db } from '../../db/database.js'
 import { requireScope } from '../../middleware/tokenAuth.js'
+import { APP_VERSION } from '../../utils/version.js'
 
 interface JobStats { total_jobs: number; enabled_jobs: number }
 interface BackupCount { status: string; count: number }
@@ -31,7 +32,7 @@ export async function statusRoutesV1(app: FastifyInstance): Promise<void> {
 
       return successResponse(reply, {
         system: 'HELBACKUP',
-        version: '1.0.0',
+        version: APP_VERSION,
         status: failedCount === 0 ? 'healthy' : 'degraded',
         jobs: {
           total: stats.total_jobs,
