@@ -45,6 +45,14 @@ export function Jobs() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  // Poll every 10s while jobs are executing to refresh the list
+  useEffect(() => {
+    if (executing.size === 0) return
+    const interval = setInterval(loadJobs, 10000)
+    return () => clearInterval(interval)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [executing.size])
+
   const handleDeleteJob = async (): Promise<void> => {
     if (!deleteJobId) return
     try {

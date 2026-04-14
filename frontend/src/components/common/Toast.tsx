@@ -10,7 +10,7 @@ interface ToastItem {
 }
 
 interface ToastContextValue {
-  toast: (message: string, variant?: ToastVariant) => void
+  toast: (message: string, variant?: ToastVariant, duration?: number) => void
 }
 
 // Fallback UUID generator for non-HTTPS contexts
@@ -52,10 +52,11 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     timers.current.delete(id)
   }, [])
 
-  const toast = useCallback((message: string, variant: ToastVariant = 'info') => {
+  const toast = useCallback((message: string, variant: ToastVariant = 'info', duration?: number) => {
     const id = generateId()
     setToasts(prev => [...prev, { id, message, variant }])
-    const timer = setTimeout(() => dismiss(id), 5000)
+    const ms = duration ?? (variant === 'error' ? 10000 : 5000)
+    const timer = setTimeout(() => dismiss(id), ms)
     timers.current.set(id, timer)
   }, [dismiss])
 

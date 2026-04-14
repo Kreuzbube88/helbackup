@@ -37,3 +37,12 @@ export const useStore = create<AuthStore>((set) => ({
     set({ token: null, user: null, isAuthenticated: false })
   },
 }))
+
+// Cross-tab auth sync: when helbackup_token is removed in another tab, log out here too
+if (typeof window !== 'undefined') {
+  window.addEventListener('storage', (e) => {
+    if (e.key === 'helbackup_token' && e.newValue === null) {
+      useStore.getState().logout()
+    }
+  })
+}

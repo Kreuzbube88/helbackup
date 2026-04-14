@@ -10,6 +10,7 @@ import { Card } from '../components/common/Card'
 import { Button } from '../components/common/Button'
 import { ConfirmModal } from '../components/common/ConfirmModal'
 import { useToast } from '../components/common/Toast'
+import { CardSkeleton } from '../components/common/Skeleton'
 import { FirstBackupWizard } from '../components/onboarding/FirstBackupWizard'
 import { api, dashboard as dashboardApi, type DashboardData } from '../api'
 
@@ -30,7 +31,7 @@ export function Dashboard() {
 
   useEffect(() => {
     void loadDashboard()
-    const interval = setInterval(() => { void loadDashboard() }, 30000)
+    const interval = setInterval(() => { void loadDashboard() }, 15000)
     return () => clearInterval(interval)
   }, [])
 
@@ -68,9 +69,15 @@ export function Dashboard() {
 
   if (loading) {
     return (
-      <div className="flex-1 flex items-center justify-center">
-        <div className="font-mono text-xs text-[var(--text-muted)] tracking-widest animate-pulse">
-          {t('loading')}
+      <div className="flex-1 p-6 overflow-auto space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <CardSkeleton />
+          <CardSkeleton />
+        </div>
+        <CardSkeleton />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <CardSkeleton />
+          <CardSkeleton />
         </div>
       </div>
     )

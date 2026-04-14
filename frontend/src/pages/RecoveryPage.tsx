@@ -4,6 +4,7 @@ import { ShieldAlert, ShieldOff, AlertTriangle } from 'lucide-react';
 import { recovery as recoveryApi, type BackupManifest } from '../api';
 import { Button } from '../components/common/Button';
 import { Card } from '../components/common/Card';
+import { CardSkeleton } from '../components/common/Skeleton';
 import ManifestBrowser from '../components/recovery/ManifestBrowser';
 import RestoreWizard from '../components/recovery/RestoreWizard';
 import FullServerRestoreWizard from '../components/recovery/FullServerRestoreWizard';
@@ -200,8 +201,8 @@ export default function RecoveryPage() {
       </div>
 
       {loading && (
-        <div className="text-center py-12 text-[var(--text-muted)] text-sm font-mono">
-          {t('loading')}
+        <div className="flex flex-col gap-3">
+          {[...Array(3)].map((_, i) => <CardSkeleton key={i} />)}
         </div>
       )}
       {loadError && (

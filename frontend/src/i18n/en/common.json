@@ -149,7 +149,10 @@
     "duration": "Duration",
     "files_copied": "Files copied",
     "warnings": "Warnings",
-    "errors": "Errors"
+    "errors": "Errors",
+    "no_logs_title": "No Logs Available",
+    "no_logs_message": "Run a backup job to see logs here. Logs appear after job execution starts.",
+    "view_jobs": "View Jobs"
   },
   "recovery": {
     "disaster_recovery_mode": "Disaster Recovery Mode",
