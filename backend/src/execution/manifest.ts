@@ -15,6 +15,7 @@ export interface ManifestEntry {
 }
 
 export interface Manifest {
+  schemaVersion: number
   backupId: string
   jobId: string
   runId: string
@@ -69,6 +70,7 @@ export async function createManifest(
     : []
 
   const manifest: Manifest = {
+    schemaVersion: 1,
     backupId: randomUUID(),
     jobId,
     runId,
@@ -173,6 +175,7 @@ export async function createJobManifest(
   const backupId = randomUUID()
   const timestamp = new Date().toISOString()
   const manifest = {
+    schemaVersion: 1,
     backupId,
     jobId,
     runId,

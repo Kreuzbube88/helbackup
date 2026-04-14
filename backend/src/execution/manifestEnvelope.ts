@@ -4,6 +4,7 @@ import type { JobExecutionEngine } from './engine.js'
 import type { Manifest } from './manifest.js'
 
 export interface ManifestEnvelope {
+  schemaVersion: number
   backupId: string
   timestamp: string
   encrypted: boolean
@@ -24,6 +25,7 @@ export async function createManifestEnvelope(
   backupType = 'unknown'
 ): Promise<void> {
   const envelope: ManifestEnvelope = {
+    schemaVersion: 1,
     backupId: manifest.backupId,
     timestamp: manifest.timestamp,
     encrypted,

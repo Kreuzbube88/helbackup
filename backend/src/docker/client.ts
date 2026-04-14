@@ -97,23 +97,17 @@ export async function saveImage(imageName: string, destFile: string): Promise<vo
   await pipeline(body, createWriteStream(destFile))
 }
 
-export async function dockerExecToFile(
+/** Shared core: create + start a Docker exec and return the raw multiplexed stream + execId. */
+async function dockerExecCore(
   containerId: string,
   cmd: string[],
-  destFile: string,
   env?: string[]
-): Promise<{ stderr: string; exitCode: number }> {
-  // Create exec instance
+): Promise<{ rawStream: Readable; execId: string }> {
   const createRes = await dockerPool.request({
     path: `/containers/${encodeURIComponent(containerId)}/exec`,
     method: 'POST',
     headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({
-      AttachStdout: true,
-      AttachStderr: true,
-      Cmd: cmd,
-      ...(env ? { Env: env } : {}),
-    }),
+    body: JSON.stringify({ AttachStdout: true, AttachStderr: true, Cmd: cmd, ...(env ? { Env: env } : {}) }),
   })
   if (createRes.statusCode !== 201) {
     const errBody = await createRes.body.text()
@@ -133,12 +127,29 @@ export async function dockerExecToFile(
     throw new Error(`Docker exec start failed (${startRes.statusCode}): ${errBody}`)
   }
 
+  // undici BodyReadable is already a Node.js Readable — cast directly, never use Readable.fromWeb
+  return { rawStream: startRes.body as unknown as Readable, execId }
+}
+
+/** Fetch exit code after exec stream has ended. */
+async function dockerExecExitCode(execId: string): Promise<number> {
+  const inspectRes = await dockerPool.request({ path: `/exec/${encodeURIComponent(execId)}/json`, method: 'GET' })
+  const { ExitCode } = (await inspectRes.body.json()) as { ExitCode: number }
+  return ExitCode
+}
+
+export async function dockerExecToFile(
+  containerId: string,
+  cmd: string[],
+  destFile: string,
+  env?: string[]
+): Promise<{ stderr: string; exitCode: number }> {
+  const { rawStream, execId } = await dockerExecCore(containerId, cmd, env)
+
   // Demux: 8-byte frame header [streamType(1B), 0,0,0, payloadSize(4B big-endian)] + payload
   // streamType 1 = stdout, 2 = stderr
   const writeStream = createWriteStream(destFile)
   const stderrChunks: Buffer[] = []
-  // undici BodyReadable is already a Node.js Readable — cast directly, never use Readable.fromWeb
-  const rawStream = startRes.body as unknown as Readable
 
   await new Promise<void>((resolve, reject) => {
     let carry = Buffer.alloc(0)
@@ -160,14 +171,7 @@ export async function dockerExecToFile(
     writeStream.on('error', reject)
   })
 
-  // Fetch exit code
-  const inspectRes = await dockerPool.request({
-    path: `/exec/${encodeURIComponent(execId)}/json`,
-    method: 'GET',
-  })
-  const { ExitCode: exitCode } = (await inspectRes.body.json()) as { ExitCode: number }
-
-  return { stderr: Buffer.concat(stderrChunks).toString('utf8'), exitCode }
+  return { stderr: Buffer.concat(stderrChunks).toString('utf8'), exitCode: await dockerExecExitCode(execId) }
 }
 
 /** Like dockerExecToFile but returns stdout as a string instead of writing to disk. */
@@ -176,28 +180,8 @@ export async function dockerExecToString(
   cmd: string[],
   env?: string[]
 ): Promise<{ stdout: string; stderr: string; exitCode: number }> {
-  const createRes = await dockerPool.request({
-    path: `/containers/${encodeURIComponent(containerId)}/exec`,
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ AttachStdout: true, AttachStderr: true, Cmd: cmd, ...(env ? { Env: env } : {}) }),
-  })
-  if (createRes.statusCode !== 201) {
-    const errBody = await createRes.body.text()
-    throw new Error(`Docker exec create failed (${createRes.statusCode}): ${errBody}`)
-  }
-  const { Id: execId } = (await createRes.body.json()) as { Id: string }
-  const startRes = await dockerPool.request({
-    path: `/exec/${encodeURIComponent(execId)}/start`,
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ Detach: false, Tty: false }),
-  })
-  if (startRes.statusCode !== 200) {
-    const errBody = await startRes.body.text()
-    throw new Error(`Docker exec start failed (${startRes.statusCode}): ${errBody}`)
-  }
-  const rawStream = startRes.body as unknown as Readable
+  const { rawStream, execId } = await dockerExecCore(containerId, cmd, env)
+
   const stdoutChunks: Buffer[] = []
   const stderrChunks: Buffer[] = []
   await new Promise<void>((resolve, reject) => {
@@ -218,12 +202,11 @@ export async function dockerExecToString(
     rawStream.on('end', resolve)
     rawStream.on('error', reject)
   })
-  const inspectRes = await dockerPool.request({ path: `/exec/${encodeURIComponent(execId)}/json`, method: 'GET' })
-  const { ExitCode: exitCode } = (await inspectRes.body.json()) as { ExitCode: number }
+
   return {
     stdout: Buffer.concat(stdoutChunks).toString('utf8'),
     stderr: Buffer.concat(stderrChunks).toString('utf8'),
-    exitCode,
+    exitCode: await dockerExecExitCode(execId),
   }
 }
 
