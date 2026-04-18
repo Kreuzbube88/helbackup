@@ -37,7 +37,7 @@ export function isTypeConfigValid(type: StepType, cfg: unknown): boolean {
     }
     case 'appdata': {
       const c = cfg as AppdataStepConfig
-      return c.targetId !== '' && c.containers.length > 0
+      return c.targetId !== '' && (c.allContainersDynamic === true || c.containers.length > 0)
     }
     case 'vms': {
       const c = cfg as VMStepConfig
