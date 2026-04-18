@@ -32,9 +32,12 @@ export interface ExternalVolumeConfig {
 
 export interface AppdataBackupConfig {
   targetId: string
-  containers: string[]       // Container IDs to include
+  allContainersDynamic?: boolean  // when true: resolve containers from Docker at runtime
+  containers: string[]            // used when allContainersDynamic is falsy
+  excludedContainers?: string[]   // container names to skip in dynamic mode
+  stopOrderPriority?: string[]    // in dynamic mode: stop these first (in order), rest alphabetically
   stopContainers: boolean
-  stopOrder: string[]        // IDs in stop order
+  stopOrder: string[]             // used when allContainersDynamic is falsy
   method: 'tar' | 'rsync'
   stopDelay?: number
   restartDelay?: number
