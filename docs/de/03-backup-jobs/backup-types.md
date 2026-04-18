@@ -38,6 +38,23 @@ Database Dumps: ✅ (optional — Datenbanken vor dem Stoppen sichern)
 
 `stopDelay` und `restartDelay` sind konfigurierbar (Standard: 10s / 5s). Auf `0` setzen um den Sleep zu überspringen — für schnelle Container ok, für Datenbank-Container erhöhen.
 
+### Container-Modus
+
+HELBACKUP unterstützt zwei Modi für die Auswahl der zu sichernden Container:
+
+**Manuell (Standard):** Container werden einzeln ausgewählt. Die Liste bleibt bei neuen Containern unverändert — neue Container müssen manuell hinzugefügt werden.
+
+**Alle (Dynamisch):** HELBACKUP ermittelt die Container-Liste automatisch zur Laufzeit über den Docker Socket. Neu hinzugefügte Container werden beim nächsten Job-Lauf automatisch einbezogen — keine manuelle Anpassung nötig.
+
+Im dynamischen Modus stehen zwei weitere Optionen zur Verfügung:
+
+- **Ausschlussliste:** Container, die dauerhaft vom Backup ausgenommen werden sollen (z.B. temporäre Container oder solche mit eigenem Backup-Mechanismus).
+- **Prioritätsreihenfolge (Stop-Order):** Container, die als erstes gestoppt werden sollen (in der angegebenen Reihenfolge). Alle anderen Container folgen in alphabetischer Reihenfolge. Sinnvoll, wenn bestimmte Container zuerst sauber beendet werden müssen (z.B. Datenbank-Container vor abhängigen Diensten).
+
+> HELBACKUP selbst wird in beiden Modi grundsätzlich vom Backup ausgeschlossen.
+
+Im dynamischen Modus funktioniert auch die "Database Dumps"-Funktion: Datenbank-Container werden automatisch aus der aufgelösten Container-Liste erkannt.
+
 **Pfadauflösung via Docker API:** Für jeden ausgewählten Container liest HELBACKUP die tatsächlichen Bind-Mount-Pfade über `docker inspect` und sichert nur Verzeichnisse, die `/appdata/` im Host-Pfad enthalten. Die Sicherung ist damit nicht an den Containernamen gebunden — ein Container dessen Appdata unter einem abweichenden Pfad liegt (z.B. `/mnt/cache/appdata/mein-jellyfin-config`) wird korrekt gesichert.
 
 **Voraussetzung:** Die Appdata der Container muss unter einem Pfad gespeichert sein, der `/appdata/` enthält (z.B. `/mnt/cache/appdata/`, `/mnt/user/appdata/`). Bind-Mounts auf nicht gemappten Laufwerken werden mit einer Warnung im Job-Log übersprungen. Für Appdata auf nicht-standardmäßigen Laufwerken muss ein entsprechendes Volume-Mount in `docker-compose.yml` eingetragen werden → [Docker Erweiterte Konfiguration](../13-advanced/docker-advanced.md).

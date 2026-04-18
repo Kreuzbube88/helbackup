@@ -38,6 +38,23 @@ Database Dumps: ✅ (optional — dumps databases before stopping containers)
 
 `stopDelay` and `restartDelay` are configurable (default: 10s / 5s). Set to `0` to skip the sleep — fine for fast containers, increase for database containers.
 
+### Container Mode
+
+HELBACKUP supports two modes for selecting which containers to back up:
+
+**Manual (default):** Containers are selected individually. The list stays unchanged when new containers are added — they must be added manually.
+
+**All (Dynamic):** HELBACKUP automatically resolves the container list at runtime via the Docker socket. Newly added containers are included in the next job run automatically — no manual updates needed.
+
+The dynamic mode offers two additional options:
+
+- **Exclusion list:** Containers that should permanently be excluded from the backup (e.g. temporary containers or those with their own backup mechanism).
+- **Priority stop order:** Containers that should be stopped first (in the specified order). All other containers follow in alphabetical order. Useful when certain containers need to be cleanly shut down first (e.g. a database container before dependent services).
+
+> HELBACKUP itself is always excluded from the backup scope in both modes.
+
+The "Database Dumps" feature also works in dynamic mode — database containers are automatically detected from the resolved container list.
+
 **Path resolution via Docker API:** For each selected container, HELBACKUP reads the actual bind-mount paths via `docker inspect` and backs up only the directories that contain `/appdata/` in the host path. This means the backup is not tied to the container name — a container whose appdata lives at a non-standard location (e.g. `/mnt/cache/appdata/my-jellyfin-config`) will be backed up from the correct path.
 
 **Requirement:** Container appdata must be stored under a path containing `/appdata/` on the host (e.g. `/mnt/cache/appdata/`, `/mnt/user/appdata/`). Bind mounts on unmapped drives are skipped with a warning in the job log. To back up appdata on a non-standard drive, add a corresponding volume mount in `docker-compose.yml` → [Docker Advanced Configuration](../13-advanced/docker-advanced.md).
