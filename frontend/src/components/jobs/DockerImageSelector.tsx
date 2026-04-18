@@ -32,7 +32,14 @@ export default function DockerImageSelector({ value, onChange, preloadedContaine
       .finally(() => setLoading(false))
   }
 
-  useEffect(() => { if (!preloadedContainers) load() }, [])
+  useEffect(() => {
+    if (preloadedContainers) {
+      setLoading(false)
+    } else {
+      load()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [!!preloadedContainers])
 
   const toggle = (name: string) => {
     if (value.includes(name)) {
