@@ -35,7 +35,7 @@ function nextRetryDelay(retryCount: number): number {
 
 export async function testWebhookDelivery(webhookId: number): Promise<void> {
   await attemptDelivery(webhookId, {
-    event: 'backup_success',
+    event: 'test',
     timestamp: new Date().toISOString(),
     data: { message: 'Test webhook delivery from HELBACKUP' },
   })
