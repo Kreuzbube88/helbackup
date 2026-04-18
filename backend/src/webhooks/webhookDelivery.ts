@@ -41,7 +41,7 @@ export async function testWebhookDelivery(webhookId: number): Promise<void> {
   })
 }
 
-async function attemptDelivery(webhookId: number, event: WebhookEvent, deliveryId?: number): Promise<void> {
+async function attemptDelivery(webhookId: number, event: WebhookEvent, deliveryId?: number, knownRetryCount?: number): Promise<void> {
   const webhook = db
     .prepare('SELECT * FROM webhooks WHERE id = ? AND enabled = 1')
     .get(webhookId) as WebhookRow | undefined
@@ -87,11 +87,8 @@ async function attemptDelivery(webhookId: number, event: WebhookEvent, deliveryI
 
     if (deliveryId !== undefined) {
       // Existing retry — increment retry_count, schedule next retry if under limit
-      const row = db
-        .prepare('SELECT retry_count FROM webhook_deliveries WHERE id = ?')
-        .get(deliveryId) as { retry_count: number } | undefined
-
-      const currentCount = (row?.retry_count ?? 0) + 1
+      // knownRetryCount is passed by the caller to avoid a redundant DB read
+      const currentCount = (knownRetryCount ?? 0) + 1
       if (currentCount < 3) {
         const nextAt = new Date(Date.now() + nextRetryDelay(currentCount)).toISOString()
         db.prepare(
@@ -163,7 +160,7 @@ export async function processWebhookRetries(): Promise<void> {
         logger.warn({ deliveryId: delivery.id }, 'Webhook retry: malformed payload — skipping')
         continue
       }
-      await attemptDelivery(delivery.webhook_id, event, delivery.id)
+      await attemptDelivery(delivery.webhook_id, event, delivery.id, delivery.retry_count)
     } catch (err: unknown) {
       logger.error({ deliveryId: delivery.id, err }, 'Webhook retry processing error')
     }

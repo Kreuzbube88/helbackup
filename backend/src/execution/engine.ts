@@ -28,7 +28,7 @@ export interface JobStep {
   retry?: { max_attempts: number; backoff: 'linear' | 'exponential' }
   /** When true (default), a step failure aborts the remaining steps. Set false to continue on error. */
   stop_on_error?: boolean
-  /** Per-step bandwidth limit for rsync transfers in KB/s. Overrides the global rsync_bwlimit_kb setting. */
+  /** Per-step bandwidth limit for rsync transfers in KB/s. Merged into step config by the engine before execution, overrides both step.config.bwlimitKb and the global rsync_bwlimit_kb setting. */
   bwlimitKb?: number
 }
 

@@ -118,7 +118,7 @@ export async function executeAppdataBackup(
   let containers: string[]
   let stopOrder: string[]
 
-  if (config.allContainersDynamic) {
+  if (config.allContainersDynamic === true) {
     const excluded = new Set(config.excludedContainers ?? [])
     containers = allContainers
       .map(c => c.Names[0]?.replace('/', '') ?? c.Id)
