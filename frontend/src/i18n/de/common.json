@@ -18,7 +18,8 @@
     "retry": "Wiederholen",
     "back": "Zurück",
     "next": "Weiter",
-    "discard": "Verwerfen"
+    "discard": "Verwerfen",
+    "refresh": "Aktualisieren"
   },
   "confirm_delete": "Wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.",
   "unsaved_changes": "Ungespeicherte Änderungen vorhanden. Wirklich schließen?",

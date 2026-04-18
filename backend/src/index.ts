@@ -223,6 +223,7 @@ app.addHook('onResponse', async (request, reply) => {
   if (!request.url.startsWith('/api/')) return
   // Skip audit-log endpoint itself to avoid recursion
   if (request.url.startsWith('/api/audit-log')) return
+  if (reply.statusCode >= 400) return
 
   let actor: string | null = null
   try {

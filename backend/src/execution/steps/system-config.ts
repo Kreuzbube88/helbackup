@@ -4,6 +4,7 @@ import { parseNasConfig, createNasTempDir, transferAndCleanup, finalizeLocalBack
 import type { JobExecutionEngine } from '../engine.js'
 import { getEncryptionPassword } from '../../utils/encryptionKey.js'
 import { encryptFileGPG } from '../../utils/gpgEncrypt.js'
+import { getSettingInt } from '../../utils/settings.js'
 import path from 'path'
 import fs from 'fs/promises'
 
@@ -75,7 +76,6 @@ export async function executeSystemConfigBackup(
           const stats = await fs.stat(sourcePath)
 
           if (stats.isDirectory()) {
-            const { getSettingInt } = await import('../../utils/settings.js')
             // Per-step limit takes precedence over global setting
             const bwLimit = config.bwlimitKb ?? getSettingInt('rsync_bwlimit_kb', 0)
             const rsyncResult = await executeRsync({

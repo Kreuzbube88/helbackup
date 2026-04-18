@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { ArrowUp, ArrowDown, X } from 'lucide-react'
+import { ArrowUp, ArrowDown, X, RefreshCw } from 'lucide-react'
 import { Select } from '../../../common/Select'
 import DockerImageSelector from '../../../jobs/DockerImageSelector'
 import { EncryptionToggle } from '../shared/EncryptionToggle'
@@ -37,8 +37,10 @@ interface Props {
 export function AppdataConfig({ value, onChange, targets }: Props) {
   const { t } = useTranslation('jobs')
   const [liveContainers, setLiveContainers] = useState<Container[]>([])
+  const [loadingContainers, setLoadingContainers] = useState(false)
 
-  useEffect(() => {
+  const loadContainers = () => {
+    setLoadingContainers(true)
     api.docker.listContainers()
       .then(data => setLiveContainers([...data].sort((a, b) => {
         const nameA = a.Names[0]?.replace('/', '') ?? ''
@@ -46,7 +48,9 @@ export function AppdataConfig({ value, onChange, targets }: Props) {
         return nameA.localeCompare(nameB)
       })))
       .catch(() => {}) // non-critical; DockerImageSelector shows its own error in manual mode
-  }, [])
+      .finally(() => setLoadingContainers(false))
+  }
+  useEffect(() => { loadContainers() }, [])
 
   const liveNames = liveContainers.map(c => c.Names[0]?.replace('/', '') ?? c.Id.slice(0, 12))
   const targetOptions = targets.map(tgt => ({ value: tgt.id, label: tgt.name }))
@@ -176,9 +180,20 @@ export function AppdataConfig({ value, onChange, targets }: Props) {
           </div>
 
           <div>
-            <p className="text-xs text-[var(--text-muted)] mb-1">
-              {t('appdata_dynamic_preview', { count: previewNames.length })}
-            </p>
+            <div className="flex items-center gap-1.5 mb-1">
+              <p className="text-xs text-[var(--text-muted)]">
+                {t('appdata_dynamic_preview', { count: previewNames.length })}
+              </p>
+              <button
+                type="button"
+                onClick={loadContainers}
+                disabled={loadingContainers}
+                className="p-0.5 text-[var(--text-muted)] hover:text-[var(--text-primary)] disabled:opacity-50"
+                aria-label={t('common:buttons.refresh')}
+              >
+                <RefreshCw size={12} className={loadingContainers ? 'animate-spin' : ''} />
+              </button>
+            </div>
             <p className="text-xs font-mono text-[var(--text-secondary)] bg-[var(--bg-secondary)] border border-[var(--border-default)] px-2 py-1.5 break-all min-h-[28px]">
               {previewNames.length > 0 ? previewNames.join(', ') : t('appdata_dynamic_none_detected')}
             </p>

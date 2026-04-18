@@ -18,7 +18,8 @@
     "retry": "Retry",
     "back": "Back",
     "next": "Next",
-    "discard": "Discard"
+    "discard": "Discard",
+    "refresh": "Refresh"
   },
   "confirm_delete": "Really delete? This action cannot be undone.",
   "unsaved_changes": "Unsaved changes. Really close?",
