@@ -177,8 +177,12 @@ export async function executeAppdataBackup(
   }
 
   // Database dumps BEFORE stopping containers
-  if (config.useDatabaseDumps && config.databaseContainers && config.databaseContainers.length > 0) {
-    await dumpDatabaseContainers(config.databaseContainers, workDir, engine)
+  // In dynamic mode, databaseContainers is always [] — fall back to the resolved containers list
+  const dbContainers = config.allContainersDynamic
+    ? (config.useDatabaseDumps ? containers : [])
+    : (config.databaseContainers ?? [])
+  if (config.useDatabaseDumps && dbContainers.length > 0) {
+    await dumpDatabaseContainers(dbContainers, workDir, engine)
   }
 
   // Export container configs BEFORE stopping
