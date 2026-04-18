@@ -5,9 +5,12 @@
 Der Recovery Key ist der **einzige** Zugang zu verschlüsselten Backups.
 
 - Generiert beim Target-Erstellen (einmalig)
-- 256-Bit Entropie (kryptographisch sicher)
-- Format: `8f2a-9c3b-1e7d-4f6a-2b8c-5d9e-3a7f-6c1b`
+- 128-Bit Entropie (kryptographisch sicher)
 - Wird NICHT in HELBACKUP gespeichert (nur du hast ihn!)
+
+Das Format lautet: `HLBK-ENC-XXXXXXXX-XXXXXXXX-XXXXXXXX-XXXXXXXX` (4 × 8 Hex-Zeichen = 128 Bit Entropie)
+
+> **Abwärtskompatibilität:** Recovery Keys, die mit einer älteren Version von HELBACKUP generiert wurden, bleiben weiterhin gültig.
 
 ## Sicherungsstrategien
 

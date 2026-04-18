@@ -18,6 +18,8 @@ Anpassen im Job:
 - 100M für schnelle lokale Verbindungen
 - 0 = kein Limit (Vorsicht!)
 
+Das globale Limit kann durch ein **step-spezifisches Limit** im Job-Wizard überschrieben werden (Feld "Bandbreitenlimit" in der Step-Konfiguration). Das Step-Limit hat immer Vorrang.
+
 ### Parallelisierung
 
 Mehrere Jobs können parallel laufen — aber Vorsicht mit:

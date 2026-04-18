@@ -5,8 +5,11 @@
 The Recovery Key is the **only** way to access encrypted backups.
 
 - Generated once during the Encryption Setup Wizard
-- Format: `HLBK-XXXX-XXXX-XXXX-XXXX` (where X = uppercase hex digit)
 - NOT stored in HELBACKUP (only you have it!)
+
+The format is: `HLBK-ENC-XXXXXXXX-XXXXXXXX-XXXXXXXX-XXXXXXXX` (4 × 8 hex chars = 128 bits of entropy)
+
+> **Backward compatibility:** Recovery keys generated with an older version of HELBACKUP remain valid.
 
 ## Storage Strategies
 

@@ -18,6 +18,8 @@ Adjust per job:
 - 100M for fast local connections
 - 0 = no limit (use caution!)
 
+The global limit can be overridden by a **per-step limit** in the job wizard (field "Bandwidth Limit" in the step configuration). The step-level limit always takes precedence.
+
 ### Parallelization
 
 Multiple jobs can run in parallel — but watch out for:
