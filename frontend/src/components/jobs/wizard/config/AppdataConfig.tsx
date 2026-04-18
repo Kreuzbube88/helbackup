@@ -161,7 +161,7 @@ export function AppdataConfig({ value, onChange, targets }: Props) {
                 </button>
               </div>
             </div>
-            <DockerImageSelector value={value.containers} onChange={handleContainersChange} />
+            <DockerImageSelector value={value.containers} onChange={handleContainersChange} preloadedContainers={liveContainers} />
           </div>
           {value.containers.length === 0 && (
             <p className="text-xs text-[var(--status-error)]">{t('validation_needs_containers')}</p>
@@ -192,6 +192,7 @@ export function AppdataConfig({ value, onChange, targets }: Props) {
                   {name}
                   <button
                     type="button"
+                    aria-label={t('btn_remove')}
                     onClick={() => onChange({ ...value, excludedContainers: value.excludedContainers.filter(n => n !== name) })}
                     className="hover:opacity-70"
                   >
@@ -280,11 +281,11 @@ export function AppdataConfig({ value, onChange, targets }: Props) {
                       <span className="text-[var(--text-muted)] text-xs w-5 text-center font-mono">{i + 1}</span>
                       <span className="flex-1 font-mono text-xs text-[var(--text-primary)]">{name}</span>
                       <div className="flex gap-1">
-                        <button type="button" onClick={() => moveUp(i)} disabled={i === 0}
+                        <button type="button" aria-label={t('btn_move_up')} onClick={() => moveUp(i)} disabled={i === 0}
                           className="p-1 text-[var(--text-muted)] hover:text-[var(--text-primary)] disabled:opacity-25 transition-colors">
                           <ArrowUp size={12} />
                         </button>
-                        <button type="button" onClick={() => moveDown(i)} disabled={i === stopOrderItems.length - 1}
+                        <button type="button" aria-label={t('btn_move_down')} onClick={() => moveDown(i)} disabled={i === stopOrderItems.length - 1}
                           className="p-1 text-[var(--text-muted)] hover:text-[var(--text-primary)] disabled:opacity-25 transition-colors">
                           <ArrowDown size={12} />
                         </button>
@@ -307,15 +308,15 @@ export function AppdataConfig({ value, onChange, targets }: Props) {
                         <span className="text-[var(--text-muted)] text-xs w-5 text-center font-mono">{i + 1}</span>
                         <span className="flex-1 font-mono text-xs text-[var(--text-primary)]">{name}</span>
                         <div className="flex gap-1">
-                          <button type="button" onClick={() => movePriorityUp(i)} disabled={i === 0}
+                          <button type="button" aria-label={t('btn_move_up')} onClick={() => movePriorityUp(i)} disabled={i === 0}
                             className="p-1 text-[var(--text-muted)] hover:text-[var(--text-primary)] disabled:opacity-25 transition-colors">
                             <ArrowUp size={12} />
                           </button>
-                          <button type="button" onClick={() => movePriorityDown(i)} disabled={i === value.stopOrderPriority.length - 1}
+                          <button type="button" aria-label={t('btn_move_down')} onClick={() => movePriorityDown(i)} disabled={i === value.stopOrderPriority.length - 1}
                             className="p-1 text-[var(--text-muted)] hover:text-[var(--text-primary)] disabled:opacity-25 transition-colors">
                             <ArrowDown size={12} />
                           </button>
-                          <button type="button"
+                          <button type="button" aria-label={t('btn_remove')}
                             onClick={() => onChange({ ...value, stopOrderPriority: value.stopOrderPriority.filter(n => n !== name) })}
                             className="p-1 text-[var(--status-error)] hover:opacity-75 transition-colors">
                             <X size={10} />

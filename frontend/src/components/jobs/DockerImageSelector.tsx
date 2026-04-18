@@ -6,19 +6,24 @@ import type { Container } from '../../api'
 interface Props {
   value: string[]
   onChange: (value: string[]) => void
+  /** When provided, skips the internal fetch and uses this list directly */
+  preloadedContainers?: Container[]
 }
 
-export default function DockerImageSelector({ value, onChange }: Props) {
+export default function DockerImageSelector({ value, onChange, preloadedContainers }: Props) {
   const { t } = useTranslation('jobs')
-  const [containers, setContainers] = useState<Container[]>([])
-  const [loading, setLoading] = useState(true)
+  const [fetchedContainers, setFetchedContainers] = useState<Container[]>([])
+  const [loading, setLoading] = useState(!preloadedContainers)
   const [error, setError] = useState<string | null>(null)
 
+  const containers = preloadedContainers ?? fetchedContainers
+
   const load = () => {
+    if (preloadedContainers) return
     setLoading(true)
     setError(null)
     api.docker.listContainers()
-      .then(data => setContainers([...data].sort((a, b) => {
+      .then(data => setFetchedContainers([...data].sort((a, b) => {
         const nameA = a.Names[0]?.replace('/', '') ?? ''
         const nameB = b.Names[0]?.replace('/', '') ?? ''
         return nameA.localeCompare(nameB)
@@ -27,7 +32,7 @@ export default function DockerImageSelector({ value, onChange }: Props) {
       .finally(() => setLoading(false))
   }
 
-  useEffect(() => { load() }, [])
+  useEffect(() => { if (!preloadedContainers) load() }, [])
 
   const toggle = (name: string) => {
     if (value.includes(name)) {
