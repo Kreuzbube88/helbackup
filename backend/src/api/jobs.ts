@@ -46,8 +46,10 @@ function validateJobSteps(steps: unknown[]): string | null {
     }
     switch (s.type) {
       case 'appdata': {
-        const c = s.config.containers
-        if (!Array.isArray(c) || c.length === 0) return 'Appdata step: at least one container required'
+        if (!s.config.allContainersDynamic) {
+          const c = s.config.containers
+          if (!Array.isArray(c) || c.length === 0) return 'Appdata step: at least one container required'
+        }
         break
       }
       case 'vms': {
