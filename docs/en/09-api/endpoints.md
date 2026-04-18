@@ -130,5 +130,68 @@ Compact widget for dashboards (HELDASH, Home Assistant).
 }
 ```
 
+## GET /api/v1/backups
+
+Returns the backup history. Can optionally be filtered by job.
+
+**Authentication:** API token or JWT required.
+
+**Query parameters:**
+- `jobId` (optional): Filters results to a specific job.
+
+**Example:**
+```bash
+# All backups
+curl -H "Authorization: Bearer helbackup_..." \
+  http://unraid:3000/api/v1/backups
+
+# Backups for a specific job
+curl -H "Authorization: Bearer helbackup_..." \
+  "http://unraid:3000/api/v1/backups?jobId=abc-123"
+```
+
+**Response:**
+```json
+[
+  {
+    "id": "uuid",
+    "jobId": "abc-123",
+    "jobName": "NAS Full Backup",
+    "status": "success",
+    "startedAt": "2024-01-15T02:00:00Z",
+    "duration": 142
+  }
+]
+```
+
+## GET /api/audit-log
+
+Returns the audit log. Records all successful mutating API requests (POST/PUT/DELETE).
+
+**Authentication:** JWT required (no API token).
+
+**Example:**
+```bash
+curl -H "Authorization: Bearer <jwt>" \
+  http://unraid:3000/api/audit-log
+```
+
+**Response:**
+```json
+[
+  {
+    "id": 1,
+    "action": "POST /api/jobs",
+    "actor": "admin",
+    "resource": "jobs",
+    "resource_id": "abc-123",
+    "details": { "status": 200 },
+    "created_at": "2024-01-15T10:30:00Z"
+  }
+]
+```
+
+> Only successful requests (HTTP < 400) are logged.
+
 ---
 Back: [API Overview](overview.md)

@@ -65,5 +65,23 @@ or behind a reverse proxy with auth).
 - 100 requests/minute/token
 - Login: 10 attempts/15 minutes (then lockout)
 
+## Audit Log
+
+All successful mutating API requests (POST/PUT/DELETE with HTTP status < 400) are automatically recorded in the `audit_log` table.
+
+**What is logged:**
+- Action (e.g. `POST /api/jobs`)
+- Actor (username from JWT)
+- Resource and resource ID
+- HTTP status
+
+The audit log is available via `GET /api/audit-log` (JWT authentication required).
+
+> Failed and unauthenticated requests are **not** logged.
+
+## Session Security
+
+**Cross-Tab Logout:** Logging out in one browser tab automatically logs out all other open tabs of the same instance. This prevents active sessions from persisting in forgotten tabs.
+
 ---
 Next: [Best Practices](../16-best-practices/security.md)

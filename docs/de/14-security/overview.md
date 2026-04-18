@@ -65,5 +65,23 @@ hinter einem Reverse Proxy mit Auth exponieren.
 - 100 Requests/Minute/Token
 - Login: 10 Versuche/15 Minuten (dann Lockout)
 
+## Audit Log
+
+Alle erfolgreichen schreibenden API-Anfragen (POST/PUT/DELETE mit HTTP-Status < 400) werden automatisch in der `audit_log`-Tabelle protokolliert.
+
+**Protokolliert wird:**
+- Aktion (z.B. `POST /api/jobs`)
+- Akteur (Benutzername aus dem JWT)
+- Ressource und Ressourcen-ID
+- HTTP-Status
+
+Das Audit-Log ist über `GET /api/audit-log` abrufbar (JWT-Authentifizierung erforderlich).
+
+> Fehlgeschlagene und nicht authentifizierte Anfragen werden **nicht** protokolliert.
+
+## Session-Sicherheit
+
+**Cross-Tab-Logout:** Beim Abmelden in einem Browser-Tab werden automatisch alle anderen offenen Tabs der gleichen Instanz abgemeldet. Dies verhindert, dass aktive Sessions in vergessenen Tabs bestehen bleiben.
+
 ---
 Weiter: [Best Practices](../16-best-practices/security.md)
