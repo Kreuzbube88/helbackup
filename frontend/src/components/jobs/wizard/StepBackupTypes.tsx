@@ -36,7 +36,8 @@ export const DEFAULT_CONFIGS: {
 } = {
   flash: { targetId: '', useEncryption: false, retentionMinimum: 3 },
   appdata: {
-    targetId: '', containers: [], stopContainers: true, stopOrder: [], stopDelay: 10, restartDelay: 5,
+    targetId: '', allContainersDynamic: false, containers: [], excludedContainers: [],
+    stopOrderPriority: [], stopContainers: true, stopOrder: [], stopDelay: 10, restartDelay: 5,
     method: 'rsync', useDatabaseDumps: false, useEncryption: false, retentionMinimum: 3,
   },
   vms: { targetId: '', vms: [], includeDisks: false, useEncryption: false, retentionMinimum: 3 },
