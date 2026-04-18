@@ -115,14 +115,29 @@ export async function executeAppdataBackup(
   )?.Names[0]?.replace('/', '')
 
   // Use local copies to avoid mutating the caller's config object on retry
-  const containers = helbackupName
-    ? (config.containers ?? []).filter(name => name !== helbackupName)
-    : [...(config.containers ?? [])]
-  // Fallback: old jobs may not have stopOrder — use containers as default order
-  const rawStopOrder = (config.stopOrder ?? []).length > 0 ? (config.stopOrder ?? []) : (config.containers ?? [])
-  const stopOrder = helbackupName
-    ? rawStopOrder.filter(name => name !== helbackupName)
-    : [...rawStopOrder]
+  let containers: string[]
+  let stopOrder: string[]
+
+  if (config.allContainersDynamic) {
+    const excluded = new Set(config.excludedContainers ?? [])
+    containers = allContainers
+      .map(c => c.Names[0]?.replace('/', '') ?? c.Id)
+      .filter(name => name !== helbackupName && !excluded.has(name))
+    // Priority containers first (in order), then remaining alphabetically
+    const prioritized = (config.stopOrderPriority ?? []).filter(n => containers.includes(n))
+    const rest = containers.filter(n => !prioritized.includes(n)).sort()
+    stopOrder = [...prioritized, ...rest]
+    engine.log('info', 'system', `Dynamic mode: resolved ${containers.length} container(s) — priority: [${prioritized.join(', ')}], rest: [${rest.join(', ')}]`)
+  } else {
+    containers = helbackupName
+      ? (config.containers ?? []).filter(name => name !== helbackupName)
+      : [...(config.containers ?? [])]
+    // Fallback: old jobs may not have stopOrder — use containers as default order
+    const rawStopOrder = (config.stopOrder ?? []).length > 0 ? (config.stopOrder ?? []) : (config.containers ?? [])
+    stopOrder = helbackupName
+      ? rawStopOrder.filter(name => name !== helbackupName)
+      : [...rawStopOrder]
+  }
 
   if (helbackupName) {
     engine.log('info', 'system', 'HELBACKUP container excluded from backup scope')
