@@ -130,7 +130,7 @@ export async function executeSSHCommand(
         return
       }
       logger.error(`SSH connection error: ${err.message}`)
-      settle(() => reject(err))
+      settle(() => reject(new Error(sanitizeError(err.message))))
     })
 
     conn.connect({
