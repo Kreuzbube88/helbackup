@@ -104,7 +104,11 @@ export async function executeFlashBackup(
     }
   }
 
-  const nasChecksums = nasConfig ? await transferAndCleanup(workDir, destPath, nasConfig, engine) : undefined
-  if (!nasConfig) await finalizeLocalBackup(workDir, destPath, engine)
-  engine.recordBackupPath('flash', destPath, config.targetId, nasChecksums)
+  if (!config.dryRun) {
+    const nasChecksums = nasConfig ? await transferAndCleanup(workDir, destPath, nasConfig, engine) : undefined
+    if (!nasConfig) await finalizeLocalBackup(workDir, destPath, engine)
+    engine.recordBackupPath('flash', destPath, config.targetId, nasChecksums)
+  } else {
+    engine.log('info', 'system', 'dry-run: skipping NAS transfer, finalize and manifest record')
+  }
 }

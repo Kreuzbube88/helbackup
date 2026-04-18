@@ -155,7 +155,7 @@ export class JobExecutionEngine extends EventEmitter {
   }
 
   async execute(steps: JobStep[], hooks?: JobHooks): Promise<void> {
-    void notificationManager.notify({ event: 'backup_started', jobName: this.jobName, timestamp: new Date().toISOString() })
+    if (!this._dryRun) void notificationManager.notify({ event: 'backup_started', jobName: this.jobName, timestamp: new Date().toISOString() })
 
     const nasPowerConfigs = this.collectNASPowerConfigs(steps)
     const powerLog = (level: 'info' | 'warn' | 'error', message: string): void => {
@@ -244,7 +244,7 @@ export class JobExecutionEngine extends EventEmitter {
         db.prepare('UPDATE job_history SET status = ?, ended_at = ?, duration_s = ? WHERE id = ?')
           .run('cancelled', new Date().toISOString(), duration, this.runId)
         this.saveSummary(duration * 1000)
-        void notificationManager.notify({
+        if (!this._dryRun) void notificationManager.notify({
           event: 'backup_failed',
           jobName: this.jobName,
           timestamp: new Date().toISOString(),
@@ -320,7 +320,7 @@ export class JobExecutionEngine extends EventEmitter {
       }
 
       const successEvent = this.summary.errors > 0 ? 'backup_failed' : this.summary.warnings > 0 ? 'backup_warning' : 'backup_success'
-      void notificationManager.notify({
+      if (!this._dryRun) void notificationManager.notify({
         event: successEvent,
         jobName: this.jobName,
         backupId: this.runId,
@@ -337,7 +337,7 @@ export class JobExecutionEngine extends EventEmitter {
         const total = parseInt(parts[1] ?? '0', 10)
         const available = parseInt(parts[3] ?? '0', 10)
         if (total > 0 && available / total < 0.10) {
-          void notificationManager.notify({
+          if (!this._dryRun) void notificationManager.notify({
             event: 'disk_space_low',
             jobName: this.jobName,
             timestamp: new Date().toISOString(),
@@ -358,7 +358,7 @@ export class JobExecutionEngine extends EventEmitter {
       this.saveSummary(duration * 1000)
       backupDurationHistogram.observe({ job_name: this.jobName }, duration)
 
-      void notificationManager.notify({
+      if (!this._dryRun) void notificationManager.notify({
         event: 'backup_failed',
         jobName: this.jobName,
         timestamp: new Date().toISOString(),

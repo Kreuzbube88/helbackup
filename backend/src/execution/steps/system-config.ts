@@ -154,8 +154,12 @@ export async function executeSystemConfigBackup(
     }
   }
 
-  const nasChecksums = nasConfig ? await transferAndCleanup(workDir, destPath, nasConfig, engine) : undefined
-  if (!nasConfig) await finalizeLocalBackup(workDir, destPath, engine)
-  engine.recordBackupPath('system_config', destPath, config.targetId, nasChecksums)
+  if (!config.dryRun) {
+    const nasChecksums = nasConfig ? await transferAndCleanup(workDir, destPath, nasConfig, engine) : undefined
+    if (!nasConfig) await finalizeLocalBackup(workDir, destPath, engine)
+    engine.recordBackupPath('system_config', destPath, config.targetId, nasChecksums)
+  } else {
+    engine.log('info', 'system', 'dry-run: skipping NAS transfer, finalize and manifest record')
+  }
   engine.log('info', 'system', 'System config backup completed')
 }
