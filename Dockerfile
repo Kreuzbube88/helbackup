@@ -29,7 +29,7 @@ FROM node:24-alpine AS final
 WORKDIR /app
 
 # Install runtime backup tools (wget is in busybox, used by HEALTHCHECK)
-RUN apk add --no-cache rsync openssh-client libvirt-client gnupg sshpass
+RUN apk add --no-cache bash rsync openssh-client libvirt-client gnupg sshpass
 
 LABEL org.opencontainers.image.title="HELBACKUP"
 LABEL org.opencontainers.image.description="Intelligent backup orchestrator for Unraid"
@@ -44,7 +44,7 @@ COPY --from=backend-build /app/dist ./dist
 COPY --from=frontend-build /app/frontend/dist ./frontend/dist
 
 # Runtime dirs
-RUN mkdir -p /app/config/ssh /app/data /app/logs && \
+RUN mkdir -p /app/config/ssh /app/config/hooks /app/data /app/logs && \
     chmod 700 /app/config/ssh
 
 EXPOSE 3000

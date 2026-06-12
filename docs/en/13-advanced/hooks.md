@@ -4,18 +4,31 @@
 
 Hooks are shell scripts that HELBACKUP executes before or after a backup job.
 
+## Allowed Locations
+
+For security reasons, hook scripts are only executed from these container directories:
+
+| Container path | Host path (Unraid default) |
+|---|---|
+| `/app/config/hooks` | `/mnt/user/appdata/helbackup/config/hooks` |
+| `/app/data/hooks` | `/mnt/user/appdata/helbackup/data/hooks` |
+
+Paths outside these directories are rejected and the job fails with `Hook path not allowed`.
+
 ## Configure Hooks
 
-In the job editor:
+Place the scripts on the host, e.g. `/mnt/user/appdata/helbackup/config/hooks/`, then enter the **container path** in the job editor:
 ```
-Pre-Backup Hook:  /mnt/user/scripts/pre-backup.sh
-Post-Backup Hook: /mnt/user/scripts/post-backup.sh
+Pre-Backup Hook:  /app/config/hooks/pre-backup.sh
+Post-Backup Hook: /app/config/hooks/post-backup.sh
 ```
 
 Scripts must be executable:
 ```bash
-chmod +x /mnt/user/scripts/pre-backup.sh
+chmod +x /mnt/user/appdata/helbackup/config/hooks/pre-backup.sh
 ```
+
+Scripts may use `#!/bin/bash` or `#!/bin/sh` — both are available in the container.
 
 ## Pre-Hook Examples
 
@@ -74,7 +87,8 @@ curl -s -X POST "https://ntfy.sh/my-topic" \
 ## Exit Codes
 
 - **0:** Success, continue backup
-- **!= 0:** Error, abort backup (for pre-hooks)
+- **2:** Skip requested — the backup is aborted, logged as a skip (pre-hooks)
+- **other != 0:** Error, abort backup (for pre-hooks)
 
 ## Logging
 

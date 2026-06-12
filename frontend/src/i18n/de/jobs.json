@@ -91,7 +91,7 @@
   "wizard_step_backup": "Backup-Typen",
   "wizard_step_hooks": "Hooks",
   "wizard_step_review": "Übersicht",
-  "hooks_hint": "Optionale Shell-Skripte, die vor und nach dem Backup ausgeführt werden. Pfade beziehen sich auf das Container-Dateisystem.",
+  "hooks_hint": "Optionale Shell-Skripte, die vor und nach dem Backup ausgeführt werden. Skripte müssen in /app/config/hooks oder /app/data/hooks liegen (auf Unraid: /mnt/user/appdata/helbackup/config/hooks).",
   "retention_enable": "Alte Backups automatisch löschen",
   "retention_days_label": "Älter als (Tage)",
   "retention_minimum_label": "Mindestens behalten",

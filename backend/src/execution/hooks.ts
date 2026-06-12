@@ -1,4 +1,5 @@
 import { spawn } from 'child_process'
+import { access, constants } from 'node:fs/promises'
 import path from 'node:path'
 import { logger } from '../utils/logger.js'
 
@@ -16,8 +17,24 @@ export async function executeHook(
 ): Promise<HookResult> {
   const resolved = path.resolve(scriptPath)
   if (!ALLOWED_HOOK_DIRS.some(dir => resolved.startsWith(dir + '/'))) {
-    logger.error(`Hook path rejected (not in allowed directories): ${resolved}`)
-    return { success: false, output: `Hook path not allowed: ${resolved}` }
+    const message = `Hook path not allowed: ${resolved} — scripts must be inside ${ALLOWED_HOOK_DIRS.join(' or ')}`
+    logger.error(message)
+    return { success: false, output: message }
+  }
+
+  try {
+    await access(resolved, constants.F_OK)
+  } catch {
+    const message = `Hook script not found: ${resolved}`
+    logger.error(message)
+    return { success: false, output: message }
+  }
+  try {
+    await access(resolved, constants.X_OK)
+  } catch {
+    const message = `Hook script is not executable: ${resolved} — run chmod +x`
+    logger.error(message)
+    return { success: false, output: message }
   }
 
   return new Promise((resolve) => {
@@ -45,9 +62,13 @@ export async function executeHook(
       }
     })
 
-    proc.on('error', (error: Error) => {
-      logger.error(`Hook ${type}-backup error: ${error.message}`)
-      resolve({ success: false, output: error.message })
+    proc.on('error', (error: NodeJS.ErrnoException) => {
+      // ENOENT here means the interpreter is missing — the script itself was verified above
+      const hint = error.code === 'ENOENT'
+        ? ' — check the shebang line (interpreter not found)'
+        : ''
+      logger.error(`Hook ${type}-backup error: ${error.message}${hint}`)
+      resolve({ success: false, output: `${error.message}${hint}` })
     })
   })
 }

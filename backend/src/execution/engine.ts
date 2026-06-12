@@ -186,7 +186,12 @@ export class JobExecutionEngine extends EventEmitter {
           JOB_ID: this.jobId,
         })
         if (!result.success) {
-          throw new Error('Pre-backup hook failed or requested skip')
+          const reason = result.output.trim()
+          this.log('error', 'system', `Pre-backup hook failed: ${reason || 'no output'}`)
+          throw new Error(`Pre-backup hook failed or requested skip${reason ? `: ${reason}` : ''}`)
+        }
+        if (result.output.trim()) {
+          this.log('info', 'system', `Pre-backup hook output: ${result.output.trim()}`)
         }
       }
 
@@ -313,10 +318,16 @@ export class JobExecutionEngine extends EventEmitter {
       // Execute post-backup hook
       if (hooks?.postPath) {
         this.log('info', 'system', 'Executing post-backup hook...')
-        await executeHook(hooks.postPath, 'post', {
+        const result = await executeHook(hooks.postPath, 'post', {
           RUN_ID: this.runId,
           JOB_ID: this.jobId,
         })
+        if (!result.success) {
+          this.log('warn', 'system', `Post-backup hook failed: ${result.output.trim() || 'no output'}`)
+          this.summary.warnings++
+        } else if (result.output.trim()) {
+          this.log('info', 'system', `Post-backup hook output: ${result.output.trim()}`)
+        }
       }
 
       const successEvent = this.summary.errors > 0 ? 'backup_failed' : this.summary.warnings > 0 ? 'backup_warning' : 'backup_success'

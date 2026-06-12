@@ -22,10 +22,10 @@ Scripts executed before or after a backup job.
 - Notifications
 - Cleanup
 
-Job configuration:
+Job configuration (scripts must be in `/app/config/hooks` or `/app/data/hooks`, see [Hooks](hooks.md)):
 ```
-Pre-Backup Hook: /mnt/user/scripts/pre-backup.sh
-Post-Backup Hook: /mnt/user/scripts/post-backup.sh
+Pre-Backup Hook: /app/config/hooks/pre-backup.sh
+Post-Backup Hook: /app/config/hooks/post-backup.sh
 ```
 
 Script example:
